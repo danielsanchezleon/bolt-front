@@ -1,0 +1,61 @@
+.accordion {
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .accordion-header {
+        padding: 24px;
+        background-color: white;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .title-wrapper {
+            padding: 5px 20px;
+            border-radius: 8px;
+        }
+
+        .pi-chevron-right {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .pi-chevron-right.open {
+            transform: rotate(90deg);
+            /* Gira la flecha hacia abajo */
+        }
+    }
+
+    .accordion-content {
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        background-color: white;
+        padding: 0 16px;
+    }
+
+    .accordion-content.open {
+        padding: 16px;
+    }
+}
+
+.accordion-disabled {
+    border-radius: 8px;
+    overflow: hidden;
+
+    .accordion-header {
+        padding: 24px;
+        background-color: lightgray;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .title-wrapper {
+            padding: 3px 20px;
+            border-radius: 8px;
+        }
+    }
+}

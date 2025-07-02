@@ -1,0 +1,39 @@
+.accordion {
+    width: 100%;
+}
+
+.accordion-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    height: 32px;
+    background-color: #e6effc;
+    color: #2563eb;
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    user-select: none;
+
+    border-radius: 8px;
+}
+
+.accordion-header:hover {
+    background-color: #dbeafe;
+}
+
+.accordion-body {
+    padding: 16px;
+}
+
+.pi-chevron-right {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.pi-chevron-right.open {
+    transform: rotate(90deg);
+    /* Gira la flecha hacia abajo */
+}
