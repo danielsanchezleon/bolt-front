@@ -5,6 +5,7 @@ import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeng/themes/lara';
 
 import { routes } from './app.routes';
+import { CustomPreset } from './custom-preset';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -13,7 +14,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: Lara,
+        preset: CustomPreset,
         options: {
           cssLayer: {
             name: 'primeng',
