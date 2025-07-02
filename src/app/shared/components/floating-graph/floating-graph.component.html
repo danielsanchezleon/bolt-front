@@ -1,0 +1,17 @@
+<div
+  class="floating-button"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+>
+  <p-button icon="pi pi-chart-line" [rounded]="true" size="large" [severity]="'secondary'"/>
+</div>
+
+<div
+  class="animated-modal"
+  [class.show]="isHovering"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+>
+  <!-- Contenido del modal -->
+  <h2>Gráfico Interactivo</h2>
+</div>

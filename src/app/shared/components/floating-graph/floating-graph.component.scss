@@ -1,0 +1,27 @@
+.floating-button {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1001;
+
+  border: 1px solid lightgray;
+  border-radius: 50%;
+}
+
+.animated-modal {
+  position: fixed;
+  top: -100%;
+  left: 0;
+  right: 0;
+  height: calc(100% - 96px);
+  background-color: white;
+  z-index: 1000;
+  transition: top 0.4s ease-in-out;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  overflow: auto;
+  padding: 1rem;
+
+  &.show {
+    top: 0;
+  }
+}

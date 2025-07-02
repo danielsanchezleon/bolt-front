@@ -23,6 +23,7 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { channelOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
+import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
 
 export class MetricOption
 {
@@ -113,7 +114,7 @@ export class Label
 
 @Component({
   selector: 'app-create-simple-condition-alert',
-  imports: [PageWrapperComponent, ReactiveFormsModule, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [PageWrapperComponent, ReactiveFormsModule, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
