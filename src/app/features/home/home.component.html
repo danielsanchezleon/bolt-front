@@ -1,0 +1,122 @@
+<app-page-wrapper>
+  <div class="cards-container">
+    <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas configuradas</div>
+      <div class="font-12 text-white">(Total de alertas creadas en el sistema)</div>
+      <div class="card-container-information">
+        <div class="font-32 text-white font-w-700">40</div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-bell font-20 text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas deshabilitadas</div>
+      <div class="font-12 text-white">(Alertas desactivadas que no se dispararán)</div>
+      <div class="card-container-information">
+        <div class="information-number">
+          <div class="font-32 font-w-700 text-white">10</div>
+          <div class="font-16 text-white">(25%)</div>
+        </div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-bell-slash font-20 text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas sin destino</div>
+      <div class="font-12 text-white">(Alertas sin canal de notificación configurado)</div>
+      <div class="card-container-information">
+        <div class="information-number">
+          <div class="font-32 font-w-700 text-white">5</div>
+          <div class="font-16 text-white">(12.5%)</div>
+        </div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-exclamation-triangle font-20 text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas sin datos</div>
+      <div class="font-12 text-white">(Alertas con errores en la query o fuentes rotas)</div>
+      <div class="card-container-information">
+        <div class="information-number">
+          <div class="font-32 font-w-700 text-white">3</div>
+          <div class="font-16 text-white">(7.5%)</div>
+        </div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-database font-20 text-white"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quick-options-container">
+    <div class="font-20 font-w-600">¿Qué revisamos hoy?</div>
+    <div class="quick-options">
+      <div class="quick-option" (click)="onClickNavigateToCreateAlert()">
+        <div class="icon-wrapper bg-blue">
+          <i class="pi pi-plus font-20 c-blue"></i>
+        </div>
+        <div class="title-description-container">
+          <div class="font-16">Crear una nueva alerta</div>
+          <div class="font-12 text-gray text-a-center">
+            Configura una nueva alerta desde cero basada en tus métricas
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-option-disabled">
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-cog font-20 text-white"></i>
+        </div>
+        <div class="title-description-container">
+          <div class="font-16 text-white">Configurar alertas</div>
+          <div class="font-12 text-white text-a-center">
+            Modifica, elimina, habilita o deshabilita alertas existentes en el sistema
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-option-disabled">
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-chart-bar font-20 text-white"></i>
+        </div>
+        <div class="title-description-container">
+          <div class="font-16 text-white">Crear una nueva alerta</div>
+          <div class="font-12 text-white text-a-center">
+            Accede a un historial detallado de alertas activadas previamente
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="last-24h-container">
+    <div class="font-20 font-w-600">Alertas lanzadas en las últimas 24h</div>
+
+    <div class="last-24h">
+      <p-table [value]="alerts" class="my-table">
+        <ng-template #header>
+          <tr>
+            <th>Nombre</th>
+            <th>Combinaciones (saltos/posibles)</th>
+            <th>Total</th>
+            <th>% recuperado en &lt;5 min.</th>
+            <th>Endpoint</th>
+            <th>Metadatos</th>
+            <th>Acciones</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-alert>
+          <tr>
+            <td>{{ alert.name }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</app-page-wrapper>

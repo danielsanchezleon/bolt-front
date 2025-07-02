@@ -1,0 +1,395 @@
+<app-page-wrapper>
+    <p-button icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary" (onClick)="onClickNavigateToCreateAlert()"/>
+
+    <div class="steps-container">
+        <div class="font-32 font-w-600">Condición simple</div>
+        <app-accordion [title]="'Paso 1: Configura la consulta'" [highlightTitle]="true" [isOpen]="true">
+            <div class="consult-configuration-container">
+                <div class="metric-selection-container">
+                    <div class="metric-select">
+                        <p-multiselect class="full-width-selector" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" optionLabel="label" placeholder="Selecciona alguna métrica" appendTo="body">
+                            <ng-template let-metric #item>
+                                <div style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                        <div class="font-w-600">{{metric.label}}</div>
+                                        <div class="font-w-600 font-12" *ngFor="let tag of metric.tags" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{tag}}</div>
+                                    </div>
+                                    <div class="font-12 text-gray">{{metric.description}}</div>
+                                </div>
+                            </ng-template>
+                        </p-multiselect>
+                        <p-button *ngIf="selectedMetricList.length > 0" label="{{selectedMetricList.length == 1 ? 'Añadir métrica' : 'Añadir métricas'}}" icon="pi pi-plus" (onClick)="onClickSelectMetrics();" [disabled]="selectedMetricList.length + selectedMetrics.length > metricOptions.maxMetricNumber" severity="secondary"/>
+                    </div>
+                    <div *ngIf="selectedMetrics.length > 0" class="metric-options">
+                        <div class="metric-option" *ngFor="let selectedMetric of selectedMetrics; let i = index;">
+                            <div class="metric-option-data">
+                                <div class="id-wrapper">
+                                    <span class="font-16 text-white font-w-600">{{selectedMetric.id}}</span>
+                                </div>
+
+                                <p-select *ngIf="i > 0" [options]="metricOperationOptions" [(ngModel)]="selectedMetric.operation" optionLabel="label" appendTo="body" (onChange)="onChangeSelectOperation();"/>
+
+                                <span class="font-16 font-w-600">{{selectedMetric.metric.label}}</span>
+                            </div>
+
+                            <div class="metric-option-action-buttons">
+                                <div>
+                                    <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (selectedMetrics.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowDown(i);"/>
+                                    <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0" icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowUp(i);"/>
+                                </div>
+                                <div style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                                <p-button [pTooltip]="'Eliminar métrica'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedMetric(i);"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngIf="selectedMetrics.length > 0 && !customizeMetric" class="metric-result-container">
+                        <div class="metric-result">
+                            <div class="font-16 font-w-600">Métrica final:</div>
+                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" class="metric-result-ids font-16 font-w-600 c-blue">
+                                {{ resultMetric | sanitizeExpression}}
+                            </div>
+                        </div> 
+                        <ng-template #metricResultIdsTooltip>
+                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
+                                <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
+                                    <span class="font-16 font-w-700 text-gray">[</span>
+                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
+                                    <span class="font-16 font-w-700 text-gray">]</span>
+                                    <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                        <p-button [pTooltip]="'Personalizar métrica'" tooltipPosition="top" showDelay="1000" icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success" (onClick)="onClickCustomizeMetric();"/>
+                    </div>
+                    <div *ngIf="selectedMetrics.length > 0 && customizeMetric" class="metric-result-container">
+                        <div class="metric-result">
+                            <div class="font-16 font-w-600" style="white-space: nowrap;">Métrica personalizada:</div>
+                            <input pSize="small" type="text" pInputText [(ngModel)]="resultMetric" style="width: 100%;" (keypress)="allowCharacters($event);"/>
+                        </div> 
+                        <ng-template #metricResultIdsTooltip>
+                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
+                                <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
+                                    <span class="font-16 font-w-700 text-gray">[</span>
+                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
+                                    <span class="font-16 font-w-700 text-gray">]</span>
+                                    <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                        <div class="metric-option-action-buttons">
+                            <p-button [pTooltip]="'Guardar'" tooltipPosition="top" showDelay="1000" icon="pi pi-check" [rounded]="true" [text]="true" severity="success" (onClick)="onClickSaveMetric();"/>
+                            <p-button [pTooltip]="'Cancelar'" tooltipPosition="top" showDelay="1000" icon="pi pi-times" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickCancelMetricCustomization();"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div *ngIf="selectedMetrics.length > 0" class="titled-container">
+                    <div class="font-16 font-w-600">Agrupaciones</div>
+                    <div class="group-by-options">
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <!-- [(ngModel)]="value1" -->
+                            <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector" [filter]="true" appendTo="body"/>
+                            <label for="over_label1">Agrupar por</label>
+                        </p-floatlabel>
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select [options]="operationOptions" class="full-width-selector" inputId="over_label2" optionLabel="label" optionValue="value" appendTo="body"/>
+                            <label for="over_label2">Operación matemática</label>
+                        </p-floatlabel>
+                    </div>
+                </div>
+
+                <app-inner-accordion *ngIf="selectedMetrics.length > 0" [title]="'Opciones avanzadas'">
+                    <div class="group-by-options">
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select [options]="timeWindowOptions" class="full-width-selector" inputId="over_label1" optionLabel="label" optionValue="value" appendTo="body"/>
+                            <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;" for="over_label1">Ventana de tiempo <i class="pi pi-info-circle" style="font-size: 0.8rem;"></i></label>
+                        </p-floatlabel>
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select [options]="discardTimeOptions" class="full-width-selector" inputId="over_label2" optionLabel="label" optionValue="value" appendTo="body"/>
+                            <label for="over_label2">Descartar últimos minutos</label>
+                        </p-floatlabel>
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select [options]="periodicityOptions" class="full-width-selector" inputId="over_label3" optionLabel="label" optionValue="value" appendTo="body"/>
+                            <label for="over_label3">Periodicidad</label>
+                        </p-floatlabel>
+                    </div>
+                </app-inner-accordion>
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true" [disabled]="step2Disabled">
+            <div class="step-2-container">
+                <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
+                <div class="notice c-blue">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <span class="font-w-700">Importante</span>: las reglas se ejecutan según un orden de precedencia. Si una misma combinación (por ejemplo: OB = España) se repite en varias líneas con el mismo umbral, se aplicará la primera que aparezca. Utiliza las flechas para subir o bajar las reglas y así establecer tu orden de preferencia.
+                    </div>
+                </div>
+
+                <div class="threshold-container" *ngFor="let threshold of thresholdList">
+                    <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.id}}</div>
+                    <div class="type-buttons-container">
+                        <div class="type-button-container" [ngClass]="{'disaster': threshold.type == 'disaster', 'text-white': threshold.type == 'disaster'}" (click)="onClickSetThresholdType(threshold, 'disaster');">Disaster</div>
+                        <div class="type-button-container" [ngClass]="{'critical': threshold.type == 'critical', 'text-white': threshold.type == 'critical'}" (click)="onClickSetThresholdType(threshold, 'critical');">Critical</div>
+                        <div class="type-button-container" [ngClass]="{'major': threshold.type == 'major'}" (click)="onClickSetThresholdType(threshold, 'major');">Major</div>
+                        <div class="type-button-container" [ngClass]="{'warning': threshold.type == 'warning'}" (click)="onClickSetThresholdType(threshold, 'warning');">Warning</div>
+                    </div>
+                    <p-select [(ngModel)]="threshold.comparation" class="select" [options]="thresholdOptions" optionLabel="label" optionValue="value" appendTo="body"/>
+                    <p-inputnumber [(ngModel)]="threshold.value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6"/>
+                </div>
+
+                <p-button label="Añadir otro umbral" icon="pi pi-plus" (onClick)="onClickAddThreshold();" severity="secondary"/>
+
+                <app-inner-accordion [title]="'Opciones de activación y recuperación'">
+                    <div class="activation-recover-block-container">
+                        <div class="activation-recover-container">
+                            <div class="activation-recover-container-title">
+                                <div class="icon-wrapper"><i class="pi pi-bell text-white" style="font-size: 0.7rem"></i></div>
+                                <div class="font-16 text-gray font-w-600">Configuración de activación de la alerta</div>
+                            </div>
+                            <div class="activation-recover-card">
+                                <div>¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
+                                <div class="activation-recover-card-data">
+                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                                    <div class="font-16">de las últimas</div>
+                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                                    <div class="font-16">evaluaciones</div>
+                                </div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si X de las últimas Y evaluaciones falla</div>
+                                <div class="activation-recover-card-time">
+                                    <i class="pi pi-clock"></i>
+                                    <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="activation-recover-container">
+                            <div class="activation-recover-container-title">
+                                <div class="icon-wrapper"><i class="pi pi-check text-white" style="font-size: 0.5rem"></i></div>
+                                <div class="font-16 text-gray font-w-600">Configuración de recuperación (desactivación de la alerta)</div>
+                            </div>
+                            <div class="activation-recover-card">
+                                <div>¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
+                                <div class="activation-recover-card-data">
+                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                                    <div class="font-16">de las últimas</div>
+                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                                    <div class="font-16">evaluaciones</div>
+                                </div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si X de las últimas Y evaluaciones falla</div>
+                                <div class="activation-recover-card-time">
+                                    <i class="pi pi-clock"></i>
+                                    <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </app-inner-accordion>
+
+                <app-inner-accordion [title]="'Periodos de silencio'">
+                    <div class="silence-periods-container">
+                        <div class="silence-period-container" *ngFor="let silencePeriod of silencePeriodList; let i = index;">
+                            <div class="checkboxes-container">
+                                <i class="pi pi-calendar c-blue"></i>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="monday" name="days" value="monday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="monday"> Lunes </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="tuesday" name="days" value="tuesday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="tuesday"> Martes </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="wednesday" name="days" value="wednesday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="wednesday"> Miércoles </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="thursday" name="days" value="thursday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="thursday"> Jueves </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="friday" name="days" value="friday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="friday"> Viernes </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="saturday" name="days" value="saturday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="saturday"> Sábado </label>
+                                </div>
+                                <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                    <p-checkbox size="small" inputId="sunday" name="days" value="sunday" [(ngModel)]="silencePeriod.days" />
+                                    <label class="font-w-600" for="sunday"> Sunday </label>
+                                </div>
+
+                            </div>
+                            <div class="times-container">
+                                <i class="pi pi-clock c-blue"></i>
+                                <p-datepicker class="datepicker" size="small" [timeOnly]="true" />
+                                <div>a</div>
+                                <p-datepicker class="datepicker" size="small" [timeOnly]="true" />
+                            </div>
+                            <p-button *ngIf="silencePeriodList.length > 1" [pTooltip]="'Eliminar periodo de silencio'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSilencePeriod(i);"/>
+                        </div>
+
+                        <p-button label="Añadir otro periodo de silencio" icon="pi pi-plus" (onClick)="onClickAddSilencePeriod();" severity="secondary"/>
+                    </div>
+                </app-inner-accordion>
+
+                <app-inner-accordion [title]="'Comportamiento ante errores'">
+                    <div class="error-behavior-container">
+                        <div class="error-behavior-line">
+                            <div class="icon-title">
+                                <i class="pi pi-database"></i>
+                                <div class="font-w-600">¿Qué quieres hacer si la query no devuelve datos?</div>
+                            </div>
+                            <p-select [options]="errorBehaviorOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                        </div>
+
+                        <div class="error-behavior-line">
+                            <div class="icon-title">
+                                <i class="pi pi-database"></i>
+                                <div class="font-w-600">¿Qué quieres hacer si la query falla y hace timeout?</div>
+                            </div>
+                            <p-select [options]="errorBehaviorOptions" size="small" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                        </div>
+                    </div>
+                </app-inner-accordion>
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true" [disabled]="step3Disabled">
+            <div class="step-3-container">
+                <div class="endpoint-list-container">
+                    <div class="font-20 font-w-600">Lista de endpoints</div>
+                    <div class="font-16">Define cómo y donde quieres recibir las alertas según su nivel de criticidad.</div>
+                    <div class="channel-list-container">
+                        <div class="channel-container" *ngFor="let channel of channelList; let i = index;">
+                            <div class="channel-data-container">
+                                <i class="pi {{iconMap.get(channel.channel)}}"></i>
+                                <p-select [options]="channelOptions" [(ngModel)]="channel.channel" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                                <div class="text-gray">prueba&#64;test.com</div>
+                            </div>
+
+                            <div class="alerts-container">
+                                <div class="type-button-container" [ngClass]="{'disaster': channel.alerts.includes('disaster'), 'text-white': channel.alerts.includes('disaster')}" (click)="onClickSetChannelAlert(channel, 'disaster');">Disaster</div>
+                                <div class="type-button-container" [ngClass]="{'critical': channel.alerts.includes('critical'), 'text-white': channel.alerts.includes('critical')}" (click)="onClickSetChannelAlert(channel, 'critical');">Critical</div>
+                                <div class="type-button-container" [ngClass]="{'major': channel.alerts.includes('major')}" (click)="onClickSetChannelAlert(channel, 'major');">Major</div>
+                                <div class="type-button-container" [ngClass]="{'warning': channel.alerts.includes('warning')}" (click)="onClickSetChannelAlert(channel, 'warning');">Warning</div>
+                            </div>
+                            <p-button *ngIf="channelList.length > 1" [pTooltip]="'Eliminar canal'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveChannel(i);"/>
+                        </div>
+                        <p-button label="Añadir otro canal" icon="pi pi-plus" (onClick)="onClickAddChannel();" severity="secondary"/>
+                    </div>
+                </div>
+                <div class="add-label-container">
+                    <div class="font-20 font-w-600">Añadir etiqueta</div>
+                    <div class="font-16">Añade etiquetas personalizadas para categorizar y organizar mejor tus alertas. Estas etiquetas pasarán a formar parte de los metadatos de la alerta.</div>
+                    <form [formGroup]="labelForm">
+                        <div class="add-label-fields">
+                            <p-floatlabel class="floatlabel" variant="on">
+                                <input class="input" pInputText id="name" formControlName="name" />
+                                <label for="name">Nombre *</label>
+                            </p-floatlabel>
+                            <p-floatlabel class="floatlabel" variant="on">
+                                <input class="input" pInputText id="value" formControlName="value" />
+                                <label for="value">Valor *</label>
+                            </p-floatlabel>
+                        </div>
+                        <p-button label="Añadir etiqueta" icon="pi pi-plus" (onClick)="onClickAddLabel();" severity="secondary" [disabled]="!labelForm.valid"/>
+                    </form>
+                    <div *ngIf="labelList.length > 0" class="font-16 font-w-600">Etiquetas añadidas</div>
+                    <div *ngIf="labelList.length > 0" class="labels-container">
+                        <div class="label-container" *ngFor="let label of labelList; let i = index;">
+                            <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
+                            <div class="font-12">{{label.name + ': ' + label.value}}</div>
+                            <i class="pi pi-times remove-icon" style="font-size: 0.75rem;" (click)="onClickRemoveTag(i);"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="notification-message-container">
+                    <div class="font-20 font-w-600">Mensaje de notificación</div>
+                    <div class="font-16">Configura el mensaje que se enviará con cada notificación.</div>
+                    <div class="notice c-blue">
+                        <i class="pi pi-info-circle"></i>
+                        <div>
+                            <span class="font-w-700">Uso de variables y bloques condicionales</span>: Puedes usar <strong>&#123;&#123;</strong> en los campos de mensaje y detalles para acceder a variables de plantilla (como <strong>host.name</strong>) y bloques condicionales (como <strong>#is_alert</strong>)
+                        </div>
+                    </div>
+
+                    <p-tabs class="tabs" value="0">
+                        <p-tablist>
+                            <p-tab style="width: 50%;" value="0">
+                                <i class="pi pi-pencil"></i>
+                                <div>Edición</div>
+                            </p-tab>
+                            <p-tab style="width: 50%;" value="1">
+                                <i class="pi pi-eye"></i>
+                                <div>Previsualización</div>
+                            </p-tab>
+                        </p-tablist>
+                        <p-tabpanels>
+                            <p-tabpanel value="0">
+                                <form [formGroup]="notificationMessageForm">
+                                    <div class="notification-message-form">
+                                        <p-floatlabel class="full-w-field" variant="on">
+                                            <textarea class="full-w-field" pTextarea id="message" rows="5" [autoResize]="true" formControlName="message"></textarea>
+                                            <label for="message">Mensaje de la alerta *</label>
+                                        </p-floatlabel>
+
+                                        <p-floatlabel class="full-w-field" variant="on">
+                                            <textarea class="full-w-field" pTextarea id="details" rows="5" [autoResize]="true" formControlName="details"></textarea>
+                                            <label for="details">Detalles adicionales</label>
+                                        </p-floatlabel>
+
+                                        <p-floatlabel class="full-w-field" variant="on">
+                                            <input class="full-w-field" pInputText id="proccedure" formControlName="proccedure"/>
+                                            <label for="proccedure">Procedimiento (OPI)</label>
+                                        </p-floatlabel>
+                                    </div>
+                                </form>
+                            </p-tabpanel>
+                            <p-tabpanel value="1">
+                            </p-tabpanel>
+                        </p-tabpanels>
+                    </p-tabs>
+                </div>
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true" [disabled]="step4Disabled">
+            <div class="step-4-container">
+                <div class="notice c-blue">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <span class="font-w-700">Importante</span>: por defecto, tu equipo (admin) podrá editar la configuración de la alerta, y todos los demás equipos podrán verla. Configura los permisos para otros equipos a continuación si quieres cambiar estos valores por defecto.
+                    </div>
+                </div>
+
+                <div class="permissions-container">
+                    <div class="permission-container" *ngFor="let permission of permissionList; let i = index;">
+                        <div class="permission-form-container">
+                            <p-select [options]="permissionTeamOptions" class="select" optionLabel="label" optionValue="value" appendTo="body"/>
+                            <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                <p-radiobutton size="small" name="permission" value="rw" [(ngModel)]="permission.permission" inputId="rw" />
+                                <i class="pi pi-pencil c-blue"></i>
+                                <label for="rw">Lectura y escritura</label>
+                            </div>
+                            <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                <p-radiobutton size="small" name="permission" value="r" [(ngModel)]="permission.permission" inputId="r" />
+                                <i class="pi pi-book c-blue"></i>
+                                <label for="r">Solo lectura</label>
+                            </div>
+                        </div>
+                        <p-button *ngIf="permissionList.length > 1" [pTooltip]="'Eliminar permiso'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemovePermission(i);"/>
+                    </div>
+
+                    <p-button label="Añadir otro permiso" icon="pi pi-plus" (onClick)="onClickAddPermission();" severity="secondary"/>
+                </div>
+            </div>
+        </app-accordion>
+
+        <div class="end-button-container">
+            <p-button label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"/>
+        </div>
+    </div>
+</app-page-wrapper>

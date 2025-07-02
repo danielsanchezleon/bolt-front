@@ -1,0 +1,71 @@
+<app-page-wrapper>
+  <p-button icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary" (onClick)="onClickNavigateToHome()" />
+  <div class="centered-container">
+    <div class="create-alert-wrapper">
+      <div class="font-32 font-w-600">Crear nueva alerta</div>
+      <div class="create-alert-container">
+        <div class="title-description-container">
+          <div class="font-20 font-w-600">Selecciona el tipo de alerta</div>
+          <div class="font-16 text-gray">Escoge el tipo de alerta que mejor se adapte a lo que quieres monitorizar</div>
+        </div>
+        <div class="alert-types-container">
+          <div class="alert-type-container" (click)="alertTypeSelected = true;" [class.selected]="alertTypeSelected">
+            <div class="icon-wrapper bg-blue">
+              <i class="pi pi-chart-line font-32 c-blue"></i>
+            </div>
+            <div class="font-20 text-a-center">Métrica - Umbral</div>
+            <div class="font-16 text-gray text-a-center">Compara los valores de una métrica con un umbral estático definido</div>
+          </div>
+
+          <div class="alert-type-container-disabled">
+            <div class="icon-wrapper bg-gray">
+              <i class="pi pi-comment font-32 text-white"></i>
+            </div>
+            <div class="font-20 text-a-center text-white">Ocurrencias de patrones de logs</div>
+            <div class="font-16 text-white text-a-center">Analiza cuantas veces aparece un patrón específico en los logs</div>
+          </div>
+
+          <div class="alert-type-container-disabled">
+            <div class="icon-wrapper bg-gray">
+              <i class="pi pi-database font-32 text-white"></i>
+            </div>
+            <div class="font-20 text-a-center text-white">Chequeo de fuente de datos</div>
+            <div class="font-16 text-white text-a-center">Verifica si una fuente de datos está disponible y responde</div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="alertTypeSelected" class="threshold-alert-options-container">
+        <div class="font-20 font-w-600">Selecciona el tipo de alerta de umbral a definir</div>
+        <div class="threshold-alert-options">
+          <div class="threshold-alert-option" (click)="onClickNavigateToSimpleCondition();">
+            <div class="icon-wrapper bg-green">
+              <i class="pi pi-filter font-32 c-green"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">Condición simple</div>
+              <div class="font-12 text-gray text-a-center">
+                Compara una métrica (ya sea directa o derivada de otras) con un valor fijo
+              </div>
+            </div>
+          </div>
+
+          <div class="threshold-alert-option">
+            <div class="icon-wrapper bg-green">
+              <i class="pi pi-calculator font-32 c-green"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">Condición compuesta</div>
+              <div class="font-12 text-gray text-a-center">
+                Define múltiples condiciones sobre una o más métricas
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="buttons-container">
+          <p-button label="Cancelar" variant="text" severity="secondary" (onClick)="alertTypeSelected = false;" />
+        </div>
+      </div>
+    </div>
+  </div>
+</app-page-wrapper>
