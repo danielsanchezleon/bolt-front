@@ -1,20 +1,29 @@
 .cards-container {
     display: flex;
     flex-direction: row;
+    align-items: stretch;
     gap: 24px;
 
     .card-container {
+        flex: 1 1 0;
         width: 100%;
-        height: fit-content;
         background-color: white;
         border-radius: 8px;
         border: 1px solid lightgray;
         padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        justify-content: space-between;
+        gap: 8px;
         cursor: pointer;
         transition: all 0.3s ease;
+
+        .card-title-description
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
         .card-container-information {
             display: flex;
@@ -46,16 +55,24 @@
     }
 
     .card-container-disabled {
+        flex: 1 1 0;
         width: 100%;
-        height: fit-content;
         background-color: lightgray;
         border-radius: 8px;
         border: 1px solid transparent;
         padding: 24px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        justify-content: space-between;
+        gap: 8px;
         transition: all 0.3s ease;
+
+        .card-title-description
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
 
         .card-container-information {
             display: flex;
@@ -103,13 +120,14 @@
             padding: 24px;
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             gap: 24px;
             cursor: pointer;
             transition: all 0.3s ease;
 
             .icon-wrapper {
+                flex-shrink: 0;
                 display: flex;
                 flex-direction: row;
                 justify-content: center;
@@ -120,10 +138,13 @@
             }
 
             .title-description-container {
+                flex: 1;
+                min-width: 0;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
+                text-align: center; 
             }
         }
 
@@ -139,12 +160,13 @@
             padding: 24px;
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
+            justify-content: flex-start;
             align-items: center;
             gap: 24px;
             transition: all 0.3s ease;
 
             .icon-wrapper {
+                flex-shrink: 0;
                 display: flex;
                 flex-direction: row;
                 justify-content: center;
@@ -155,10 +177,13 @@
             }
 
             .title-description-container {
+                flex: 1;
+                min-width: 0; 
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
                 align-items: center;
+                text-align: center; 
             }
         }
     }

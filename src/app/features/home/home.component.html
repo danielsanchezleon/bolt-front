@@ -1,8 +1,10 @@
 <app-page-wrapper>
   <div class="cards-container">
     <div class="card-container-disabled">
-      <div class="font-16 text-white">Alertas configuradas</div>
-      <div class="font-12 text-white">(Total de alertas creadas en el sistema)</div>
+      <div class="card-title-description">
+        <div class="font-16 text-white">Alertas configuradas</div>
+        <div class="font-12 text-white">(Total de alertas creadas en el sistema)</div>
+      </div>
       <div class="card-container-information">
         <div class="font-32 text-white font-w-700">40</div>
         <div class="icon-wrapper bg-gray">
@@ -12,8 +14,10 @@
     </div>
 
     <div class="card-container-disabled">
-      <div class="font-16 text-white">Alertas deshabilitadas</div>
-      <div class="font-12 text-white">(Alertas desactivadas que no se dispararán)</div>
+      <div class="card-title-description">
+        <div class="font-16 text-white">Alertas deshabilitadas</div>
+        <div class="font-12 text-white">(Alertas desactivadas que no se dispararán)</div>
+      </div>
       <div class="card-container-information">
         <div class="information-number">
           <div class="font-32 font-w-700 text-white">10</div>
@@ -26,8 +30,10 @@
     </div>
 
     <div class="card-container-disabled">
-      <div class="font-16 text-white">Alertas sin destino</div>
-      <div class="font-12 text-white">(Alertas sin canal de notificación configurado)</div>
+      <div class="card-title-description">
+        <div class="font-16 text-white">Alertas sin destino</div>
+        <div class="font-12 text-white">(Alertas sin canal de notificación configurado)</div>
+      </div>
       <div class="card-container-information">
         <div class="information-number">
           <div class="font-32 font-w-700 text-white">5</div>
@@ -63,7 +69,7 @@
         </div>
         <div class="title-description-container">
           <div class="font-16">Crear una nueva alerta</div>
-          <div class="font-12 text-gray text-a-center">
+          <div class="font-12 text-gray">
             Configura una nueva alerta desde cero basada en tus métricas
           </div>
         </div>
@@ -75,7 +81,7 @@
         </div>
         <div class="title-description-container">
           <div class="font-16 text-white">Configurar alertas</div>
-          <div class="font-12 text-white text-a-center">
+          <div class="font-12 text-white">
             Modifica, elimina, habilita o deshabilita alertas existentes en el sistema
           </div>
         </div>
@@ -87,7 +93,7 @@
         </div>
         <div class="title-description-container">
           <div class="font-16 text-white">Crear una nueva alerta</div>
-          <div class="font-12 text-white text-a-center">
+          <div class="font-12 text-white">
             Accede a un historial detallado de alertas activadas previamente
           </div>
         </div>
@@ -112,11 +118,15 @@
           </tr>
         </ng-template>
         <ng-template #body let-alert>
-          <tr>
+          <!-- <tr>
             <td>{{ alert.name }}</td>
-          </tr>
+          </tr> -->
         </ng-template>
       </p-table>
+      <div style="background-color: white; display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 8px;">
+        <i class="pi pi-info-circle font-16 c-blue"></i>
+        <div>No hay alertas que mostrar</div>
+      </div>
     </div>
   </div>
 </app-page-wrapper>
