@@ -1,1 +1,113 @@
 /* You can add global styles to this file, and also import other style files */
+
+*{
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+body{
+    margin: 0 !important;
+    background-color: #f1f1f1;
+}
+
+.font-40 {
+    font-size: 40px;
+}
+
+.font-32 {
+    font-size: 32px;
+}
+
+.font-24 {
+    font-size: 24px;
+}
+
+.font-20 {
+    font-size: 20px;
+}
+
+.font-16 {
+    font-size: 16px;
+}
+
+.font-12 {
+    font-size: 12px;
+}
+
+.text-gray {
+    color: gray;
+}
+
+.text-lightgray {
+    color: lightgray;
+}
+
+.text-white {
+    color: white;
+}
+
+.font-w-600 {
+    font-weight: 600;
+}
+
+.font-w-700 {
+    font-weight: 700;
+}
+
+.text-a-center {
+    text-align: center;
+}
+
+.bg-blue {
+    background-color: #dbeafe;
+}
+
+.c-blue {
+    color: #2563eb;
+}
+
+.bg-orange {
+    background-color: #ffedd5;
+}
+
+.c-orange {
+    color: #f97316;
+}
+
+.bg-red {
+    background-color: #fee2e2;
+}
+
+.c-red {
+    color: #ef4444;
+}
+
+.bg-yellow {
+    background-color: #fef9c3;
+}
+
+.c-yellow {
+    color: #eab308;
+}
+
+.bg-green {
+    background-color: #dcfae5;
+}
+
+.c-green {
+    color: #15803d;
+}
+
+.bg-gray {
+    background-color: gray;
+}
+
+.p-tooltip {
+    max-width: fit-content !important;
+}
+
+.icon-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
