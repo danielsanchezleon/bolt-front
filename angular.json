@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "bolt-front": {
+    "prueba": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -17,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/bolt-front",
+            "outputPath": "dist/prueba",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -32,6 +32,7 @@
               }
             ],
             "styles": [
+              "node_modules/primeicons/primeicons.css", 
               "src/styles.scss"
             ],
             "scripts": []
@@ -64,10 +65,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "bolt-front:build:production"
+              "buildTarget": "prueba:build:production"
             },
             "development": {
-              "buildTarget": "bolt-front:build:development"
+              "buildTarget": "prueba:build:development"
             }
           },
           "defaultConfiguration": "development"
