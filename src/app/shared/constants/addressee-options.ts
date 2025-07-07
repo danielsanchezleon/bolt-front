@@ -6,7 +6,6 @@ export const channelOptions = [
 ];
 
 export const alertOptions = [
-    {value: 'null', label: 'Nulo'},
     {value: 'disaster', label: 'Disaster'},
     {value: 'critical', label: 'Critical'},
     {value: 'major', label: 'Major'},

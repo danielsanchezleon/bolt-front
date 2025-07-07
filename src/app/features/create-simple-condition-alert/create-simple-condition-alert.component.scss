@@ -570,7 +570,7 @@
                     gap: 8px;
 
                     .select {
-                        width: 175px;
+                        width: 220px;
                     }
                 }
             }
@@ -586,4 +586,58 @@
 
 .full-width-selector {
     width: 100%;
+}
+
+.modal-steps
+{
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+
+    max-height: 400px;
+    overflow-x: scroll;
+    overflow-x: hidden;
+
+    .modal-step
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        .modal-step-content
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .title-description-block-1
+            {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+
+                .title
+                {
+                    font-size: 12px;
+                    font-weight: 700;
+                }
+
+                .description
+                {
+                    font-size: 12px;
+                    color: gray;
+                }
+            }
+        }
+    }
+}
+
+.modal-actions
+{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    
+    margin-top: 24px;
 }

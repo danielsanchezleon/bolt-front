@@ -1,4 +1,11 @@
-export const thresholdOptions = [
+export const thresholdTypeOptions = [
+    {value: 'disaster', label: 'Disaster'},
+    {value: 'critical', label: 'Critical'},
+    {value: 'major', label: 'Major'},
+    {value: 'warning', label: 'Warning'}
+];
+
+export const thresholdComparationOptions = [
     {value: 'greater-than', label: 'Mayor que'},
     {value: 'less-than', label: 'Menor que'},
     {value: 'in-range', label: 'Dentro del rango'},
@@ -15,7 +22,17 @@ export const activationRecoverEvaluationOptions = [
     {value: '7', label: '7'},
     {value: '8', label: '8'},
     {value: '9', label: '9'},
-    {value: '10', label: '10'},
+    {value: '10', label: '10'}
+];
+
+export const silencePeriodDayOptions = [
+    {value: 'monday', label: 'Lunes'},
+    {value: 'tuesday', label: 'Martes'},
+    {value: 'wednesday', label: 'Miércoles'},
+    {value: 'thursday', label: 'Jueves'},
+    {value: 'friday', label: 'Viernes'},
+    {value: 'saturday', label: 'Sábado'},
+    {value: 'sunday', label: 'Domingo'}
 ];
 
 export const errorBehaviorOptions = [

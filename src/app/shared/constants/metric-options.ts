@@ -155,12 +155,3 @@ export const periodicityOptions = [
     {value: '30min', label: '30 minutos'},
     {value: '1h', label: '1 hora'}
 ];
-
-export const permissionTeamOptions = [
-    {value: 'n1', label: 'N1'},
-    {value: 'n2video', label: 'N2 (video)'},
-    {value: 'n2ppgg', label: 'N2 (ppgg)'},
-    {value: 'it', label: 'IT'},
-    {value: 'observability', label: 'Observabilidad'},
-    {value: 'aiops', label: 'AIOPs'}
-];

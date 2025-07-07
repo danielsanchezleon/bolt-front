@@ -4,8 +4,8 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { Router } from '@angular/router';
-import { MetricOptions, Metric, metricList, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions, permissionTeamOptions} from '../../shared/constants/metric-options';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
+import { MetricOptions, Metric, metricList, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions} from '../../shared/constants/metric-options';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
@@ -14,16 +14,21 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SanitizeExpressionPipe } from '../../shared/pipes/replace-empty.pipe';
 import { FloatLabelModule } from 'primeng/floatlabel';
 
-import { thresholdOptions, activationRecoverEvaluationOptions, errorBehaviorOptions } from '../../shared/constants/threshold-options';
+import { thresholdTypeOptions, thresholdComparationOptions, activationRecoverEvaluationOptions, silencePeriodDayOptions, errorBehaviorOptions } from '../../shared/constants/threshold-options';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InnerAccordionComponent } from '../../shared/components/inner-accordion/inner-accordion.component';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { channelOptions } from '../../shared/constants/addressee-options';
+import { channelOptions, alertOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
+
 import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { Subscription } from 'rxjs';
+
+import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
 
 export class MetricOption
 {
@@ -72,19 +77,6 @@ export class SilencePeriod
   }
 }
 
-export class Permission
-{
-  id: string;
-  team?: string[] = [];
-  permission: string;
-
-  constructor (id: string)
-  {
-    this.id = id;
-    this.permission = 'r'
-  }
-}
-
 export class Channel
 {
   id: string;
@@ -100,7 +92,7 @@ export class Channel
   }
 }
 
-export class Label
+export class Tag
 {
   name: string;
   value: string;
@@ -112,14 +104,63 @@ export class Label
   }
 }
 
+export class Permission
+{
+  team: any;
+  type: any;
+
+  constructor ()
+  {
+    this.type = permissionTypeOptions[0];
+  }
+}
+
+type ThresholdFormGroup = FormGroup<{
+  id: FormControl<string>;
+  type: FormControl<any>;
+  comparation: FormControl<any>;
+  value: FormControl<number | null>;
+}>;
+
+type ThresholdFormArray = FormArray<ThresholdFormGroup>;
+
+type SilencePeriodFormGroup = FormGroup<{
+  id: FormControl<string>;
+  days: FormControl<any[] | null>;
+  from: FormControl<string | null>;
+  to: FormControl<string | null>;
+}>;
+
+type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
+
+type EndpointFormGroup = FormGroup<{
+  id: FormControl<string>;
+  channel: FormControl<any>;
+  value: FormControl<string>;
+  alerts: FormControl<any[]>;
+}>;
+
+type EndpointFormArray = FormArray<EndpointFormGroup>;
+
+type PermissionFormGroup = FormGroup<{
+  id: FormControl<string>;
+  team: FormControl<string>;
+  permission: FormControl<string>
+}>;
+
+type PermissionFormArray = FormArray<PermissionFormGroup>;
+
 @Component({
   selector: 'app-create-simple-condition-alert',
-  imports: [PageWrapperComponent, ReactiveFormsModule, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
 export class CreateSimpleConditionAlertComponent implements OnInit
 {
+  //General
+  subscriptions: Subscription[] = [];
+
   //Step 1
   metricOptions: MetricOptions = new MetricOptions();
   metricOperationOptions: any[] = [];
@@ -138,26 +179,41 @@ export class CreateSimpleConditionAlertComponent implements OnInit
   discardTimeOptions: any[] = [];
   periodicityOptions: any[] = [];
 
+  groupByForm: FormGroup;
+  advancedOptionsForm: FormGroup;
+
   //Step 2
-  thresholdList: Threshold[] = [];
-  thresholdOptions: any[] = [];
-  errorBehaviorOptions: any[] = [];
-  silencePeriodList: SilencePeriod[] = [];
+  thresholdTypeOptions: any[] = [];
+  thresholdComparationOptions: any[] = [];
+  thresholdArray: ThresholdFormArray;
+
   activationRecoverEvaluationOptions: any[] = [];
+  activationRecoverForm: FormGroup;
+
+  silencePeriodDayOptions: any[] = [];
+  silencePeriodArray: SilencePeriodFormArray;
+
+  errorBehaviorOptions: any[] = [];
+  errorBehaviorForm: FormGroup;
 
   //Step 3
   channelOptions: any[] = [];
-  channelList: Channel[] = [];
+  alertOptions: any[] = [];
+  endpointArray: EndpointFormArray;
   iconMap: Map<String, string> = new Map<string, string>();
 
-  labelForm: FormGroup;
-  labelList: Label[] = [];
+  tagForm: FormGroup;
+  tagList: Tag[] = [];
 
   notificationMessageForm: FormGroup;
 
   //Step 4
   permissionTeamOptions: any[] = [];
+  permissionTypeOptions: any[] = [];
   permissionList: Permission[] = [];
+
+  //Modal
+  modalVisible: boolean = false;
 
   //Steps
   step2Disabled: boolean = true;
@@ -166,7 +222,40 @@ export class CreateSimpleConditionAlertComponent implements OnInit
 
   constructor(private router: Router, private _fb: FormBuilder)
   {
-    this.labelForm = this._fb.group({
+    //Step 1
+    this.groupByForm = this._fb.group({
+      groupBy: [[], []],
+      operation: [operationOptions[0], []]
+    });
+
+    this.advancedOptionsForm = this._fb.group({
+      timeWindow: [timeWindowOptions[1], [Validators.required]],
+      discardTime: [discardTimeOptions[0], [Validators.required]],
+      periodicity: [periodicityOptions[1], [Validators.required]]
+    });
+
+    //Step 2
+    this.thresholdArray = this._fb.array<ThresholdFormGroup>([]);
+
+    this.activationRecoverForm = this._fb.group({
+      activation1: [activationRecoverEvaluationOptions[1], [Validators.required]],
+      activation2: [activationRecoverEvaluationOptions[1], [Validators.required]],
+      recover1: [activationRecoverEvaluationOptions[1], [Validators.required]],
+      recover2: [activationRecoverEvaluationOptions[1], [Validators.required]]
+    });
+
+    this.silencePeriodArray = this._fb.array<SilencePeriodFormGroup>([]);
+
+    this.errorBehaviorForm = this._fb.group({
+      error1: [errorBehaviorOptions[0], [Validators.required]],
+      error2: [errorBehaviorOptions[0], [Validators.required]]
+    });
+
+    //Step 3
+
+    this.endpointArray = this._fb.array<EndpointFormGroup>([]);
+
+    this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
       value: ['', [Validators.required]]
     });
@@ -176,6 +265,12 @@ export class CreateSimpleConditionAlertComponent implements OnInit
       details: ['', []],
       proccedure: ['', []]
     });
+
+    let sub: Subscription = this.notificationMessageForm.get('message')?.valueChanges.subscribe(() => {
+      this.checkSteps();
+    }) as Subscription;
+
+    this.subscriptions.push(sub);
   }
 
   ngOnInit(): void 
@@ -191,15 +286,21 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.periodicityOptions = periodicityOptions;
 
     //Step 2
-    this.thresholdOptions = thresholdOptions;
-    this.thresholdList.push(new Threshold('1', 'disaster', 'greater-than'));
-    this.errorBehaviorOptions = errorBehaviorOptions;
-    this.silencePeriodList.push(new SilencePeriod('1'));
+    this.thresholdTypeOptions = thresholdTypeOptions;
+    this.thresholdComparationOptions = thresholdComparationOptions;
+    this.createThreshold();
+
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
+
+    this.silencePeriodDayOptions = silencePeriodDayOptions;
+    this.createSilencePeriod();
+
+    this.errorBehaviorOptions = errorBehaviorOptions;
 
     //Step 3
     this.channelOptions = channelOptions;
-    this.channelList.push(new Channel('1'));
+    this.alertOptions = alertOptions;
+    this.createEndpoint();
 
     for (const option of channelOptions) {
       this.iconMap.set(option.value, option.icon);
@@ -207,7 +308,112 @@ export class CreateSimpleConditionAlertComponent implements OnInit
 
     //Step 4
     this.permissionTeamOptions = permissionTeamOptions;
-    this.permissionList.push(new Permission('1'));
+    this.permissionTypeOptions = permissionTypeOptions;
+    this.createPermission();
+  }
+
+  createThreshold() 
+  {
+    const group: ThresholdFormGroup = this._fb.group({
+      id: this._fb.control((this.thresholdArray.length + 1).toString()),
+      type: this._fb.control(thresholdTypeOptions[0]),
+      comparation: this._fb.control(thresholdComparationOptions[0]),
+      value: this._fb.control(null, Validators.required)
+    }) as ThresholdFormGroup;
+
+    this.thresholdArray.push(group);
+
+    let sub: Subscription = group.get('value')?.valueChanges.subscribe(() => {
+      this.checkSteps();
+    }) as Subscription;
+
+    this.subscriptions.push(sub);
+  }
+
+  firstValueCompleted(): boolean 
+  {
+    let value = this.thresholdArray.at(0).get('value')?.value;
+    return value !== null && value !== undefined;
+  }
+
+  allValuesCompleted(): boolean 
+  {
+    return this.thresholdArray.controls.every(control => 
+    {
+      let value = control.get('value')?.value;
+      return value !== null && value !== undefined;
+    });
+  }
+
+  createSilencePeriod() 
+  {
+    const group: SilencePeriodFormGroup = this._fb.group({
+      id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
+      days: this._fb.control(null),
+      from: this._fb.control(null),
+      to: this._fb.control(null)
+    }) as SilencePeriodFormGroup;
+
+    this.silencePeriodArray.push(group);
+  }
+
+  allSilencePeriodFieldsCompleted(): boolean 
+  {
+    return this.silencePeriodArray.controls.every(control => 
+    {
+      let days = control.get('days')?.value;
+      let from = control.get('from')?.value;
+      let to = control.get('to')?.value;
+
+      return days != null && days != undefined && days.length != 0 && from != null && from != undefined && to != null && to != undefined;
+    });
+  }
+
+  deleteSilencePeriod(i: number) 
+  {
+    this.silencePeriodArray.removeAt(i);
+  }
+
+  createEndpoint() 
+  {
+    const group: EndpointFormGroup = this._fb.group({
+      id: this._fb.control((this.endpointArray.length + 1).toString()),
+      channel: this._fb.control(channelOptions[0]),
+      value: this._fb.control('prueba@test.com'),
+      alerts: this._fb.control(Array.of())
+    }) as EndpointFormGroup;
+
+    this.endpointArray.push(group);
+  }
+
+  deleteEndpoint(i: number) 
+  {
+    this.endpointArray.removeAt(i);
+  }
+
+  createPermission() 
+  {
+    this.permissionList.push(new Permission());
+  }
+
+  deletePermission(i: number) 
+  {
+    this.permissionList.splice(i, 1);
+  }
+
+  firstPermissionCompleted(): boolean 
+  {
+    let team = this.permissionList[0].team;
+    return team !== null && team !== undefined;
+  }
+
+  allPermissionsCompleted(): boolean 
+  {
+    return this.permissionList.every(permission => 
+    {
+      let team = permission.team;
+      return team !== null && team !== undefined;
+    });
   }
 
   private allowedLetters(): string[] {
@@ -332,13 +538,32 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     if (this.selectedMetrics.length > 0)
     {
       this.step2Disabled = false;
-      this.step3Disabled = false;
-      this.step4Disabled = false;
     }
     else
     {
       this.step2Disabled = true;
       this.step3Disabled = true;
+      this.step4Disabled = true;
+    }
+
+    if ((this.thresholdArray.length == 1 && this.firstValueCompleted()) ||
+        (this.thresholdArray.length > 1 && this.allValuesCompleted()))
+    {
+      this.step3Disabled = false;
+      this.step4Disabled = false;
+    }
+    else
+    {
+      this.step3Disabled = true;
+      this.step4Disabled = true;
+    }
+
+    if (this.notificationMessageForm.get('message')?.valid)
+    {
+      this.step4Disabled = false;
+    }
+    else
+    {
       this.step4Disabled = true;
     }
   }
@@ -364,73 +589,47 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.customizeMetric = false;
   }
 
-  onClickSetThresholdType(threshold: Threshold, type: string)
+  onClickSetThresholdType(threshold: any, type: string)
   {
-    threshold.type = type;
+    threshold.get('type').setValue(type);
   }
 
-  onClickAddThreshold()
+  onClickSetEndpointAlert(endpoint: any, alert: any)
   {
-    this.thresholdList.push(new Threshold((this.thresholdList.length + 1).toString(), 'disaster', 'greater-than'));
-  }
+    let alerts: any[] = endpoint.get('alerts')?.value;
 
-  onClickRemoveSilencePeriod(i: number)
-  {
-    this.silencePeriodList.splice(i, 1);
-  }
-
-  onClickAddSilencePeriod()
-  {
-    this.silencePeriodList.push(new SilencePeriod((this.silencePeriodList.length + 1).toString()));
-  }
-
-  onClickAddPermission()
-  {
-    this.permissionList.push(new Permission((this.silencePeriodList.length + 1).toString()));
-  }
-
-  onClickRemovePermission(i: number)
-  {
-    this.permissionList.splice(i, 1);
-  }
-
-  onClickRemoveChannel(i: number)
-  {
-    this.channelList.splice(i, 1);
-  }
-
-  onClickSetChannelAlert(channel: Channel, alert: string)
-  {
-    if (channel.alerts.includes(alert))
+    if (alerts.includes(alert))
     {
-      channel.alerts = channel.alerts.filter((al) => al !== alert);
+      alerts = alerts.filter((al) => al !== alert);
     }
     else
     {
-      channel.alerts.push(alert);
+      alerts.push(alert);
     }
+
+    endpoint.get('alerts')?.setValue(alerts);
   }
 
-  onClickAddChannel()
+  onClickAddTag()
   {
-    this.channelList.push(new Channel((this.channelList.length + 1).toString()));
-  }
+    this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value));
 
-  onClickAddLabel()
-  {
-    this.labelList.push(new Label(this.labelForm.get('name')?.value, this.labelForm.get('value')?.value));
-
-    this.labelForm.reset();
-    this.labelForm.updateValueAndValidity();
+    this.tagForm.reset();
+    this.tagForm.updateValueAndValidity();
   }
 
   onClickRemoveTag(i: number)
   {
-    this.labelList.splice(i, 1);
+    this.tagList.splice(i, 1);
   }
 
   onClickCreateAlert()
   {
-    
+    this.modalVisible = true;
+  }
+
+  ngOnDestroy()
+  {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 }
