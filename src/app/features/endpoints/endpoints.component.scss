@@ -1,0 +1,31 @@
+.endpoints-container
+{
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    
+    margin-top: 32px;
+
+    .endpoint-list-container
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+
+        .list-title
+        {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-container
+        {
+            background-color: white;
+            padding: 16px;
+            border: 1px solid lightgray;
+            border-radius: 8px;
+        }
+    }
+}

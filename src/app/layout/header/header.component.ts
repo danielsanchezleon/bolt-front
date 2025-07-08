@@ -15,4 +15,9 @@ export class HeaderComponent
   {
     this.router.navigate(['']);
   }
+
+  onClickNavigateToEndpoints()
+  {
+    this.router.navigate(['endpoints']);
+  }
 }
