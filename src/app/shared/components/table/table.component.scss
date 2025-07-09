@@ -1,0 +1,33 @@
+.table-container
+{
+    background-color: white;
+    padding: 16px;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+
+    margin-top: 24px;
+}
+
+.filter-container
+{
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: center;
+
+    .outlined-button
+    {   
+        width: fit-content;
+        background-color: white !important;
+        border-radius: 8px;
+    }
+}
+
+.accordion-content 
+{
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    margin-top: 24px;
+}

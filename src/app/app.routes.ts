@@ -3,6 +3,7 @@ import { HomeComponent } from './features/home/home.component';
 import { CreateAlertComponent } from './features/create-alert/create-alert.component';
 import { CreateSimpleConditionAlertComponent } from './features/create-simple-condition-alert/create-simple-condition-alert.component';
 import { EndpointsComponent } from './features/endpoints/endpoints.component';
+import { ModifyAlertComponent } from './features/modify-alert/modify-alert.component';
 
 export const routes: Routes = [
   {
@@ -20,5 +21,9 @@ export const routes: Routes = [
   {
     path: 'endpoints',
     component: EndpointsComponent,
+  },
+  {
+    path: 'modificar-alerta',
+    component: ModifyAlertComponent,
   }
 ];

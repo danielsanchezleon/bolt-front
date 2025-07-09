@@ -1,1 +1,34 @@
-<p>table works!</p>
+<div *ngIf="data.filter" class="filter-container">
+    <p-iconfield style="width: 100%;">
+        <p-inputicon class="pi pi-search" />
+        <input style="width: 100%;" type="text" pInputText placeholder="{{data.searchPlaceholder}}" (input)="applyFilterGlobal($event, 'contains')" />
+    </p-iconfield>
+    <p-button icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}" label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true" [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button" (onClick)="filterPanelOpen = !filterPanelOpen;" />
+</div>
+
+<div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
+    
+</div>
+
+<div class="table-container">
+    <p-table #dt [columns]="columns" [value]="filteredItems" [size]="data.size" [showGridlines]="data.grid" [stripedRows]="data.strippedRows">
+        <ng-template #header>
+            <tr>
+                <th *ngFor="let column of columns" [style]="column.headerStyles">{{column.label}}</th>
+                <th *ngIf="hasActions" style="text-align: center;">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-item let-columns="columns">
+            <tr>
+                <td *ngFor="let column of columns" [style]="column.columnStyles">
+                    <div *ngIf="column.type == 'text'">{{item[column.value]}}</div>
+                    <p-tag *ngIf="column.type == 'tag'" severity="info" [value]="item[column.value]" [rounded]="true" [ngStyle]="{'font-size':'12px'}"/>
+                </td>
+                <td *ngIf="hasActions" style="text-align: center;">
+                    <p-menu #menu [model]="data.actions" [popup]="true" appendTo="body"/>
+                    <p-button [rounded]="true" [text]="true" (click)="menu.toggle($event)" icon="pi pi-ellipsis-h" severity="secondary"/>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

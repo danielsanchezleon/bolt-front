@@ -12,33 +12,7 @@
                 <div class="font-24 font-w-600">Listado de endpoints</div>
                 <p-button label="Nuevo endpoint" icon="pi pi-plus" />
             </div>
-            <div class="list-container">
-                <p-table [value]="endpointList" stripedRows [size]="'large'">
-                    <ng-template #header>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>URL/Destino</th>
-                            <th>Tipo</th>
-                            <th>Alertas configuradas</th>
-                            <th>Fecha de creación</th>
-                            <th style="text-align: center;">Acciones</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-endpoint>
-                        <tr>
-                            <td class="font-w-600">{{ endpoint.name }}</td>
-                            <td>{{ endpoint.url }}</td>
-                            <td>{{ endpoint.type }}</td>
-                            <td>{{ endpoint.alertCount }}</td>
-                            <td>{{ endpoint.date }}</td>
-                            <td style="text-align: center;">
-                                <p-menu #menu [model]="actionOptions" [popup]="true" appendTo="body"/>
-                                <p-button [rounded]="true" [text]="true" (click)="menu.toggle($event)" icon="pi pi-ellipsis-h" severity="secondary"/>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
+            <app-table [data]="endpointTable"></app-table>
         </div>
     </div>
 </app-page-wrapper>

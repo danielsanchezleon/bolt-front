@@ -3,19 +3,20 @@ import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-
 import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
-import { endpointList } from '../../shared/constants/endpoints';
+import { endpointTable } from '../../shared/constants/endpoints';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
+import { TableComponent } from '../../shared/components/table/table.component';
 
 @Component({
   selector: 'app-endpoints',
-  imports: [MenuModule, TableModule, ButtonModule, PageWrapperComponent],
+  imports: [TableComponent, MenuModule, TableModule, ButtonModule, PageWrapperComponent],
   templateUrl: './endpoints.component.html',
   styleUrl: './endpoints.component.scss'
 })
 export class EndpointsComponent 
 {
-  endpointList: any[] = [];
+  endpointTable: any[] = [];
   actionOptions: MenuItem[];
 
   constructor(private router: Router)
@@ -34,7 +35,7 @@ export class EndpointsComponent
 
   ngOnInit(): void 
   {
-    this.endpointList = endpointList;
+    this.endpointTable = endpointTable;
   }
   
   onClickNavigateToHome()

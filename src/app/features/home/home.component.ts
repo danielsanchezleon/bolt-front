@@ -24,4 +24,9 @@ export class HomeComponent {
   {
     this.router.navigate(['crear-alerta']);
   }
+
+  onClickNavigateToModifyAlert()
+  {
+    this.router.navigate(['modificar-alerta']);
+  }
 }
