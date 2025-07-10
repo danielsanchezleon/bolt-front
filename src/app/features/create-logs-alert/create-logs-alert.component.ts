@@ -1,10 +1,9 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { Router } from '@angular/router';
-import { MetricOptions, Metric, metricList, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions} from '../../shared/constants/metric-options';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
@@ -29,90 +28,65 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { Subscription } from 'rxjs';
 
 import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
+import { logOptions, logTagOptions, operationOptions, timeWindowOptions, periodicityOptions } from '../../shared/constants/logs';
 
-import { Popover, PopoverModule } from 'primeng/popover';
-
-export class MetricOption
-{
-  id: string;
-  metric: Metric;
-  operation: any = {value: 'add', label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior'};
-
-  constructor (id: string, metric: Metric)
-  {
-    this.id = id;
-    this.metric = metric;
-  }
-}
-
-export class Threshold
-{
+export class Threshold {
   id: string;
   type: string;
   comparation: string;
   value?: number;
 
-  constructor (id: string, type: string, comparation: string, value?: number)
-  {
+  constructor(id: string, type: string, comparation: string, value?: number) {
     this.id = id;
     this.type = type;
     this.comparation = comparation;
 
-    if (value)
-    {
+    if (value) {
       this.value = value;
     }
   }
 }
 
-export class SilencePeriod
-{
+export class SilencePeriod {
   id: string;
   days?: string[];
   from?: string;
   to?: string;
 
-  constructor (id: string)
-  {
+  constructor(id: string) {
     this.id = id;
     this.days = [];
   }
 }
 
-export class Channel
-{
+export class Channel {
   id: string;
   channel: string;
   value?: string;
   alerts: string[];
 
-  constructor (id: string)
-  {
+  constructor(id: string) {
     this.id = id;
     this.channel = 'email';
     this.alerts = [];
   }
 }
 
-export class Tag
-{
+export class Tag {
   name: string;
   value: string;
 
-  constructor (name: string, value: string)
-  {
+  constructor(name: string, value: string) {
     this.name = name;
     this.value = value;
   }
 }
 
-export class Permission
-{
+export class Permission {
   team: any;
   type: any;
 
-  constructor ()
-  {
+  constructor() {
     this.type = permissionTypeOptions[0];
   }
 }
@@ -151,32 +125,23 @@ type PermissionFormGroup = FormGroup<{
 }>;
 
 @Component({
-  selector: 'app-create-simple-condition-alert',
-  imports: [PopoverModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
-  templateUrl: './create-simple-condition-alert.component.html',
-  styleUrl: './create-simple-condition-alert.component.scss'
+  selector: 'app-create-logs-alert',
+  imports: [PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  templateUrl: './create-logs-alert.component.html',
+  styleUrl: './create-logs-alert.component.scss'
 })
-export class CreateSimpleConditionAlertComponent implements OnInit
-{
+export class CreateLogsAlertComponent implements OnInit {
   //General
   subscriptions: Subscription[] = [];
 
   //Step 1
-  metricOptions: MetricOptions = new MetricOptions();
-  metricOperationOptions: any[] = [];
-  metricList: Metric[] = [];
-  selectedMetricList: Metric[] = [];
-  selectedMetrics: MetricOption[] = [];
-  letters: string[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  customizeMetric: boolean = false;
-  resultMetric: string = '';
-  resultMetricLabel: string = '';
+  logOptions: any[] = [];
+  selectedLogOption: any;
 
-  tagIntersectionOptions: any[] = [];
+  logTagOptions: any[] = [];
   operationOptions: any[] = []
 
   timeWindowOptions: any[] = [];
-  discardTimeOptions: any[] = [];
   periodicityOptions: any[] = [];
 
   groupByForm: FormGroup;
@@ -205,10 +170,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit
   tagForm: FormGroup;
   tagList: Tag[] = [];
 
-  @ViewChild('messagePopover') messagePopover: Popover | undefined;
-  @ViewChild('details') detailsPopover: Popover | undefined;
-  previousMessageValue: string = '';
-  previousDetailsValue: string = '';
   notificationMessageForm: FormGroup;
 
   //Step 4
@@ -224,18 +185,16 @@ export class CreateSimpleConditionAlertComponent implements OnInit
   step3Disabled: boolean = true;
   step4Disabled: boolean = true;
 
-  constructor(private router: Router, private _fb: FormBuilder)
-  {
+  constructor(private router: Router, private _fb: FormBuilder) {
     //Step 1
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
-      operation: [operationOptions[0], []]
+      operation: new FormControl({value: operationOptions[0], disabled: true}, Validators.required)
     });
 
     this.advancedOptionsForm = this._fb.group({
-      timeWindow: [timeWindowOptions[1], [Validators.required]],
-      discardTime: [discardTimeOptions[0], [Validators.required]],
-      periodicity: [periodicityOptions[1], [Validators.required]]
+      timeWindow: [timeWindowOptions[0], [Validators.required]],
+      periodicity: [periodicityOptions[0], [Validators.required]]
     });
 
     //Step 2
@@ -277,16 +236,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.subscriptions.push(sub);
   }
 
-  ngOnInit(): void 
-  {
+  ngOnInit(): void {
     //Step 1
-    this.metricList = metricList;
-    this.metricOperationOptions = metricOperationOptions;
+    this.logOptions = logOptions;
 
+    this.logTagOptions = logTagOptions;
     this.operationOptions = operationOptions;
 
     this.timeWindowOptions = timeWindowOptions;
-    this.discardTimeOptions = discardTimeOptions;
     this.periodicityOptions = periodicityOptions;
 
     //Step 2
@@ -316,8 +273,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.createPermission();
   }
 
-  createThreshold() 
-  {
+  createThreshold() {
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
       type: this._fb.control(thresholdTypeOptions[0]),
@@ -334,23 +290,19 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.subscriptions.push(sub);
   }
 
-  firstValueCompleted(): boolean 
-  {
+  firstValueCompleted(): boolean {
     let value = this.thresholdArray.at(0).get('value')?.value;
     return value !== null && value !== undefined;
   }
 
-  allValuesCompleted(): boolean 
-  {
-    return this.thresholdArray.controls.every(control => 
-    {
+  allValuesCompleted(): boolean {
+    return this.thresholdArray.controls.every(control => {
       let value = control.get('value')?.value;
       return value !== null && value !== undefined;
     });
   }
 
-  createSilencePeriod() 
-  {
+  createSilencePeriod() {
     const group: SilencePeriodFormGroup = this._fb.group({
       id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
       days: this._fb.control(null),
@@ -361,10 +313,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.silencePeriodArray.push(group);
   }
 
-  allSilencePeriodFieldsCompleted(): boolean 
-  {
-    return this.silencePeriodArray.controls.every(control => 
-    {
+  allSilencePeriodFieldsCompleted(): boolean {
+    return this.silencePeriodArray.controls.every(control => {
       let days = control.get('days')?.value;
       let from = control.get('from')?.value;
       let to = control.get('to')?.value;
@@ -373,13 +323,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     });
   }
 
-  deleteSilencePeriod(i: number) 
-  {
+  deleteSilencePeriod(i: number) {
     this.silencePeriodArray.removeAt(i);
   }
 
-  createEndpoint() 
-  {
+  createEndpoint() {
     const group: EndpointFormGroup = this._fb.group({
       id: this._fb.control((this.endpointArray.length + 1).toString()),
       channel: this._fb.control(channelOptions[0]),
@@ -390,281 +338,100 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.endpointArray.push(group);
   }
 
-  deleteEndpoint(i: number) 
-  {
+  deleteEndpoint(i: number) {
     this.endpointArray.removeAt(i);
   }
 
-  createPermission() 
-  {
+  createPermission() {
     this.permissionList.push(new Permission());
   }
 
-  deletePermission(i: number) 
-  {
+  deletePermission(i: number) {
     this.permissionList.splice(i, 1);
   }
 
-  firstPermissionCompleted(): boolean 
-  {
+  firstPermissionCompleted(): boolean {
     let team = this.permissionList[0].team;
     return team !== null && team !== undefined;
   }
 
-  allPermissionsCompleted(): boolean 
-  {
-    return this.permissionList.every(permission => 
-    {
+  allPermissionsCompleted(): boolean {
+    return this.permissionList.every(permission => {
       let team = permission.team;
       return team !== null && team !== undefined;
     });
   }
 
-  private allowedLetters(): string[] {
-    let letters = [];
-
-    for (let i = 0; i < this.selectedMetrics.length; i++) 
-    {
-      letters.push(this.letters[i]);
-    }
-
-    return letters;
-  }
-
-  private get allowedChars(): string[] {
-    return ['+', '-', '*', '/', '(', ')', ...this.allowedLetters()];
-  }
-
-  allowCharacters(event: KeyboardEvent) 
-  {
-    const char = event.key;
-
-    if (!this.allowedChars.includes(char))
-    {
-      event.preventDefault();
-    }
-  }
-
-  onClickNavigateToCreateAlert()
-  {
+  onClickNavigateToCreateAlert() {
     this.router.navigate(['crear-alerta']);
   }
 
-  onClickSelectMetrics()
-  {
-    let offset: number = this.selectedMetrics.length;
-
-    this.selectedMetricList.forEach((selectedMetric, i) => {
-      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric));
-    });
-
-    this.metricList = this.metricList.filter(metricA => !this.selectedMetricList.some(metricB => metricB.value === metricA.value));
-
-    this.selectedMetricList = [];
-
+  onClickSelectLogOption() {
     this.checkSteps();
-    this.generateResultMetric();
-    this.getMetricTagsIntersection();
   }
 
-  generateResultMetric()
-  {
-    this.resultMetric = '';
-    this.resultMetricLabel = '';
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      this.resultMetric += selectedMetric.id;
-      this.resultMetricLabel += selectedMetric.metric.label;
-
-      if (i < (this.selectedMetrics.length - 1))
-      {
-        this.resultMetric += this.selectedMetrics[i+1].operation.symbol;
-        this.resultMetricLabel += ' ' + this.selectedMetrics[i+1].operation.symbol + ' ';
-      }
-    });
-  }
-
-  getMetricTagsIntersection()
-  {
-    let commonTags = new Set(this.selectedMetrics[0].metric.tags);
-
-    for (let selectedMetric of this.selectedMetrics.slice(1)) 
-    {
-      commonTags = new Set(selectedMetric.metric.tags.filter(tag => commonTags.has(tag)));
-    }
-
-    this.tagIntersectionOptions = Array.from(commonTags).map(tag => ({ label: tag, value: tag }));
-  }
-
-  onClickRemoveSelectedMetric(index: number)
-  {
-    this.selectedMetrics.splice(index, 1);
-
-    this.metricList = metricList;
-    this.metricList = this.metricList.filter(metricA => !this.selectedMetrics.some(metricB => metricB.metric.value === metricA.value));
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.checkSteps();
-    this.generateResultMetric();
-    this.getMetricTagsIntersection();
-  }
-
-  onClickArrowDown(index: number)
-  {
-    [this.selectedMetrics[index], this.selectedMetrics[index+1]] = [this.selectedMetrics[index+1], this.selectedMetrics[index]];
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.checkSteps();
-    this.generateResultMetric();
-  }
-
-  onClickArrowUp(index: number)
-  {
-    [this.selectedMetrics[index], this.selectedMetrics[index-1]] = [this.selectedMetrics[index-1], this.selectedMetrics[index]];
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.checkSteps();
-    this.generateResultMetric();
-  }
-
-  checkSteps()
-  {
+  checkSteps() {
     //Step 2
-    if (this.selectedMetrics.length > 0)
-    {
+    if (this.selectedLogOption != null && this.selectedLogOption != undefined) {
       this.step2Disabled = false;
     }
-    else
-    {
+    else {
       this.step2Disabled = true;
       this.step3Disabled = true;
       this.step4Disabled = true;
     }
 
     if ((this.thresholdArray.length == 1 && this.firstValueCompleted()) ||
-        (this.thresholdArray.length > 1 && this.allValuesCompleted()))
-    {
+      (this.thresholdArray.length > 1 && this.allValuesCompleted())) {
       this.step3Disabled = false;
       this.step4Disabled = false;
     }
-    else
-    {
+    else {
       this.step3Disabled = true;
       this.step4Disabled = true;
     }
 
-    if (this.notificationMessageForm.get('message')?.valid)
-    {
+    if (this.notificationMessageForm.get('message')?.valid) {
       this.step4Disabled = false;
     }
-    else
-    {
+    else {
       this.step4Disabled = true;
     }
   }
 
-  onClickCustomizeMetric()
-  {
-    this.customizeMetric = true;
-  }
-
-  onChangeSelectOperation()
-  {
-    this.generateResultMetric();
-  }
-
-  onClickSaveMetric()
-  {
-    this.customizeMetric = false;
-  }
-
-  onClickCancelMetricCustomization()
-  {
-    this.generateResultMetric();
-    this.customizeMetric = false;
-  }
-
-  onClickSetThresholdType(threshold: any, type: string)
-  {
+  onClickSetThresholdType(threshold: any, type: string) {
     threshold.get('type').setValue(type);
   }
 
-  onClickSetEndpointAlert(endpoint: any, alert: any)
-  {
+  onClickSetEndpointAlert(endpoint: any, alert: any) {
     let alerts: any[] = endpoint.get('alerts')?.value;
 
-    if (alerts.includes(alert))
-    {
+    if (alerts.includes(alert)) {
       alerts = alerts.filter((al) => al !== alert);
     }
-    else
-    {
+    else {
       alerts.push(alert);
     }
 
     endpoint.get('alerts')?.setValue(alerts);
   }
 
-  onClickAddTag()
-  {
+  onClickAddTag() {
     this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value));
 
     this.tagForm.reset();
     this.tagForm.updateValueAndValidity();
   }
 
-  onClickRemoveTag(i: number)
-  {
+  onClickRemoveTag(i: number) {
     this.tagList.splice(i, 1);
   }
 
-  onClickCreateAlert()
-  {
+  onClickCreateAlert() {
     this.modalVisible = true;
   }
 
-  ngOnDestroy()
-  {
+  ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
-
-  verifyMessageText(event: Event, value: string)
-  {
-    // Comparar el valor anterior con el nuevo
-    if (
-      value.length > this.previousMessageValue.length &&              // Escribieron algo nuevo
-      value.endsWith('{{') &&                                  // Lo nuevo termina en {{
-      !this.previousMessageValue.endsWith('{{')                       // Pero antes no terminaba en {{
-    ) {
-      console.log(event)
-      this.messagePopover?.toggle(event);
-    }
-
-    // Guardar el valor actual como "anterior" para la próxima comparación
-    this.previousMessageValue = value;
-  }
-
-  verifyDetailsText(event: Event, value: string)
-  {
-    // Comparar el valor anterior con el nuevo
-    if (
-      value.length > this.previousDetailsValue.length &&              // Escribieron algo nuevo
-      value.endsWith('{{') &&                                  // Lo nuevo termina en {{
-      !this.previousDetailsValue.endsWith('{{')                       // Pero antes no terminaba en {{
-    ) {
-      this.detailsPopover?.toggle(event);
-    }
-
-    // Guardar el valor actual como "anterior" para la próxima comparación
-    this.previousDetailsValue = value;
   }
 }

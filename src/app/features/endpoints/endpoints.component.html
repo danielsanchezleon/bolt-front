@@ -3,14 +3,16 @@
 
     <div class="endpoints-container">
         <div class="page-title">
-            <div class="font-32 font-w-700">Gestión de endpoints</div>
+            <div class="page-title-top">
+                <div class="font-32 font-w-700">Gestión de endpoints</div>
+                <p-button label="Nuevo endpoint" icon="pi pi-plus" />
+            </div>
             <div>Administra los puntos de contacto para notificaciones de alertas</div>
         </div>
 
         <div class="endpoint-list-container">
             <div class="list-title">
                 <div class="font-24 font-w-600">Listado de endpoints</div>
-                <p-button label="Nuevo endpoint" icon="pi pi-plus" />
             </div>
             <app-table [data]="endpointTable"></app-table>
         </div>

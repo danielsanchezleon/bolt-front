@@ -6,10 +6,10 @@ export const endpointTable: any = {
     searchPlaceholder: 'Buscar alertas por nombre, descripción o etiquetas',
     columns: [
         {label: 'Nombre', value: 'name', type: 'text', headerStyles: '', columnStyles: 'font-weight: 600;'},
-        {label: 'URL/Destino', value: 'url', type: 'text' , headerStyles: '', columnStyles: ''},
-        {label: 'Tipo', value: 'type', type: 'tag' , headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'},
-        {label: 'Alertas configuradas', value: 'alertCount', type: 'text' , headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'},
-        {label: 'Fecha', value: 'date', type: 'text' , headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'}
+        {label: 'URL/Destino', value: 'url', type: 'text', headerStyles: '', columnStyles: ''},
+        {label: 'Tipo', value: 'type', type: 'tag', headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'},
+        {label: 'Alertas configuradas', value: 'alertCount', type: 'text', headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'},
+        {label: 'Fecha', value: 'date', type: 'text', headerStyles: 'text-align: center;', columnStyles: 'text-align: center;'}
     ],
     items: [
         {name: 'Notificaciones Frontend', url: 'frontend@empresa.com', type: 'Email', alertCount: '12', date: '2024-01-15'},
@@ -21,5 +21,38 @@ export const endpointTable: any = {
     actions: [
         {label: 'Editar', value: 'edit', icon: 'pi pi-pencil'},
         {label: 'Eliminar', value: 'delete', icon: 'pi pi-trash'}
+    ],
+    filters: [
+        {
+            label: 'Nombre', 
+            value: 'name', 
+            type: 'text'
+        },
+        {
+            label: 'URL/Destino', 
+            value: 'url', 
+            type: 'text'
+        },
+        {
+            label: 'Tipo', 
+            value: 'type', 
+            type: 'multiselect', 
+            options: [
+                {label: 'Email', value: 'email'},
+                {label: 'Teams', value: 'teams'},
+                {label: 'Webhook', value: 'webhook'},
+                {label: 'PagerDuty', value: 'pagerduty'}
+            ]
+        },
+        {
+            label: 'Alertas configuradas', 
+            value: 'alertCount', 
+            type: 'num'
+        },
+        {
+            label: 'Fecha', 
+            value: 'date', 
+            type: 'text'
+        },
     ]
 };

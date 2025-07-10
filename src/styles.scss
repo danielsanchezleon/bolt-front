@@ -117,4 +117,12 @@ body{
     display: flex;
     flex-direction: column;
     gap: 8px;
+
+    .page-title-top
+    {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
 }

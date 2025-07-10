@@ -7,18 +7,16 @@ import { Tag } from 'primeng/tag';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
-
-import {
-  trigger,
-  state,
-  style,
-  transition,
-  animate
-} from '@angular/animations';
+import { FloatLabelModule } from 'primeng/floatlabel';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-table',
-  imports: [InputTextModule, InputIconModule, IconFieldModule, Tag, MenuModule, ButtonModule, CommonModule, TableModule],
+  imports: [ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, Tag, MenuModule, ButtonModule, CommonModule, TableModule],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
   animations: [
@@ -50,10 +48,14 @@ export class TableComponent
   filteredItems: any[] = [];
 
   hasActions: boolean = false;
+  hasFilters: boolean = false;
+  hasBlueHeader: boolean = false;
 
   filterPanelOpen: boolean = false;
 
-  constructor () {}
+  filterForm!: FormGroup;
+
+  constructor (private _fb: FormBuilder) {}
 
   ngOnInit()
   {
@@ -65,6 +67,20 @@ export class TableComponent
     {
       this.hasActions = true;
     }
+
+    if (this.data && this.data != null && this.data != undefined && this.data.filters.length > 0)
+    {
+      this.hasFilters = true;
+
+      const group: any = {};
+
+      this.data.filters.forEach( (filter: any) => 
+      {
+        group[filter.value] = this._fb.control(null);
+      });
+
+      this.filterForm = this._fb.group(group);
+    }
   }
 
   applyFilterGlobal($event: any, stringVal: any) 
@@ -72,9 +88,52 @@ export class TableComponent
     const filterValue: string = ($event.target as HTMLInputElement).value.toLowerCase();
 
     this.filteredItems = this.items.filter( (item) =>
-        Object.values(item).some(valor =>
-            String(valor).toLowerCase().includes(filterValue)
+        Object.values(item).some(value =>
+            String(value).toLowerCase().includes(filterValue)
         )
     );
+  }
+
+  clearIndividualFilters()
+  {
+    this.filterForm.reset();
+    this.filterForm.updateValueAndValidity();
+
+    this.applyIndividualFilters();
+  }
+
+  applyIndividualFilters() {
+    const filtrosAplicados = this.filterForm.value;
+    
+    this.filteredItems = this.items.filter( (item) => 
+    {
+      return this.data.filters.every( (filter: any) => 
+      {
+        const field = filter.value;
+        const type = filter.type;
+        const filterValue = filtrosAplicados[field];
+
+        if (filterValue === null || filterValue === '' || (Array.isArray(filterValue) && filterValue.length === 0)) {
+          return true; // Empty filters are not applied
+        }
+
+        const itemValue = item[field];
+
+        switch (type) 
+        {
+          case 'text':
+            return itemValue.toLowerCase().includes(filterValue.toString().toLowerCase());
+
+          case 'num':
+            return itemValue.toString() === filterValue.toString();
+
+          case 'multiselect':
+            return filterValue.includes(itemValue);
+
+          default:
+            return true;
+        }
+      });
+    });
   }
 }

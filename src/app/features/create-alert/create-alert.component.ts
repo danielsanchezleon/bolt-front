@@ -25,4 +25,9 @@ export class CreateAlertComponent
   {
     this.router.navigate(['condicion-simple']);
   }
+
+  onClickNavigateToLogs()
+  {
+    this.router.navigate(['logs']);
+  }
 }

@@ -2,110 +2,49 @@
     <p-button icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary" (onClick)="onClickNavigateToCreateAlert()"/>
 
     <div class="steps-container">
-        <div class="font-32 font-w-600">Condición simple</div>
+        <div class="font-32 font-w-600">Patrones de logs</div>
         <app-accordion [title]="'Paso 1: Configura la consulta'" [highlightTitle]="true" [isOpen]="true">
             <div class="consult-configuration-container">
                 <div class="metric-selection-container">
                     <div class="metric-select">
-                        <p-multiselect class="full-width-selector" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" optionLabel="label" placeholder="Selecciona alguna métrica" appendTo="body">
-                            <ng-template let-metric #item>
+                        <p-select class="full-width-selector" [options]="logOptions" [(ngModel)]="selectedLogOption" optionLabel="label" appendTo="body" (onChange)="onClickSelectLogOption();" placeholder="Selecciona un origen/fuente de logs">
+                            <ng-template let-logOption #item>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                                    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-                                        <div class="font-w-600">{{metric.label}}</div>
-                                        <div class="font-w-600 font-12" *ngFor="let tag of metric.tags" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{tag}}</div>
-                                    </div>
-                                    <div class="font-12 text-gray">{{metric.description}}</div>
+                                    <div class="font-w-600">{{logOption.label}}</div>
+                                    <div class="font-12 text-gray">{{logOption.description}}</div>
                                 </div>
                             </ng-template>
-                        </p-multiselect>
-                        <p-button *ngIf="selectedMetricList.length > 0" label="{{selectedMetricList.length == 1 ? 'Añadir métrica' : 'Añadir métricas'}}" icon="pi pi-plus" (onClick)="onClickSelectMetrics();" [disabled]="selectedMetricList.length + selectedMetrics.length > metricOptions.maxMetricNumber" severity="secondary"/>
+                        </p-select>
                     </div>
-                    <div *ngIf="selectedMetrics.length > 0" class="metric-options">
-                        <div class="metric-option" *ngFor="let selectedMetric of selectedMetrics; let i = index;">
-                            <div class="metric-option-data">
-                                <div class="id-wrapper">
-                                    <span class="font-16 text-white font-w-600">{{selectedMetric.id}}</span>
-                                </div>
-
-                                <p-select *ngIf="i > 0" [options]="metricOperationOptions" [(ngModel)]="selectedMetric.operation" optionLabel="label" appendTo="body" (onChange)="onChangeSelectOperation();"/>
-
-                                <span class="font-16 font-w-600">{{selectedMetric.metric.label}}</span>
-                            </div>
-
-                            <div class="metric-option-action-buttons">
-                                <div>
-                                    <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (selectedMetrics.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowDown(i);"/>
-                                    <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0" icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowUp(i);"/>
-                                </div>
-                                <div style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                                <p-button [pTooltip]="'Eliminar métrica'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedMetric(i);"/>
-                            </div>
-                        </div>
-                    </div>
-                    <div *ngIf="selectedMetrics.length > 0 && !customizeMetric" class="metric-result-container">
+                    <div *ngIf="selectedLogOption" class="metric-result-container">
                         <div class="metric-result">
-                            <div class="font-16 font-w-600">Métrica final:</div>
-                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" class="metric-result-ids font-16 font-w-600 c-blue">
-                                {{ resultMetric | sanitizeExpression}}
+                            <div class="font-16 font-w-600">Fuente seleccionada:</div>
+                            <div class="metric-result-ids font-16 font-w-600 c-blue">
+                                {{ selectedLogOption.label}}
                             </div>
-                        </div> 
-                        <ng-template #metricResultIdsTooltip>
-                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
-                                <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
-                                    <span class="font-16 font-w-700 text-gray">[</span>
-                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
-                                    <span class="font-16 font-w-700 text-gray">]</span>
-                                    <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
-                                </div>
-                            </div>
-                        </ng-template>
-                        <p-button [pTooltip]="'Personalizar métrica'" tooltipPosition="top" showDelay="1000" icon="pi pi-pencil" [rounded]="true" [text]="true" severity="success" (onClick)="onClickCustomizeMetric();"/>
-                    </div>
-                    <div *ngIf="selectedMetrics.length > 0 && customizeMetric" class="metric-result-container">
-                        <div class="metric-result">
-                            <div class="font-16 font-w-600" style="white-space: nowrap;">Métrica personalizada:</div>
-                            <input pSize="small" type="text" pInputText [(ngModel)]="resultMetric" style="width: 100%;" (keypress)="allowCharacters($event);"/>
-                        </div> 
-                        <ng-template #metricResultIdsTooltip>
-                            <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
-                                <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
-                                    <span class="font-16 font-w-700 text-gray">[</span>
-                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
-                                    <span class="font-16 font-w-700 text-gray">]</span>
-                                    <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
-                                </div>
-                            </div>
-                        </ng-template>
-                        <div class="metric-option-action-buttons">
-                            <p-button [pTooltip]="'Guardar'" tooltipPosition="top" showDelay="1000" icon="pi pi-check" [rounded]="true" [text]="true" severity="success" (onClick)="onClickSaveMetric();"/>
-                            <p-button [pTooltip]="'Cancelar'" tooltipPosition="top" showDelay="1000" icon="pi pi-times" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickCancelMetricCustomization();"/>
                         </div>
                     </div>
                 </div>
 
-                <div *ngIf="selectedMetrics.length > 0" class="titled-container">
+                <div *ngIf="selectedLogOption" class="titled-container">
                     <div class="font-16 font-w-600">Agrupaciones</div>
                     <form class="group-by-options" [formGroup]="groupByForm">
                         <p-floatlabel class="full-width-selector" variant="on">
-                            <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector" [filter]="true" appendTo="body" formControlName="groupBy"/>
+                            <p-multiselect [options]="logTagOptions" class="full-width-selector" [filter]="true" appendTo="body" formControlName="groupBy"/>
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                         <p-floatlabel class="full-width-selector" variant="on">
-                            <p-select [options]="operationOptions" class="full-width-selector" inputId="over_label2" optionLabel="label" appendTo="body" formControlName="operation"/>
+                            <p-select [pTooltip]="'Conteo es la única operación disponible para logs'" [tooltipPosition]="'top'" [options]="operationOptions" class="full-width-selector operation-select" inputId="over_label2" optionLabel="label" appendTo="body" formControlName="operation" />
                             <label for="over_label2">Operación matemática</label>
                         </p-floatlabel>
                     </form>
                 </div>
 
-                <app-inner-accordion *ngIf="selectedMetrics.length > 0" [title]="'Opciones avanzadas'">
+                <app-inner-accordion *ngIf="selectedLogOption" [title]="'Opciones avanzadas'">
                     <form class="group-by-options" [formGroup]="advancedOptionsForm">
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-select [pTooltip]="'Intervalo de tiempo sobre el cual se calcula la métrica seleccionada. Ejemplo: Con una ventana de 5 minutos, se calcula la media del uso de CPU durante ese intervalo.'" tooltipPosition="top" showDelay="500" [options]="timeWindowOptions" class="full-width-selector" inputId="over_label1" optionLabel="label" appendTo="body" formControlName="timeWindow"/>
                             <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;" for="over_label1">Ventana de tiempo <i class="pi pi-info-circle" style="font-size: 0.8rem;"></i></label>
-                        </p-floatlabel>
-                        <p-floatlabel class="full-width-selector" variant="on">
-                            <p-select [pTooltip]="'Aquí puedes introducir el número de minutos desde el momento actual que se van a descartar de datos.'" tooltipPosition="top" showDelay="500" [options]="discardTimeOptions" class="full-width-selector" inputId="over_label2" optionLabel="label" appendTo="body" formControlName="discardTime"/>
-                            <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;" for="over_label2">Descartar últimos minutos <i class="pi pi-info-circle" style="font-size: 0.8rem;"></i></label>
                         </p-floatlabel>
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-select [pTooltip]="'Define cada cuánto se ejecuta la evaluación de la métrica. Si la ventana de tiempo es de 5 minutos y la periodicidad es de 1 minuto, se evaluará cada minuto considerando los últimos 5 minutos de datos.'" tooltipPosition="top" showDelay="500" [options]="periodicityOptions" class="full-width-selector" inputId="over_label3" optionLabel="label" appendTo="body" formControlName="periodicity"/>
@@ -307,15 +246,12 @@
                                 <form [formGroup]="notificationMessageForm">
                                     <div class="notification-message-form">
                                         <p-floatlabel class="full-w-field" variant="on">
-                                            <textarea class="full-w-field" pTextarea #message id="message" rows="5" [autoResize]="true" formControlName="message" (ngModelChange)="verifyMessageText($event, message.value)"></textarea>
+                                            <textarea class="full-w-field" pTextarea id="message" rows="5" [autoResize]="true" formControlName="message"></textarea>
                                             <label for="message">Mensaje de la alerta *</label>
-                                            <p-popover #messagePopover>
-                                                Hola
-                                            </p-popover>
                                         </p-floatlabel>
 
                                         <p-floatlabel class="full-w-field" variant="on">
-                                            <textarea class="full-w-field" pTextarea #details id="details" rows="5" [autoResize]="true" formControlName="details" (ngModelChange)="verifyDetailsText($event, details.value)"></textarea>
+                                            <textarea class="full-w-field" pTextarea id="details" rows="5" [autoResize]="true" formControlName="details"></textarea>
                                             <label for="details">Detalles adicionales</label>
                                         </p-floatlabel>
 
@@ -362,7 +298,7 @@
         </app-accordion>
 
         <div class="end-button-container">
-            <p-button label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary" [disabled]="selectedMetrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid"/>
+            <p-button label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary" [disabled]="(selectedLogOption == null || selectedLogOption == undefined) || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid"/>
         </div>
     </div>
 </app-page-wrapper>
@@ -374,14 +310,9 @@
         <div class="modal-step">
             <div class="font-16 font-w-700 c-blue">Paso 1: Configuración de la consulta</div>
             <div class="modal-step-content">
-                <div class="font-16 font-w-600">Métricas seleccionadas</div>
-                <div class="title-description-block-1" *ngFor="let selectedMetric of selectedMetrics; let i = index;">
-                    <div class="title">Métrica {{selectedMetric.id}}</div>
-                    <div class="description"><span *ngIf="i > 0">({{selectedMetric.operation.symbol}})</span> {{selectedMetric.metric.label}}</div>
-                </div>
+                <div class="font-16 font-w-600">Fuente seleccionada</div>
                 <div class="title-description-block-1">
-                    <div class="title">Métrica final</div>
-                    <div class="description">{{resultMetric | sanitizeExpression}}</div>
+                    <div class="description">{{selectedLogOption?.label}}</div>
                 </div>
             </div>
             <div class="modal-step-content">
@@ -400,10 +331,6 @@
                 <div class="title-description-block-1">
                     <div class="title">Ventana de tiempo</div>
                     <div class="description">{{advancedOptionsForm.get('timeWindow')?.value.label}}</div>
-                </div>
-                <div class="title-description-block-1">
-                    <div class="title">Descartar últimos minutos</div>
-                    <div class="description">{{advancedOptionsForm.get('discardTime')?.value.label}}</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">Periodicidad</div>
@@ -529,7 +456,3 @@
         <p-button label="Confirmar" severity="primary" />
     </div>
 </app-modal>
-
-<p-popover #detailsPopover>
-    Adios
-</p-popover>

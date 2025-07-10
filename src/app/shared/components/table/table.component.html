@@ -3,15 +3,27 @@
         <p-inputicon class="pi pi-search" />
         <input style="width: 100%;" type="text" pInputText placeholder="{{data.searchPlaceholder}}" (input)="applyFilterGlobal($event, 'contains')" />
     </p-iconfield>
-    <p-button icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}" label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true" [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button" (onClick)="filterPanelOpen = !filterPanelOpen;" />
+    <p-button *ngIf="hasFilters" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}" label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true" [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button" (onClick)="filterPanelOpen = !filterPanelOpen;" />
 </div>
 
 <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
-    
+    <form *ngIf="filterForm" [formGroup]="filterForm">
+        <p-floatlabel variant="on" *ngFor="let filter of data.filters;">
+            <input *ngIf="filter.type == 'text'" pInputText id="on_label" autocomplete="off" formControlName="{{ filter.value }}" />
+            <p-inputnumber *ngIf="filter.type == 'num'" id="on_label" formControlName="{{ filter.value }}" />
+            <p-multiselect *ngIf="filter.type == 'multiselect'" id="on_label" [options]="filter.options" optionLabel="label" optionValue="label" appendTo="body" formControlName="{{ filter.value }}" />
+            <label for="on_label">{{filter.label}}</label>
+        </p-floatlabel>
+    </form>
+
+    <div class="buttons-container">
+        <p-button label="Borrar filtros" [outlined]="true" (onClick)="clearIndividualFilters()" />
+        <p-button label="Aplicar filtros" [outlined]="false" (onClick)="applyIndividualFilters()" />
+    </div>
 </div>
 
 <div class="table-container">
-    <p-table #dt [columns]="columns" [value]="filteredItems" [size]="data.size" [showGridlines]="data.grid" [stripedRows]="data.strippedRows">
+    <p-table id="dt" #dt [columns]="columns" [value]="filteredItems" [size]="data.size" [showGridlines]="data.grid" [stripedRows]="data.strippedRows">
         <ng-template #header>
             <tr>
                 <th *ngFor="let column of columns" [style]="column.headerStyles">{{column.label}}</th>

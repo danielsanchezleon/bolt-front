@@ -4,6 +4,7 @@ import { CreateAlertComponent } from './features/create-alert/create-alert.compo
 import { CreateSimpleConditionAlertComponent } from './features/create-simple-condition-alert/create-simple-condition-alert.component';
 import { EndpointsComponent } from './features/endpoints/endpoints.component';
 import { ModifyAlertComponent } from './features/modify-alert/modify-alert.component';
+import { CreateLogsAlertComponent } from './features/create-logs-alert/create-logs-alert.component';
 
 export const routes: Routes = [
   {
@@ -25,5 +26,9 @@ export const routes: Routes = [
   {
     path: 'modificar-alerta',
     component: ModifyAlertComponent,
+  },
+  {
+    path: 'logs',
+    component: CreateLogsAlertComponent,
   }
 ];
