@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
@@ -19,7 +19,7 @@ import { InnerAccordionComponent } from '../../shared/components/inner-accordion
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { channelOptions, alertOptions } from '../../shared/constants/addressee-options';
+import { channelOptions, alertOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 
@@ -29,6 +29,8 @@ import { Subscription } from 'rxjs';
 
 import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
 import { logOptions, logTagOptions, operationOptions, timeWindowOptions, periodicityOptions } from '../../shared/constants/logs';
+
+import { DialogModule } from 'primeng/dialog';
 
 export class Threshold {
   id: string;
@@ -126,7 +128,7 @@ type PermissionFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-create-logs-alert',
-  imports: [PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-logs-alert.component.html',
   styleUrl: './create-logs-alert.component.scss'
 })
@@ -170,6 +172,17 @@ export class CreateLogsAlertComponent implements OnInit {
   tagForm: FormGroup;
   tagList: Tag[] = [];
 
+  conditionalBlockOptions: any[] = [];
+  templateVariableOptions: any[] = [];
+
+  @HostListener('document:click', ['$event']) clickout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
+  @HostListener('document:scroll', ['$event']) scrollout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
+  messageDialogStyle: any = {};
+  detailsDialogStyle: any = {};
+  messageModalVisible: boolean = false;
+  detailsModalVisible: boolean = false;
+  previousMessageValue: string = '';
+  previousDetailsValue: string = '';
   notificationMessageForm: FormGroup;
 
   //Step 4
@@ -266,6 +279,9 @@ export class CreateLogsAlertComponent implements OnInit {
     for (const option of channelOptions) {
       this.iconMap.set(option.value, option.icon);
     }
+
+    this.conditionalBlockOptions = conditionalBlockOptions;
+    this.templateVariableOptions = templateVariableOptions;
 
     //Step 4
     this.permissionTeamOptions = permissionTeamOptions;
@@ -433,5 +449,81 @@ export class CreateLogsAlertComponent implements OnInit {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  verifyMessageText(value: string, messageInput: HTMLElement)
+  {
+    let messageInputRect = messageInput.getBoundingClientRect();
+
+    const isOpeningDoubleBraces = value.length > this.previousMessageValue.length && value.endsWith('{{') && !this.previousMessageValue.endsWith('{{');
+
+    // Comparar el valor anterior con el nuevo
+    if (isOpeningDoubleBraces) 
+    {
+      this.messageDialogStyle = 
+      {
+        position: 'fixed',
+        top: messageInputRect.bottom + 'px',
+        left: messageInputRect.left + 'px',
+        width: '300px'
+      }
+
+      this.messageModalVisible = true;
+    }
+    else
+    {
+      this.messageModalVisible = false;
+    }
+
+    // Guardar el valor actual como "anterior" para la próxima comparación
+    this.previousMessageValue = value;
+  }
+
+  verifyDetailsText(value: string, detailsInput: HTMLElement)
+  {
+    let detailsInputRect = detailsInput.getBoundingClientRect();
+
+    const isOpeningDoubleBraces = value.length > this.previousDetailsValue.length && value.endsWith('{{') && !this.previousDetailsValue.endsWith('{{');
+
+    // Comparar el valor anterior con el nuevo
+    if (isOpeningDoubleBraces) 
+    {
+      this.detailsDialogStyle = 
+      {
+        position: 'fixed',
+        top: detailsInputRect.bottom + 'px',
+        left: detailsInputRect.left + 'px',
+        width: '300px'
+      }
+
+      this.detailsModalVisible = true;
+    }
+    else
+    {
+      this.detailsModalVisible = false;
+    }
+
+    // Guardar el valor actual como "anterior" para la próxima comparación
+    this.previousDetailsValue = value;
+  }
+
+  onClickAddConditionalBlockToMessage(i: number)
+  {
+    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
+  }
+
+  onClickAddTemplateVariableToMessage(i: number)
+  {
+    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + templateVariableOptions[i].value + '}}');
+  }
+
+  onClickAddConditionalBlockToDetails(i: number)
+  {
+    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
+  }
+
+  onClickAddTemplateVariableToDetails(i: number)
+  {
+    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
   }
 }

@@ -512,7 +512,7 @@
             .notification-message-form {
                 display: flex;
                 flex-direction: column;
-                gap: 24px;
+                gap: 16px;
 
                 .full-w-field {
                     width: 100%;
@@ -640,4 +640,62 @@
     align-items: center;
     
     margin-top: 24px;
+}
+
+.notification-modal-content
+{
+    max-height: 128px;
+    margin: 16px 0px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .notification-modal-title
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .options-container
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .option-container
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            border-radius: 8px;
+            padding: 8px;
+
+            background-color: white;
+
+            cursor: pointer;
+
+            .title
+            {
+                width: fit-content;
+                border: 1px solid lightgray;
+                border-radius: 20px;
+                padding: 2px 8px;
+
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+            }
+        }
+
+        .option-container:hover
+        {
+            background-color: #f0f0f0;
+        }
+    }
 }

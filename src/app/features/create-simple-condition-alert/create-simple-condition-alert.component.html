@@ -306,27 +306,30 @@
                             <p-tabpanel value="0">
                                 <form [formGroup]="notificationMessageForm">
                                     <div class="notification-message-form">
-                                        <p-floatlabel class="full-w-field" variant="on">
-                                            <textarea class="full-w-field" pTextarea #message id="message" rows="5" [autoResize]="true" formControlName="message" (ngModelChange)="verifyMessageText($event, message.value)"></textarea>
-                                            <label for="message">Mensaje de la alerta *</label>
-                                            <p-popover #messagePopover>
-                                                Hola
-                                            </p-popover>
-                                        </p-floatlabel>
+                                        <label class="font-w-600" for="message">Mensaje de la alerta <span style="color: red;">*</span></label>
+                                        <textarea class="full-w-field" pTextarea #message id="message" rows="2" [autoResize]="true" formControlName="message" (ngModelChange)="verifyMessageText(message.value, message)" placeholder="Escribe aquí el mensaje de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..."></textarea>
 
-                                        <p-floatlabel class="full-w-field" variant="on">
-                                            <textarea class="full-w-field" pTextarea #details id="details" rows="5" [autoResize]="true" formControlName="details" (ngModelChange)="verifyDetailsText($event, details.value)"></textarea>
-                                            <label for="details">Detalles adicionales</label>
-                                        </p-floatlabel>
+                                        <label class="font-w-600" for="details">Detalles adicionales</label>
+                                        <textarea class="full-w-field" pTextarea #details id="details" rows="2" [autoResize]="true" formControlName="details" (ngModelChange)="verifyDetailsText(details.value, details)" placeholder="Escribe aquí los detalles adicionales de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..."></textarea>
 
-                                        <p-floatlabel class="full-w-field" variant="on">
-                                            <input class="full-w-field" pInputText id="proccedure" formControlName="proccedure"/>
-                                            <label for="proccedure">Procedimiento (OPI)</label>
-                                        </p-floatlabel>
+                                        <label class="font-w-600" for="proccedure">Procedimiento (OPI)</label>
+                                        <input class="full-w-field" pInputText id="proccedure" formControlName="proccedure" placeholder="URL del Procedimiento Operativo (OPI)"/>
                                     </div>
                                 </form>
                             </p-tabpanel>
                             <p-tabpanel value="1">
+                                <form [formGroup]="notificationMessageForm">
+                                    <div class="notification-message-form">
+                                        <label class="font-w-600">Mensaje de la alerta:</label>
+                                        <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" formControlName="message" readonly="readonly"></textarea>
+
+                                        <label class="font-w-600">Detalles adicionales:</label>
+                                        <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" formControlName="details" readonly="readonly"></textarea>
+
+                                        <label class="font-w-600">Procedimiento (OPI):</label>
+                                        <input class="full-w-field" pInputText formControlName="proccedure" readonly="readonly" />
+                                    </div>
+                                </form>
                             </p-tabpanel>
                         </p-tabpanels>
                     </p-tabs>
@@ -530,6 +533,52 @@
     </div>
 </app-modal>
 
-<p-popover #detailsPopover>
-    Adios
-</p-popover>
+<p-dialog [(visible)]="messageModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false" [style]="messageDialogStyle" (click)="$event.stopPropagation();">
+    <div class="notification-modal-content">
+        <div class="notification-modal-title">
+            <div class="font-20 c-blue font-w-700">#</div>
+            <div class="font-16 font-w-600">Bloques condicionales</div>
+        </div>
+        <div class="options-container">
+            <div class="option-container" *ngFor="let conditionalBlockOption of conditionalBlockOptions; let i = index;" (click)="onClickAddConditionalBlockToMessage(i);">
+                <div class="font-12 font-w-600 title">{{conditionalBlockOption.label}}</div>
+                <div class="font-12 text-gray">{{conditionalBlockOption.description}}</div>
+            </div>
+        </div>
+        <div class="notification-modal-title">
+            <div class="font-20 c-green font-w-700">&#123;x&#125;</div>
+            <div class="font-16 font-w-600">Variables de plantilla</div>
+        </div>
+        <div class="options-container">
+            <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;" (click)="onClickAddTemplateVariableToMessage(i);">
+                <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>
+                <div class="font-12 text-gray">{{templateVariableOption.description}}</div>
+            </div>
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="detailsModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false" [style]="detailsDialogStyle" (click)="$event.stopPropagation();">
+    <div class="notification-modal-content">
+        <div class="notification-modal-title">
+            <div class="font-20 c-blue font-w-700">#</div>
+            <div class="font-16 font-w-600">Bloques condicionales</div>
+        </div>
+        <div class="options-container">
+            <div class="option-container" *ngFor="let conditionalBlockOption of conditionalBlockOptions; let i = index;" (click)="onClickAddConditionalBlockToDetails(i);">
+                <div class="font-12 font-w-600 title">{{conditionalBlockOption.label}}</div>
+                <div class="font-12 text-gray">{{conditionalBlockOption.description}}</div>
+            </div>
+        </div>
+        <div class="notification-modal-title">
+            <div class="font-20 c-green font-w-700">&#123;x&#125;</div>
+            <div class="font-16 font-w-600">Variables de plantilla</div>
+        </div>
+        <div class="options-container">
+            <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;" (click)="onClickAddTemplateVariableToDetails(i);">
+                <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>
+                <div class="font-12 text-gray">{{templateVariableOption.description}}</div>
+            </div>
+        </div>
+    </div>
+</p-dialog>
