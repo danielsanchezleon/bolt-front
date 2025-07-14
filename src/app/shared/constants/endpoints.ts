@@ -3,7 +3,7 @@ export const endpointTable: any = {
     grid: false,
     strippedRows: true,
     filter: true,
-    searchPlaceholder: 'Buscar alertas por nombre, descripción o etiquetas',
+    searchPlaceholder: '',
     columns: [
         {label: 'Nombre', value: 'name', type: 'text', headerStyles: '', columnStyles: 'font-weight: 600;'},
         {label: 'URL/Destino', value: 'url', type: 'text', headerStyles: '', columnStyles: ''},
