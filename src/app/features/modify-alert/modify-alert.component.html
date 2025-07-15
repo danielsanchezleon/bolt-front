@@ -22,13 +22,23 @@
             (onClick)="filterPanelOpen = !filterPanelOpen;" />
     </div>
 
-    <!-- <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
+    <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
         <form *ngIf="filterForm" [formGroup]="filterForm">
-            <p-floatlabel variant="on" *ngFor="let filter of data.filters;">
-                <input *ngIf="filter.type == 'text'" pInputText id="on_label" autocomplete="off" formControlName="{{ filter.value }}" />
-                <p-inputnumber *ngIf="filter.type == 'num'" id="on_label" formControlName="{{ filter.value }}" />
-                <p-multiselect *ngIf="filter.type == 'multiselect'" id="on_label" [options]="filter.options" optionLabel="label" optionValue="label" appendTo="body" formControlName="{{ filter.value }}" />
-                <label for="on_label">{{filter.label}}</label>
+            <p-floatlabel variant="on">
+                <input pInputText autocomplete="off" formControlName="name" />
+                <label>Nombre</label>
+            </p-floatlabel>
+            <p-floatlabel variant="on">
+                <input pInputText autocomplete="off" formControlName="message" />
+                <label>Mensaje</label>
+            </p-floatlabel>
+            <p-floatlabel variant="on">
+                <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="timeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="timeWindow" />
+                <label for="timeWindowLabel">Ventana de tiempo</label>
+            </p-floatlabel>
+            <p-floatlabel variant="on">
+                <p-select [style]="{'width': '256px'}" inputId="periodicityLabel" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="periodicity" />
+                <label for="periodicityLabel">Periodicidad</label>
             </p-floatlabel>
         </form>
 
@@ -36,7 +46,7 @@
             <p-button label="Borrar filtros" [outlined]="true" (onClick)="clearIndividualFilters()" />
             <p-button label="Aplicar filtros" [outlined]="false" (onClick)="applyIndividualFilters()" />
         </div>
-    </div> -->
+    </div>
 
     <div class="table-container">
         <p-table id="dt" #dt [value]="filteredTestAlerts" [size]="'small'" [showGridlines]="true" [stripedRows]="true">
