@@ -4,9 +4,9 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { Router } from '@angular/router';
-import { MetricOptions, Metric, metricList, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions} from '../../shared/constants/metric-options';
+import { MetricOptions, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl } from '@angular/forms';
-import { MultiSelectModule } from 'primeng/multiselect';
+import { MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
@@ -26,93 +26,82 @@ import { TabsModule } from 'primeng/tabs';
 
 import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
-import { Subscription } from 'rxjs';
+import { debounceTime, Subject, Subscription } from 'rxjs';
 
 import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
 
 import { DialogModule } from 'primeng/dialog';
+import { MetricService } from '../../shared/services/metric.service';
+import { TableMetricInfo } from '../../shared/models/TableMetricInfo';
 
-export class MetricOption
-{
+export class MetricOption {
   id: string;
-  metric: Metric;
-  operation: any = {value: 'add', label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior'};
+  metric: TableMetricInfo;
+  operation: any = { value: 'add', label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior' };
 
-  constructor (id: string, metric: Metric)
-  {
+  constructor(id: string, metric: TableMetricInfo) {
     this.id = id;
     this.metric = metric;
   }
 }
 
-export class Threshold
-{
+export class Threshold {
   id: string;
   type: string;
   comparation: string;
   value?: number;
 
-  constructor (id: string, type: string, comparation: string, value?: number)
-  {
+  constructor(id: string, type: string, comparation: string, value?: number) {
     this.id = id;
     this.type = type;
     this.comparation = comparation;
 
-    if (value)
-    {
+    if (value) {
       this.value = value;
     }
   }
 }
 
-export class SilencePeriod
-{
+export class SilencePeriod {
   id: string;
   days?: string[];
   from?: string;
   to?: string;
 
-  constructor (id: string)
-  {
+  constructor(id: string) {
     this.id = id;
     this.days = [];
   }
 }
 
-export class Channel
-{
+export class Channel {
   id: string;
   channel: string;
   value?: string;
   alerts: string[];
 
-  constructor (id: string)
-  {
+  constructor(id: string) {
     this.id = id;
     this.channel = 'email';
     this.alerts = [];
   }
 }
 
-export class Tag
-{
+export class Tag {
   name: string;
   value: string;
 
-  constructor (name: string, value: string)
-  {
+  constructor(name: string, value: string) {
     this.name = name;
     this.value = value;
   }
 }
 
-export class Permission
-{
+export class Permission {
   team: any;
   type: any;
 
-  constructor ()
-  {
+  constructor() {
     this.type = permissionTypeOptions[0];
   }
 }
@@ -156,16 +145,17 @@ type PermissionFormGroup = FormGroup<{
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
-export class CreateSimpleConditionAlertComponent implements OnInit
-{
+export class CreateSimpleConditionAlertComponent implements OnInit {
   //General
   subscriptions: Subscription[] = [];
 
   //Step 1
+  private filterSubject = new Subject<string>();
+
   metricOptions: MetricOptions = new MetricOptions();
   metricOperationOptions: any[] = [];
-  metricList: Metric[] = [];
-  selectedMetricList: Metric[] = [];
+  metricList: TableMetricInfo[] = [];
+  selectedMetricList: TableMetricInfo[] = [];
   selectedMetrics: MetricOption[] = [];
   letters: string[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
   customizeMetric: boolean = false;
@@ -231,8 +221,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
   step3Disabled: boolean = true;
   step4Disabled: boolean = true;
 
-  constructor(private router: Router, private _fb: FormBuilder)
-  {
+  constructor(private router: Router, private _fb: FormBuilder, private metricService: MetricService) {
     //Step 1
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
@@ -284,10 +273,15 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.subscriptions.push(sub);
   }
 
-  ngOnInit(): void 
-  {
+  ngOnInit(): void {
     //Step 1
-    this.metricList = metricList;
+
+    this.filterSubject
+      .pipe(debounceTime(1000)) // Espera 1 segundo desde la última tecla
+      .subscribe(filtro => {
+        this.getMetrics(filtro);
+      });
+
     this.metricOperationOptions = metricOperationOptions;
 
     this.operationOptions = operationOptions;
@@ -326,8 +320,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.createPermission();
   }
 
-  createThreshold() 
-  {
+  createThreshold() {
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
       type: this._fb.control(thresholdTypeOptions[0]),
@@ -344,23 +337,19 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.subscriptions.push(sub);
   }
 
-  firstValueCompleted(): boolean 
-  {
+  firstValueCompleted(): boolean {
     let value = this.thresholdArray.at(0).get('value')?.value;
     return value !== null && value !== undefined;
   }
 
-  allValuesCompleted(): boolean 
-  {
-    return this.thresholdArray.controls.every(control => 
-    {
+  allValuesCompleted(): boolean {
+    return this.thresholdArray.controls.every(control => {
       let value = control.get('value')?.value;
       return value !== null && value !== undefined;
     });
   }
 
-  createSilencePeriod() 
-  {
+  createSilencePeriod() {
     const group: SilencePeriodFormGroup = this._fb.group({
       id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
       days: this._fb.control(null),
@@ -371,10 +360,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.silencePeriodArray.push(group);
   }
 
-  allSilencePeriodFieldsCompleted(): boolean 
-  {
-    return this.silencePeriodArray.controls.every(control => 
-    {
+  allSilencePeriodFieldsCompleted(): boolean {
+    return this.silencePeriodArray.controls.every(control => {
       let days = control.get('days')?.value;
       let from = control.get('from')?.value;
       let to = control.get('to')?.value;
@@ -383,13 +370,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     });
   }
 
-  deleteSilencePeriod(i: number) 
-  {
+  deleteSilencePeriod(i: number) {
     this.silencePeriodArray.removeAt(i);
   }
 
-  createEndpoint() 
-  {
+  createEndpoint() {
     const group: EndpointFormGroup = this._fb.group({
       id: this._fb.control((this.endpointArray.length + 1).toString()),
       channel: this._fb.control(channelOptions[0]),
@@ -400,31 +385,25 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.endpointArray.push(group);
   }
 
-  deleteEndpoint(i: number) 
-  {
+  deleteEndpoint(i: number) {
     this.endpointArray.removeAt(i);
   }
 
-  createPermission() 
-  {
+  createPermission() {
     this.permissionList.push(new Permission());
   }
 
-  deletePermission(i: number) 
-  {
+  deletePermission(i: number) {
     this.permissionList.splice(i, 1);
   }
 
-  firstPermissionCompleted(): boolean 
-  {
+  firstPermissionCompleted(): boolean {
     let team = this.permissionList[0].team;
     return team !== null && team !== undefined;
   }
 
-  allPermissionsCompleted(): boolean 
-  {
-    return this.permissionList.every(permission => 
-    {
+  allPermissionsCompleted(): boolean {
+    return this.permissionList.every(permission => {
       let team = permission.team;
       return team !== null && team !== undefined;
     });
@@ -433,8 +412,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
   private allowedLetters(): string[] {
     let letters = [];
 
-    for (let i = 0; i < this.selectedMetrics.length; i++) 
-    {
+    for (let i = 0; i < this.selectedMetrics.length; i++) {
       letters.push(this.letters[i]);
     }
 
@@ -445,23 +423,19 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     return ['+', '-', '*', '/', '(', ')', ...this.allowedLetters()];
   }
 
-  allowCharacters(event: KeyboardEvent) 
-  {
+  allowCharacters(event: KeyboardEvent) {
     const char = event.key;
 
-    if (!this.allowedChars.includes(char))
-    {
+    if (!this.allowedChars.includes(char)) {
       event.preventDefault();
     }
   }
 
-  onClickNavigateToCreateAlert()
-  {
+  onClickNavigateToCreateAlert() {
     this.router.navigate(['crear-alerta']);
   }
 
-  onClickSelectMetrics()
-  {
+  onClickSelectMetrics() {
     let offset: number = this.selectedMetrics.length;
 
     this.selectedMetricList.forEach((selectedMetric, i) => {
@@ -477,8 +451,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.getMetricTagsIntersection();
   }
 
-  generateResultMetric()
-  {
+  generateResultMetric() {
     this.resultMetric = '';
     this.resultMetricLabel = '';
 
@@ -486,177 +459,154 @@ export class CreateSimpleConditionAlertComponent implements OnInit
       this.resultMetric += selectedMetric.id;
       this.resultMetricLabel += selectedMetric.metric.label;
 
-      if (i < (this.selectedMetrics.length - 1))
-      {
-        this.resultMetric += this.selectedMetrics[i+1].operation.symbol;
-        this.resultMetricLabel += ' ' + this.selectedMetrics[i+1].operation.symbol + ' ';
+      if (i < (this.selectedMetrics.length - 1)) {
+        this.resultMetric += this.selectedMetrics[i + 1].operation.symbol;
+        this.resultMetricLabel += ' ' + this.selectedMetrics[i + 1].operation.symbol + ' ';
       }
     });
   }
 
-  getMetricTagsIntersection()
-  {
+  getMetricTagsIntersection() {
     let commonTags = new Set(this.selectedMetrics[0].metric.tags);
 
-    for (let selectedMetric of this.selectedMetrics.slice(1)) 
-    {
+    for (let selectedMetric of this.selectedMetrics.slice(1)) {
       commonTags = new Set(selectedMetric.metric.tags.filter(tag => commonTags.has(tag)));
     }
 
     this.tagIntersectionOptions = Array.from(commonTags).map(tag => ({ label: tag, value: tag }));
   }
 
-  onClickRemoveSelectedMetric(index: number)
-  {
+  onClickRemoveSelectedMetric(index: number) {
+
+    this.metricList.push(this.selectedMetrics[index].metric);
+
     this.selectedMetrics.splice(index, 1);
 
-    this.metricList = metricList;
-    this.metricList = this.metricList.filter(metricA => !this.selectedMetrics.some(metricB => metricB.metric.value === metricA.value));
-
     this.selectedMetrics.forEach((selectedMetric, i) => {
       selectedMetric.id = this.letters[i];
     });
 
     this.checkSteps();
-    this.generateResultMetric();
-    this.getMetricTagsIntersection();
-  }
 
-  onClickArrowDown(index: number)
-  {
-    [this.selectedMetrics[index], this.selectedMetrics[index+1]] = [this.selectedMetrics[index+1], this.selectedMetrics[index]];
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.checkSteps();
-    this.generateResultMetric();
-  }
-
-  onClickArrowUp(index: number)
-  {
-    [this.selectedMetrics[index], this.selectedMetrics[index-1]] = [this.selectedMetrics[index-1], this.selectedMetrics[index]];
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.checkSteps();
-    this.generateResultMetric();
-  }
-
-  checkSteps()
-  {
-    //Step 2
     if (this.selectedMetrics.length > 0)
     {
+      this.generateResultMetric();
+      this.getMetricTagsIntersection();
+    }
+  }
+
+  onClickArrowDown(index: number) {
+    [this.selectedMetrics[index], this.selectedMetrics[index + 1]] = [this.selectedMetrics[index + 1], this.selectedMetrics[index]];
+
+    this.selectedMetrics.forEach((selectedMetric, i) => {
+      selectedMetric.id = this.letters[i];
+    });
+
+    this.checkSteps();
+    this.generateResultMetric();
+  }
+
+  onClickArrowUp(index: number) {
+    [this.selectedMetrics[index], this.selectedMetrics[index - 1]] = [this.selectedMetrics[index - 1], this.selectedMetrics[index]];
+
+    this.selectedMetrics.forEach((selectedMetric, i) => {
+      selectedMetric.id = this.letters[i];
+    });
+
+    this.checkSteps();
+    this.generateResultMetric();
+  }
+
+  checkSteps() {
+    //Step 2
+    if (this.selectedMetrics.length > 0) {
       this.step2Disabled = false;
     }
-    else
-    {
+    else {
       this.step2Disabled = true;
       this.step3Disabled = true;
       this.step4Disabled = true;
     }
 
     if ((this.thresholdArray.length == 1 && this.firstValueCompleted()) ||
-        (this.thresholdArray.length > 1 && this.allValuesCompleted()))
-    {
+      (this.thresholdArray.length > 1 && this.allValuesCompleted())) {
       this.step3Disabled = false;
       this.step4Disabled = false;
     }
-    else
-    {
+    else {
       this.step3Disabled = true;
       this.step4Disabled = true;
     }
 
-    if (this.notificationMessageForm.get('message')?.valid)
-    {
+    if (this.notificationMessageForm.get('message')?.valid) {
       this.step4Disabled = false;
     }
-    else
-    {
+    else {
       this.step4Disabled = true;
     }
   }
 
-  onClickCustomizeMetric()
-  {
+  onClickCustomizeMetric() {
     this.customizeMetric = true;
   }
 
-  onChangeSelectOperation()
-  {
+  onChangeSelectOperation() {
     this.generateResultMetric();
   }
 
-  onClickSaveMetric()
-  {
+  onClickSaveMetric() {
     this.customizeMetric = false;
   }
 
-  onClickCancelMetricCustomization()
-  {
+  onClickCancelMetricCustomization() {
     this.generateResultMetric();
     this.customizeMetric = false;
   }
 
-  onClickSetThresholdType(threshold: any, type: string)
-  {
+  onClickSetThresholdType(threshold: any, type: string) {
     threshold.get('type').setValue(type);
   }
 
-  onClickSetEndpointAlert(endpoint: any, alert: any)
-  {
+  onClickSetEndpointAlert(endpoint: any, alert: any) {
     let alerts: any[] = endpoint.get('alerts')?.value;
 
-    if (alerts.includes(alert))
-    {
+    if (alerts.includes(alert)) {
       alerts = alerts.filter((al) => al !== alert);
     }
-    else
-    {
+    else {
       alerts.push(alert);
     }
 
     endpoint.get('alerts')?.setValue(alerts);
   }
 
-  onClickAddTag()
-  {
+  onClickAddTag() {
     this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value));
 
     this.tagForm.reset();
     this.tagForm.updateValueAndValidity();
   }
 
-  onClickRemoveTag(i: number)
-  {
+  onClickRemoveTag(i: number) {
     this.tagList.splice(i, 1);
   }
 
-  onClickCreateAlert()
-  {
+  onClickCreateAlert() {
     this.modalVisible = true;
   }
 
-  ngOnDestroy()
-  {
+  ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  verifyMessageText(value: string, messageInput: HTMLElement)
-  {
+  verifyMessageText(value: string, messageInput: HTMLElement) {
     let messageInputRect = messageInput.getBoundingClientRect();
 
     const isOpeningDoubleBraces = value.length > this.previousMessageValue.length && value.endsWith('{{') && !this.previousMessageValue.endsWith('{{');
 
     // Comparar el valor anterior con el nuevo
-    if (isOpeningDoubleBraces) 
-    {
-      this.messageDialogStyle = 
+    if (isOpeningDoubleBraces) {
+      this.messageDialogStyle =
       {
         position: 'fixed',
         top: messageInputRect.bottom + 'px',
@@ -666,8 +616,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
 
       this.messageModalVisible = true;
     }
-    else
-    {
+    else {
       this.messageModalVisible = false;
     }
 
@@ -675,16 +624,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.previousMessageValue = value;
   }
 
-  verifyDetailsText(value: string, detailsInput: HTMLElement)
-  {
+  verifyDetailsText(value: string, detailsInput: HTMLElement) {
     let detailsInputRect = detailsInput.getBoundingClientRect();
 
     const isOpeningDoubleBraces = value.length > this.previousDetailsValue.length && value.endsWith('{{') && !this.previousDetailsValue.endsWith('{{');
 
     // Comparar el valor anterior con el nuevo
-    if (isOpeningDoubleBraces) 
-    {
-      this.detailsDialogStyle = 
+    if (isOpeningDoubleBraces) {
+      this.detailsDialogStyle =
       {
         position: 'fixed',
         top: detailsInputRect.bottom + 'px',
@@ -694,8 +641,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit
 
       this.detailsModalVisible = true;
     }
-    else
-    {
+    else {
       this.detailsModalVisible = false;
     }
 
@@ -703,23 +649,34 @@ export class CreateSimpleConditionAlertComponent implements OnInit
     this.previousDetailsValue = value;
   }
 
-  onClickAddConditionalBlockToMessage(i: number)
-  {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
+  onClickAddConditionalBlockToMessage(i: number) {
+    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' + conditionalBlockOptions[i].value + '}}');
   }
 
-  onClickAddTemplateVariableToMessage(i: number)
-  {
+  onClickAddTemplateVariableToMessage(i: number) {
     this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + templateVariableOptions[i].value + '}}');
   }
 
-  onClickAddConditionalBlockToDetails(i: number)
-  {
-    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
+  onClickAddConditionalBlockToDetails(i: number) {
+    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' + conditionalBlockOptions[i].value + '}}');
   }
 
-  onClickAddTemplateVariableToDetails(i: number)
-  {
+  onClickAddTemplateVariableToDetails(i: number) {
     this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
+  }
+
+  getMetrics(filter: string) {
+    this.metricService.getMetrics(filter).subscribe(
+      (response) => {
+        this.metricList = response;
+      },
+      (error) => {
+
+      }
+    )
+  }
+
+  onFilterMetricsChange(event: MultiSelectFilterEvent) {
+    this.filterSubject.next(event.filter);
   }
 }
