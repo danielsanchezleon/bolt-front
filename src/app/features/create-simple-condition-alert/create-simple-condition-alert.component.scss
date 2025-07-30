@@ -166,66 +166,95 @@
         }
 
         .threshold-container {
+
             display: flex;
             flex-direction: row;
             align-items: center;
-            gap: 16px;
+            justify-content: space-between;
 
             background-color: #ebebeb;
             border: 1px solid lightgray;
             border-radius: 8px;
             padding: 16px;
 
-            .id-wrapper {
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
-                background-color: #2563eb;
+            .threshold-left {
 
                 display: flex;
                 flex-direction: row;
-                justify-content: center;
                 align-items: center;
+                gap: 16px;
+
+                .id-wrapper {
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background-color: #2563eb;
+
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                .type-buttons-container {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 4px;
+
+                    .type-button-container {
+                        border: 1px solid lightgray;
+                        border-radius: 24px;
+                        padding: 3px 8px;
+                        font-weight: 600;
+
+                        cursor: pointer;
+                    }
+
+                    .disaster {
+                        background-color: #C62828;
+                        border: 2px solid #2563eb;
+                    }
+
+                    .critical {
+                        background-color: #EF6C00;
+                        border: 2px solid #2563eb;
+                    }
+
+                    .major {
+                        background-color: #F9A825;
+                        border: 2px solid #2563eb;
+                    }
+
+                    .warning {
+                        background-color: #FDD835;
+                        border: 2px solid #2563eb;
+                    }
+                }
+
+                .select {
+                    width: 200px;
+                }
+
+                ::ng-deep .threshold-value input
+                {
+                    width: 128px !important;
+                }
+
+                .range-container
+                {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 4px;
+                }
             }
 
-            .type-buttons-container {
+            .threshold-options {
                 display: flex;
                 flex-direction: row;
                 align-items: center;
-                gap: 4px;
-
-                .type-button-container {
-                    border: 1px solid lightgray;
-                    border-radius: 24px;
-                    padding: 3px 8px;
-                    font-weight: 600;
-
-                    cursor: pointer;
-                }
-
-                .disaster {
-                    background-color: #C62828;
-                    border: 2px solid #2563eb;
-                }
-
-                .critical {
-                    background-color: #EF6C00;
-                    border: 2px solid #2563eb;
-                }
-
-                .major {
-                    background-color: #F9A825;
-                    border: 2px solid #2563eb;
-                }
-
-                .warning {
-                    background-color: #FDD835;
-                    border: 2px solid #2563eb;
-                }
-            }
-
-            .select {
-                width: 200px;
+                gap: 8px;
             }
         }
 
@@ -588,8 +617,7 @@
     width: 100%;
 }
 
-.modal-steps
-{
+.modal-steps {
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -598,32 +626,27 @@
     overflow-x: scroll;
     overflow-x: hidden;
 
-    .modal-step
-    {
+    .modal-step {
         display: flex;
         flex-direction: column;
         gap: 24px;
 
-        .modal-step-content
-        {
+        .modal-step-content {
             display: flex;
             flex-direction: column;
             gap: 8px;
 
-            .title-description-block-1
-            {
+            .title-description-block-1 {
                 display: flex;
                 flex-direction: column;
                 gap: 2px;
 
-                .title
-                {
+                .title {
                     font-size: 12px;
                     font-weight: 700;
                 }
 
-                .description
-                {
+                .description {
                     font-size: 12px;
                     color: gray;
                 }
@@ -632,18 +655,16 @@
     }
 }
 
-.modal-actions
-{
+.modal-actions {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    
+
     margin-top: 24px;
 }
 
-.notification-modal-content
-{
+.notification-modal-content {
     max-height: 128px;
     margin: 16px 0px;
 
@@ -651,22 +672,19 @@
     flex-direction: column;
     gap: 16px;
 
-    .notification-modal-title
-    {
+    .notification-modal-title {
         display: flex;
         flex-direction: row;
         align-items: center;
         gap: 8px;
     }
 
-    .options-container
-    {
+    .options-container {
         display: flex;
         flex-direction: column;
         gap: 4px;
 
-        .option-container
-        {
+        .option-container {
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -678,8 +696,7 @@
 
             cursor: pointer;
 
-            .title
-            {
+            .title {
                 width: fit-content;
                 border: 1px solid lightgray;
                 border-radius: 20px;
@@ -693,8 +710,7 @@
             }
         }
 
-        .option-container:hover
-        {
+        .option-container:hover {
             background-color: #f0f0f0;
         }
     }

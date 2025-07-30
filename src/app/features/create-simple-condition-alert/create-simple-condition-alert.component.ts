@@ -68,12 +68,14 @@ export class Threshold {
   id: string;
   type: string;
   comparation: string;
+  order: number;
   value?: number;
 
-  constructor(id: string, type: string, comparation: string, value?: number) {
+  constructor(id: string, type: string, comparation: string, order: number, value?: number) {
     this.id = id;
     this.type = type;
     this.comparation = comparation;
+    this.order = order;
 
     if (value) {
       this.value = value;
@@ -129,7 +131,12 @@ type ThresholdFormGroup = FormGroup<{
   id: FormControl<string>;
   type: FormControl<any>;
   comparation: FormControl<any>;
+  order: FormControl<number>;
   value: FormControl<number | null>;
+  minIncluded: FormControl<boolean>;
+  min: FormControl<number | null>;
+  maxIncluded: FormControl<boolean>;
+  max: FormControl<number | null>;
 }>;
 
 type ThresholdFormArray = FormArray<ThresholdFormGroup>;
@@ -243,8 +250,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   step4Disabled: boolean = true;
 
   constructor(
-    private router: Router, 
-    private _fb: FormBuilder, 
+    private router: Router,
+    private _fb: FormBuilder,
     private metricService: MetricService,
     private alertService: AlertService) {
     //Step 1
@@ -347,32 +354,85 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.createPermission();
   }
 
+  watchGroupValidity(group: ThresholdFormGroup) {
+    const fields = ['value', 'min', 'minIncluded', 'max', 'maxIncluded'];
+
+    fields.forEach(fieldName => {
+      const control = group.get(fieldName);
+      if (control) {
+        const sub = control.valueChanges.subscribe(() => {
+          group.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+          this.checkSteps(); // <- fuerza revalidación general
+        });
+        this.subscriptions.push(sub);
+      }
+    });
+  }
+
   createThreshold() {
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
       type: this._fb.control(thresholdTypeOptions[0]),
       comparation: this._fb.control(thresholdComparationOptions[0]),
-      value: this._fb.control(null, Validators.required)
+      order: this._fb.control(this.thresholdArray.length + 1),
+      value: this._fb.control(null),
+      minIncluded: this._fb.control(true),
+      min: this._fb.control(null),
+      maxIncluded: this._fb.control(true),
+      max: this._fb.control(null)
     }) as ThresholdFormGroup;
 
     this.thresholdArray.push(group);
 
-    let sub: Subscription = group.get('value')?.valueChanges.subscribe(() => {
+    this.watchGroupValidity(group);
+
+    // Suscripción para ajustar validadores dinámicamente
+    const comparationControl = group.get('comparation');
+    const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
+      const valueControl = group.get('value');
+      const minControl = group.get('min');
+      const minIncludedControl = group.get('minIncluded');
+      const maxControl = group.get('max');
+      const maxIncludedControl = group.get('maxIncluded');
+
+      if (comp.value === 0 || comp.value === 1) {
+        // Solo "value" requerido
+        valueControl?.setValidators(Validators.required);
+        minControl?.clearValidators();
+        maxControl?.clearValidators();
+        minIncludedControl?.clearValidators();
+        maxIncludedControl?.clearValidators();
+
+        console.log()
+      } else if (comp.value === 2 || comp.value === 3) {
+        // Solo rango requerido
+        valueControl?.clearValidators();
+        minControl?.setValidators(Validators.required);
+        maxControl?.setValidators(Validators.required);
+        minIncludedControl?.setValidators(Validators.required);
+        maxIncludedControl?.setValidators(Validators.required);
+      }
+
+      // Importante: actualizar validación
+      valueControl?.updateValueAndValidity();
+      minControl?.updateValueAndValidity();
+      maxControl?.updateValueAndValidity();
+      minIncludedControl?.updateValueAndValidity();
+      maxIncludedControl?.updateValueAndValidity();
+
       this.checkSteps();
+
     }) as Subscription;
 
-    this.subscriptions.push(sub);
-  }
+    this.subscriptions.push(dynamicValidationSub);
 
-  firstValueCompleted(): boolean {
-    let value = this.thresholdArray.at(0).get('value')?.value;
-    return value !== null && value !== undefined;
+    // Ejecutar validación inicial según el valor inicial
+    comparationControl?.updateValueAndValidity();
   }
 
   allValuesCompleted(): boolean {
-    return this.thresholdArray.controls.every(control => {
-      let value = control.get('value')?.value;
-      return value !== null && value !== undefined;
+    return this.thresholdArray.controls.every(group => {
+      return group.valid;
     });
   }
 
@@ -466,7 +526,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let offset: number = this.selectedMetrics.length;
 
     this.selectedMetricList.forEach((selectedMetric, i) => {
-      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric, (i+1)));
+      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric, (i + 1)));
     });
 
     this.metricList = this.metricList.filter(metricA => !this.selectedMetricList.some(metricB => metricB.metric === metricA.metric));
@@ -515,8 +575,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     this.checkSteps();
 
-    if (this.selectedMetrics.length > 0)
-    {
+    if (this.selectedMetrics.length > 0) {
       this.generateResultMetric();
       this.getMetricTagsIntersection();
     }
@@ -524,7 +583,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickArrowDown(index: number) {
     [this.selectedMetrics[index], this.selectedMetrics[index + 1]] = [this.selectedMetrics[index + 1], this.selectedMetrics[index]];
-    
+
     let orderAux: number = this.selectedMetrics[index].order;
     this.selectedMetrics[index].order = this.selectedMetrics[index + 1].order;
     this.selectedMetrics[index + 1].order = orderAux;
@@ -563,8 +622,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       this.step4Disabled = true;
     }
 
-    if ((this.thresholdArray.length == 1 && this.firstValueCompleted()) ||
-      (this.thresholdArray.length > 1 && this.allValuesCompleted())) {
+    if (this.allValuesCompleted()) {
       this.step3Disabled = false;
       this.step4Disabled = false;
     }
@@ -732,13 +790,21 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.filterSubject.next(event.filter);
   }
 
-  onClickConfirmCreateAlert()
+  onClickConfirmCreateAlert() 
   {
+    //FILTER LOGS
+    let filterLogs: FilterLogDto[] = [];
+
+    //PERMISSIONS
+    let alertPermissions: AlertPermissionDto[] = [];
+
+    //CONDITION HISTORIES
+    let alertConditionHistories: AlertConditionHistoryDto[] = [];
+
     //ENDPOINTS
     let endpointAlerts: EndpointAlertDto[] = [];
 
-    for (let endpoint of this.endpointArray.controls)
-    {
+    for (let endpoint of this.endpointArray.controls) {
       let endpointDto: EndpointDto = new EndpointDto(endpoint.get('channel')?.value.label, endpoint.get('channel')?.value.value, endpoint.get('value')?.value!)
       endpointAlerts.push(new EndpointAlertDto(endpoint.get('alerts')?.value!, endpointDto))
     }
@@ -746,13 +812,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //PERIODOS DE SILENCIO
     let alertSilences: AlertSilenceDto[] = [];
 
-    for (let silencePeriod of this.silencePeriodArray.controls)
+    if (this.allSilencePeriodFieldsCompleted())
     {
-      let days: number[] = silencePeriod.get('days')?.value!;
+      for (let silencePeriod of this.silencePeriodArray.controls) {
+        let days: number[] = silencePeriod.get('days')?.value!;
 
-      for (let i = 0; i < days.length; i++)
-      {
-        alertSilences.push(new AlertSilenceDto(days[i], silencePeriod.get('from')?.value!, silencePeriod.get('to')?.value!));
+        for (let i = 0; i < days.length; i++) {
+          alertSilences.push(new AlertSilenceDto(days[i], silencePeriod.get('from')?.value!, silencePeriod.get('to')?.value!));
+        }
       }
     }
 
@@ -760,8 +827,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let alertIndicators: AlertIndicatorDto[] = [];
     let alertMetrics: AlertMetricDto[] = [];
 
-    for (let selectedMetric of this.selectedMetrics)
-    {
+    for (let selectedMetric of this.selectedMetrics) {
       alertMetrics.push(new AlertMetricDto(selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
     }
 
@@ -770,8 +836,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //UMBRALES
     let alertConditions: AlertConditionDto[] = [];
 
-    for (let threshold of this.thresholdArray.controls)
-    {
+    for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
       alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null, null));
       alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, alertClauses));
@@ -779,16 +844,16 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     //ALERTA
     let alertDto: AlertDto = new AlertDto(
-      "", 
-      "", 
-      this.notificationMessageForm.get('message')?.value, 
-      this.notificationMessageForm.get('details')?.value, 
-      this.tagList, 
-      this.advancedOptionsForm.get('timeWindow')?.value.value, 
-      this.advancedOptionsForm.get('periodicity')?.value.value, 
-      0, 
-      this.advancedOptionsForm.get('discardTime')?.value.value, 
-      this.groupByForm.get('groupBy')?.value, 
+      "",
+      "",
+      this.notificationMessageForm.get('message')?.value,
+      this.notificationMessageForm.get('details')?.value,
+      this.tagList,
+      this.advancedOptionsForm.get('timeWindow')?.value.value,
+      this.advancedOptionsForm.get('periodicity')?.value.value,
+      0,
+      this.advancedOptionsForm.get('discardTime')?.value.value,
+      this.groupByForm.get('groupBy')?.value,
       this.groupByForm.get('operation')?.value.value,
       null,
       this.activationRecoverForm.get('activation1')?.value.value,
@@ -801,18 +866,62 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     alertDto.alertSilences = alertSilences;
     alertDto.endpointAlerts = endpointAlerts;
     alertDto.alertIndicators = alertIndicators;
+    alertDto.alertPermissions = alertPermissions;
+    alertDto.alertConditionHistories = alertConditionHistories;
+    alertDto.filterLogs = filterLogs;
 
     console.log(alertDto);
 
-    this.alertService.createAlert(alertDto).subscribe(
-      (response) => 
-      {
-        
-      },
-      (error) =>
-      {
+    // this.alertService.createAlert(alertDto).subscribe(
+    //   (response) => 
+    //   {
 
-      }
-    )
+    //   },
+    //   (error) =>
+    //   {
+
+    //   }
+    // )
+  }
+
+  onClickRemoveSelectedThreshold(index: number) {
+
+    this.thresholdArray.controls.splice(index, 1);
+
+    this.thresholdArray.controls.forEach((threshold, i) => {
+      threshold.get('id')?.setValue((i + 1).toString());
+    });
+
+    this.checkSteps();
+  }
+
+  onClickThresholdArrowDown(index: number) {
+    [this.thresholdArray.controls[index], this.thresholdArray.controls[index + 1]] = [this.thresholdArray.controls[index + 1], this.thresholdArray.controls[index]];
+
+    let orderAux: number = this.thresholdArray.controls[index].get('order')?.value!;
+    this.thresholdArray.controls[index].get('order')?.setValue(this.thresholdArray.controls[index + 1].get('order')?.value!);
+    this.thresholdArray.controls[index + 1].get('order')?.setValue(orderAux);
+
+    this.thresholdArray.controls.forEach((threshold, i) => {
+      threshold.get('id')?.setValue((i + 1).toString());
+    });
+
+    this.checkSteps();
+    this.generateResultMetric();
+  }
+
+  onClickThresholdArrowUp(index: number) {
+    [this.thresholdArray.controls[index], this.thresholdArray.controls[index - 1]] = [this.thresholdArray.controls[index - 1], this.thresholdArray.controls[index]];
+
+    let orderAux: number = this.thresholdArray.controls[index].get('order')?.value!;
+    this.thresholdArray.controls[index].get('order')?.setValue(this.thresholdArray.controls[index - 1].get('order')?.value!);
+    this.thresholdArray.controls[index - 1].get('order')?.setValue(orderAux);
+
+    this.thresholdArray.controls.forEach((threshold, i) => {
+      threshold.get('id')?.setValue((i + 1).toString());
+    });
+
+    this.checkSteps();
+    this.generateResultMetric();
   }
 }

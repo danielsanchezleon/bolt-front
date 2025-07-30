@@ -1,11 +1,13 @@
-export interface AlertConditionHistoryDto 
+export class AlertConditionHistoryDto 
 {
-  versionNumber: number;
-  operation: string;
-  state: string;
-  errorDetail: string;
-  date: string; // ISO date string
-  user: string;
-  retries: number;
-  configurationData: Record<string, any>;
+  constructor(
+    public versionNumber: number,
+    public operation: string,
+    public state: string,
+    public errorDetail: string,
+    public date: string,
+    public user: string,
+    public retries: number,
+    public configurationData: Record<string, any>
+  ) {}
 }

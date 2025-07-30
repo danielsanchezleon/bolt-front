@@ -1,7 +1,9 @@
 import { TeamDto } from "./TeamDto";
 
-export interface AlertPermissionDto 
+export class AlertPermissionDto 
 {
-  writePermission: boolean;
-  team: TeamDto;
+  constructor(
+    public writePermission: boolean,
+    public team: TeamDto
+  ) {}
 }

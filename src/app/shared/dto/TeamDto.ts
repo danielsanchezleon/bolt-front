@@ -1,4 +1,6 @@
-export interface TeamDto 
+export class TeamDto 
 {
-  description: string;
+  constructor(
+    public description: string
+  ) {}
 }

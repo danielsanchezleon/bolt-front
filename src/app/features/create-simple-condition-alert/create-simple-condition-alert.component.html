@@ -33,11 +33,11 @@
                             </div>
 
                             <div class="metric-option-action-buttons">
-                                <div>
+                                <div *ngIf="selectedMetrics.length > 1">
                                     <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (selectedMetrics.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowDown(i);"/>
                                     <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0" icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickArrowUp(i);"/>
                                 </div>
-                                <div style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                                <div *ngIf="selectedMetrics.length > 1" style="width: 2px; height: 32px; background-color: lightgray;"></div>
                                 <p-button [pTooltip]="'Eliminar métrica'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedMetric(i);"/>
                             </div>
                         </div>
@@ -128,15 +128,42 @@
                 </div>
 
                 <div class="threshold-container" *ngFor="let threshold of thresholdArray.controls; let i = index;" [formGroup]="threshold">
-                    <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.get('id')?.value}}</div>
-                    <div class="type-buttons-container">
-                        <div class="type-button-container" [ngClass]="{'disaster': threshold.get('type')?.value == thresholdTypeOptions[0], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[0]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[0]);">Disaster</div>
-                        <div class="type-button-container" [ngClass]="{'critical': threshold.get('type')?.value == thresholdTypeOptions[1], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[1]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[1]);">Critical</div>
-                        <div class="type-button-container" [ngClass]="{'major': threshold.get('type')?.value == thresholdTypeOptions[2]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[2]);">Major</div>
-                        <div class="type-button-container" [ngClass]="{'warning': threshold.get('type')?.value == thresholdTypeOptions[3]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[3]);">Warning</div>
+                    <div class="threshold-left">
+                        <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.get('id')?.value}}</div>
+                        <div class="type-buttons-container">
+                            <div class="type-button-container" [ngClass]="{'disaster': threshold.get('type')?.value == thresholdTypeOptions[0], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[0]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[0]);">Disaster</div>
+                            <div class="type-button-container" [ngClass]="{'critical': threshold.get('type')?.value == thresholdTypeOptions[1], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[1]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[1]);">Critical</div>
+                            <div class="type-button-container" [ngClass]="{'major': threshold.get('type')?.value == thresholdTypeOptions[2]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[2]);">Major</div>
+                            <div class="type-button-container" [ngClass]="{'warning': threshold.get('type')?.value == thresholdTypeOptions[3]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[3]);">Warning</div>
+                        </div>
+                        <p-select formControlName="comparation" class="select" [options]="thresholdComparationOptions" optionLabel="label" appendTo="body" size="small"/>
+                        <p-inputnumber class="threshold-value" *ngIf="threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1" formControlName="value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Valor"/>
+                        <div *ngIf="threshold.get('comparation')?.value.value == 2 || threshold.get('comparation')?.value.value == 3" class="range-container">
+                            <div>
+                                <p-checkbox formControlName="minIncluded" [binary]="true" size="small"/>
+                                &nbsp;
+                                <label>Incl.</label>
+                            </div>
+                            <p-inputnumber class="threshold-value" formControlName="min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Min"/>
+                            -
+                            <p-inputnumber class="threshold-value" formControlName="max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Max"/>
+                            <div>
+                                <p-checkbox formControlName="maxIncluded" [binary]="true" size="small"/>
+                                &nbsp;
+                                <label>Incl.</label>
+                            </div>
+                        </div>
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="thresholdComparationOptions" appendTo="body" size="small" placeholder="{{dimension}}"/>
                     </div>
-                    <p-select formControlName="comparation" class="select" [options]="thresholdComparationOptions" optionLabel="label" appendTo="body"/>
-                    <p-inputnumber formControlName="value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6"/>
+                    <div *ngIf="thresholdArray.controls.length > 1" class="threshold-options">
+                        <div>
+                            <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (thresholdArray.controls.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickThresholdArrowDown(i);"/>
+                            <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0" icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickThresholdArrowUp(i);"/>
+                        </div>
+                        <div style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                        <p-button [pTooltip]="'Eliminar umbral'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedThreshold(i);"/>
+                    </div>
                 </div>
 
                 <p-button label="Añadir otro umbral" icon="pi pi-plus" (onClick)="createThreshold();" severity="secondary"/>
