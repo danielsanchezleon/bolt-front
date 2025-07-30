@@ -12,6 +12,11 @@ export class MetricService {
 
   constructor(private http: HttpClient) {}
 
+  getAllMetrics(): Observable<TableMetricInfo[]> 
+  {
+    return this.http.get<TableMetricInfo[]>(this.apiUrl);
+  }
+
   getMetrics(filter: string): Observable<TableMetricInfo[]> 
   {
     const params = new HttpParams().set('filter', filter);

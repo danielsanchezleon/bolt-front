@@ -1,11 +1,10 @@
 export interface TableMetricInfo 
 {
-  tableSchema: string;
-  tableName: string;
-  columnName: string;
-  value: string;
-  label: string;
-  dataType: string;
-  isNullable: string;
-  tags: string[];
+  bbdd: string;
+  table_name: string;
+  metric: string;
+  data_type: string;
+  is_nullable: string;
+  dimension: string[];
+  comments: string;
 }

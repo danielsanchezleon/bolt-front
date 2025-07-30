@@ -5,25 +5,25 @@ export class MetricOptions
 
 export const metricOperationOptions = [
     {
-        value: 'add',
+        value: 0,
         label: 'Sumar ( + )',
         symbol: '+',
         description: 'Sumar con la métrica anterior'
     },
     {
-        value: 'subtract',
+        value: 1,
         label: 'Restar ( - )',
         symbol: '-',
         description: 'Restar con la métrica anterior'
     },
     {
-        value: 'multiply',
+        value: 2,
         label: 'Multiplicar ( * )',
         symbol: '*',
         description: 'Multiplicar con la métrica anterior'
     },
     {
-        value: 'divide',
+        value: 3,
         label: 'Dividir ( / )',
         symbol: '/',
         description: 'Dividir con la métrica anterior'
@@ -31,40 +31,40 @@ export const metricOperationOptions = [
 ];
 
 export const operationOptions = [
-    {value: 'avg', label: 'Media'},
-    {value: 'sum', label: 'Suma'},
-    {value: 'min', label: 'Mínimo'},
-    {value: 'max', label: 'Máximo'},
-    {value: 'count', label: 'Count'}
+    {value: 0, label: 'Media'},
+    {value: 1, label: 'Suma'},
+    {value: 2, label: 'Mínimo'},
+    {value: 3, label: 'Máximo'},
+    {value: 4, label: 'Count'}
 ];
 
 export const timeWindowOptions = [
-    {value: '1min', label: '1 minuto'},
-    {value: '5min', label: '5 minutos'},
-    {value: '10min', label: '10 minutos'},
-    {value: '15min', label: '15 minutos'},
-    {value: '30min', label: '30 minutos'},
-    {value: '1h', label: '1 hora'},
-    {value: '2h', label: '2 horas'},
-    {value: '3h', label: '3 horas'},
-    {value: '6h', label: '6 horas'},
-    {value: '12h', label: '12 horas'},
-    {value: '24h', label: '24 horas'}
+    {value: 1, label: '1 minuto'},
+    {value: 5, label: '5 minutos'},
+    {value: 10, label: '10 minutos'},
+    {value: 15, label: '15 minutos'},
+    {value: 30, label: '30 minutos'},
+    {value: 60, label: '1 hora'},
+    {value: 120, label: '2 horas'},
+    {value: 180, label: '3 horas'},
+    {value: 360, label: '6 horas'},
+    {value: 720, label: '12 horas'},
+    {value: 1440, label: '24 horas'}
 ];
 
 export const discardTimeOptions = [
-    {value: 'null', label: 'Sin descartar'},
-    {value: '1min', label: '1 minuto'},
-    {value: '5min', label: '5 minutos'},
-    {value: '10min', label: '10 minutos'},
-    {value: '15min', label: '15 minutos'}
+    {value: null, label: 'Sin descartar'},
+    {value: 1, label: '1 minuto'},
+    {value: 5, label: '5 minutos'},
+    {value: 10, label: '10 minutos'},
+    {value: 15, label: '15 minutos'}
 ];
 
 export const periodicityOptions = [
-    {value: '1min', label: '1 minuto'},
-    {value: '5min', label: '5 minutos'},
-    {value: '10min', label: '10 minutos'},
-    {value: '15min', label: '15 minutos'},
-    {value: '30min', label: '30 minutos'},
-    {value: '1h', label: '1 hora'}
+    {value: 1, label: '1 minuto'},
+    {value: 5, label: '5 minutos'},
+    {value: 10, label: '10 minutos'},
+    {value: 15, label: '15 minutos'},
+    {value: 30, label: '30 minutos'},
+    {value: 60, label: '1 hora'}
 ];

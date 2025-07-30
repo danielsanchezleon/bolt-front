@@ -34,14 +34,33 @@ import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../shared/services/metric.service';
 import { TableMetricInfo } from '../../shared/models/TableMetricInfo';
 
+import { SkeletonModule } from 'primeng/skeleton';
+
+import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
+import { AlertConditionDto } from '../../shared/dto/AlertConditionDto';
+import { AlertConditionHistoryDto } from '../../shared/dto/AlertConditionHistoryDto';
+import { AlertDto } from '../../shared/dto/AlertDto';
+import { AlertIndicatorDto } from '../../shared/dto/AlertIndicatorDto';
+import { AlertMetricDto } from '../../shared/dto/AlertMetricDto';
+import { AlertPermissionDto } from '../../shared/dto/AlertPermissionDto';
+import { AlertSilenceDto } from '../../shared/dto/AlertSilenceDto';
+import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
+import { EndpointAlertDto } from '../../shared/dto/EndpointAlertDto';
+import { EndpointDto } from '../../shared/dto/EndpointDto';
+import { FilterLogDto } from '../../shared/dto/FilterLogDto';
+import { TeamDto } from '../../shared/dto/TeamDto';
+import { AlertService } from '../../shared/services/alert.service';
+
 export class MetricOption {
   id: string;
   metric: TableMetricInfo;
-  operation: any = { value: 'add', label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior' };
+  operation: any = { value: 0, label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior' };
+  order: number;
 
-  constructor(id: string, metric: TableMetricInfo) {
+  constructor(id: string, metric: TableMetricInfo, order: number) {
     this.id = id;
     this.metric = metric;
+    this.order = order;
   }
 }
 
@@ -141,7 +160,7 @@ type PermissionFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-create-simple-condition-alert',
-  imports: [DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
@@ -151,6 +170,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   //Step 1
   private filterSubject = new Subject<string>();
+  loadingAllMetricList: boolean = false;
+  loadingMetricList: boolean = false;
 
   metricOptions: MetricOptions = new MetricOptions();
   metricOperationOptions: any[] = [];
@@ -190,7 +211,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   channelOptions: any[] = [];
   alertOptions: any[] = [];
   endpointArray: EndpointFormArray;
-  iconMap: Map<String, string> = new Map<string, string>();
+  iconMap: Map<number, string> = new Map<number, string>();
 
   tagForm: FormGroup;
   tagList: Tag[] = [];
@@ -221,7 +242,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   step3Disabled: boolean = true;
   step4Disabled: boolean = true;
 
-  constructor(private router: Router, private _fb: FormBuilder, private metricService: MetricService) {
+  constructor(
+    private router: Router, 
+    private _fb: FormBuilder, 
+    private metricService: MetricService,
+    private alertService: AlertService) {
     //Step 1
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
@@ -275,6 +300,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   ngOnInit(): void {
     //Step 1
+
+    this.getAllMetrics();
 
     this.filterSubject
       .pipe(debounceTime(1000)) // Espera 1 segundo desde la última tecla
@@ -439,10 +466,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let offset: number = this.selectedMetrics.length;
 
     this.selectedMetricList.forEach((selectedMetric, i) => {
-      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric));
+      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric, (i+1)));
     });
 
-    this.metricList = this.metricList.filter(metricA => !this.selectedMetricList.some(metricB => metricB.value === metricA.value));
+    this.metricList = this.metricList.filter(metricA => !this.selectedMetricList.some(metricB => metricB.metric === metricA.metric));
 
     this.selectedMetricList = [];
 
@@ -457,7 +484,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     this.selectedMetrics.forEach((selectedMetric, i) => {
       this.resultMetric += selectedMetric.id;
-      this.resultMetricLabel += selectedMetric.metric.label;
+      this.resultMetricLabel += selectedMetric.metric.metric;
 
       if (i < (this.selectedMetrics.length - 1)) {
         this.resultMetric += this.selectedMetrics[i + 1].operation.symbol;
@@ -467,10 +494,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   getMetricTagsIntersection() {
-    let commonTags = new Set(this.selectedMetrics[0].metric.tags);
+    let commonTags = new Set(this.selectedMetrics[0].metric.dimension);
 
     for (let selectedMetric of this.selectedMetrics.slice(1)) {
-      commonTags = new Set(selectedMetric.metric.tags.filter(tag => commonTags.has(tag)));
+      commonTags = new Set(selectedMetric.metric.dimension.filter(dim => commonTags.has(dim)));
     }
 
     this.tagIntersectionOptions = Array.from(commonTags).map(tag => ({ label: tag, value: tag }));
@@ -497,6 +524,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickArrowDown(index: number) {
     [this.selectedMetrics[index], this.selectedMetrics[index + 1]] = [this.selectedMetrics[index + 1], this.selectedMetrics[index]];
+    
+    let orderAux: number = this.selectedMetrics[index].order;
+    this.selectedMetrics[index].order = this.selectedMetrics[index + 1].order;
+    this.selectedMetrics[index + 1].order = orderAux;
 
     this.selectedMetrics.forEach((selectedMetric, i) => {
       selectedMetric.id = this.letters[i];
@@ -508,6 +539,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickArrowUp(index: number) {
     [this.selectedMetrics[index], this.selectedMetrics[index - 1]] = [this.selectedMetrics[index - 1], this.selectedMetrics[index]];
+
+    let orderAux: number = this.selectedMetrics[index].order;
+    this.selectedMetrics[index].order = this.selectedMetrics[index - 1].order;
+    this.selectedMetrics[index - 1].order = orderAux;
 
     this.selectedMetrics.forEach((selectedMetric, i) => {
       selectedMetric.id = this.letters[i];
@@ -665,18 +700,119 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
   }
 
+  getAllMetrics() {
+    this.loadingAllMetricList = true;
+
+    this.metricService.getAllMetrics().subscribe(
+      (response) => {
+        this.metricList = response;
+        this.loadingAllMetricList = false;
+      },
+      (error) => {
+        this.loadingAllMetricList = false;
+      }
+    )
+  }
+
   getMetrics(filter: string) {
+    this.loadingMetricList = true;
+
     this.metricService.getMetrics(filter).subscribe(
       (response) => {
         this.metricList = response;
+        this.loadingMetricList = false;
       },
       (error) => {
-
+        this.loadingMetricList = false;
       }
     )
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent) {
     this.filterSubject.next(event.filter);
+  }
+
+  onClickConfirmCreateAlert()
+  {
+    //ENDPOINTS
+    let endpointAlerts: EndpointAlertDto[] = [];
+
+    for (let endpoint of this.endpointArray.controls)
+    {
+      let endpointDto: EndpointDto = new EndpointDto(endpoint.get('channel')?.value.label, endpoint.get('channel')?.value.value, endpoint.get('value')?.value!)
+      endpointAlerts.push(new EndpointAlertDto(endpoint.get('alerts')?.value!, endpointDto))
+    }
+
+    //PERIODOS DE SILENCIO
+    let alertSilences: AlertSilenceDto[] = [];
+
+    for (let silencePeriod of this.silencePeriodArray.controls)
+    {
+      let days: number[] = silencePeriod.get('days')?.value!;
+
+      for (let i = 0; i < days.length; i++)
+      {
+        alertSilences.push(new AlertSilenceDto(days[i], silencePeriod.get('from')?.value!, silencePeriod.get('to')?.value!));
+      }
+    }
+
+    //METRICAS
+    let alertIndicators: AlertIndicatorDto[] = [];
+    let alertMetrics: AlertMetricDto[] = [];
+
+    for (let selectedMetric of this.selectedMetrics)
+    {
+      alertMetrics.push(new AlertMetricDto(selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
+    }
+
+    alertIndicators.push(new AlertIndicatorDto('A', alertMetrics));
+
+    //UMBRALES
+    let alertConditions: AlertConditionDto[] = [];
+
+    for (let threshold of this.thresholdArray.controls)
+    {
+      let alertClauses: AlertClauseDto[] = [];
+      alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null, null));
+      alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, alertClauses));
+    }
+
+    //ALERTA
+    let alertDto: AlertDto = new AlertDto(
+      "", 
+      "", 
+      this.notificationMessageForm.get('message')?.value, 
+      this.notificationMessageForm.get('details')?.value, 
+      this.tagList, 
+      this.advancedOptionsForm.get('timeWindow')?.value.value, 
+      this.advancedOptionsForm.get('periodicity')?.value.value, 
+      0, 
+      this.advancedOptionsForm.get('discardTime')?.value.value, 
+      this.groupByForm.get('groupBy')?.value, 
+      this.groupByForm.get('operation')?.value.value,
+      null,
+      this.activationRecoverForm.get('activation1')?.value.value,
+      this.activationRecoverForm.get('activation2')?.value.value,
+      this.activationRecoverForm.get('recover1')?.value.value,
+      this.activationRecoverForm.get('recover2')?.value.value
+    );
+
+    alertDto.alertConditions = alertConditions;
+    alertDto.alertSilences = alertSilences;
+    alertDto.endpointAlerts = endpointAlerts;
+    alertDto.alertIndicators = alertIndicators;
+
+    console.log(alertDto);
+
+    this.alertService.createAlert(alertDto).subscribe(
+      (response) => 
+      {
+        
+      },
+      (error) =>
+      {
+
+      }
+    )
   }
 }

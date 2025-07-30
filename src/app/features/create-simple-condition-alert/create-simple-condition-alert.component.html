@@ -4,17 +4,17 @@
     <div class="steps-container">
         <div class="font-32 font-w-600">Condición simple</div>
         <app-accordion [title]="'Paso 1: Configura la consulta'" [highlightTitle]="true" [isOpen]="true">
-            <div class="consult-configuration-container">
+            <div *ngIf="!loadingAllMetricList" class="consult-configuration-container">
                 <div class="metric-selection-container">
                     <div class="metric-select">
-                        <p-multiselect class="full-width-selector" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="label" placeholder="Selecciona alguna métrica" appendTo="body">
+                        <p-multiselect class="full-width-selector" [loading]="loadingMetricList" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="metric" [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona alguna métrica'" appendTo="body">
                             <ng-template let-metric #item>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-                                        <div class="font-w-600">{{metric.label}}</div>
-                                        <div class="font-w-600 font-12" *ngFor="let tag of metric.tags" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{tag}}</div>
+                                        <div class="font-w-600">{{metric.metric}}</div>
+                                        <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
                                     </div>
-                                    <div class="font-12 text-gray">{{metric.description}}</div>
+                                    <div *ngIf="metric.comments" class="font-12 text-gray">{{metric?.description}}</div>
                                 </div>
                             </ng-template>
                         </p-multiselect>
@@ -29,7 +29,7 @@
 
                                 <p-select *ngIf="i > 0" [options]="metricOperationOptions" [(ngModel)]="selectedMetric.operation" optionLabel="label" appendTo="body" (onChange)="onChangeSelectOperation();"/>
 
-                                <span class="font-16 font-w-600">{{selectedMetric.metric.label}}</span>
+                                <span class="font-16 font-w-600">{{selectedMetric.metric.metric}}</span>
                             </div>
 
                             <div class="metric-option-action-buttons">
@@ -53,7 +53,7 @@
                             <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
                                 <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
                                     <span class="font-16 font-w-700 text-gray">[</span>
-                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
+                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.metric}}</span>
                                     <span class="font-16 font-w-700 text-gray">]</span>
                                     <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
                                 </div>
@@ -70,7 +70,7 @@
                             <div [pTooltip]="metricResultIdsTooltip" tooltipPosition="top" style="display: flex; flex-direction: row; align-items: center;">
                                 <div *ngFor="let selectedMetric of selectedMetrics; let i = index;">
                                     <span class="font-16 font-w-700 text-gray">[</span>
-                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.label}}</span>
+                                    <span class="font-12 font-w-600 text-white">{{selectedMetric.metric.metric}}</span>
                                     <span class="font-16 font-w-700 text-gray">]</span>
                                     <span *ngIf="i < (selectedMetrics.length - 1)" class="font-16 font-w-700">{{selectedMetrics[i+1].operation.symbol}}</span>
                                 </div>
@@ -114,6 +114,7 @@
                     </form>
                 </app-inner-accordion>
             </div>
+            <p-skeleton *ngIf="loadingAllMetricList" width="100%" height="91px" borderRadius="16px" />
         </app-accordion>
 
         <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true" [disabled]="step2Disabled">
@@ -151,11 +152,11 @@
                                 <div>¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
                                 <div class="activation-recover-card-data">
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="activation1"/>
-                                    <div class="font-16">de las últimas</div>
+                                    <div class="font-16">de los últimos</div>
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="activation2"/>
-                                    <div class="font-16">evaluaciones</div>
+                                    <div class="font-16">minutos</div>
                                 </div>
-                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si {{activationRecoverForm.get('activation1')?.value.label}} de las últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones falla</div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en {{activationRecoverForm.get('activation1')?.value.label}} de los últimos {{activationRecoverForm.get('activation2')?.value.label}} minutos falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
                                     <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
@@ -172,11 +173,11 @@
                                 <div>¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
                                 <div class="activation-recover-card-data">
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="recover1"/>
-                                    <div class="font-16">de las últimas</div>
+                                    <div class="font-16">de los últimos</div>
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="recover2"/>
-                                    <div class="font-16">evaluaciones</div>
+                                    <div class="font-16">minutos</div>
                                 </div>
-                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si {{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones falla</div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en {{activationRecoverForm.get('recover1')?.value.label}} de los últimos {{activationRecoverForm.get('recover2')?.value.label}} minutos falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
                                     <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
@@ -210,7 +211,7 @@
                     </div>
                 </app-inner-accordion>
 
-                <app-inner-accordion [title]="'Comportamiento ante errores'">
+                <!-- <app-inner-accordion [title]="'Comportamiento ante errores'">
                     <form class="error-behavior-container" [formGroup]="errorBehaviorForm">
                         <div class="error-behavior-line">
                             <div class="icon-title">
@@ -228,7 +229,7 @@
                             <p-select [options]="errorBehaviorOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="error2"/>
                         </div>
                     </form>
-                </app-inner-accordion>
+                </app-inner-accordion> -->
             </div>
         </app-accordion>
 
@@ -380,7 +381,7 @@
                 <div class="font-16 font-w-600">Métricas seleccionadas</div>
                 <div class="title-description-block-1" *ngFor="let selectedMetric of selectedMetrics; let i = index;">
                     <div class="title">Métrica {{selectedMetric.id}}</div>
-                    <div class="description"><span *ngIf="i > 0">({{selectedMetric.operation.symbol}})</span> {{selectedMetric.metric.label}}</div>
+                    <div class="description"><span *ngIf="i > 0">({{selectedMetric.operation.symbol}})</span> {{selectedMetric.metric.metric}}</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">Métrica final</div>
@@ -428,11 +429,11 @@
                 <div class="font-16 font-w-600">Opciones de activación de recuperación</div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de las últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones</div>
+                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de los últimos {{activationRecoverForm.get('activation2')?.value.label}} minutos</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones</div>
+                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de los últimos {{activationRecoverForm.get('recover2')?.value.label}} minutos</div>
                 </div>
             </div>
             <div *ngIf="allSilencePeriodFieldsCompleted()" class="modal-step-content">
@@ -450,7 +451,7 @@
                     <div class="description">No se han añadido periodos de silencio</div>
                 </div>
             </div>
-            <div class="modal-step-content">
+            <!-- <div class="modal-step-content">
                 <div class="font-16 font-w-600">Comportamiento ante errores</div>
                 <div class="title-description-block-1">
                     <div class="title">¿Qué quieres hacer si la query no devuelve datos?</div>
@@ -460,7 +461,7 @@
                     <div class="title">¿Qué quieres hacer si la query falla y hace timeout?</div>
                     <div class="description">{{errorBehaviorForm.get('error2')?.value.label}}</div>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <div class="modal-step">
@@ -529,7 +530,7 @@
     </div>
     <div class="modal-actions">
         <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;"/>
-        <p-button label="Confirmar" severity="primary" />
+        <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCreateAlert();"/>
     </div>
 </app-modal>
 
