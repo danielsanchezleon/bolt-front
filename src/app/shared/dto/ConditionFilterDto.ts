@@ -1,5 +1,7 @@
-export interface ConditionFilterDto 
+export class ConditionFilterDto 
 {
-  conditionFilterField: string;
-  conditionFilterValue: string;
+  constructor(
+    public conditionFilterField: string,
+    public conditionFilterValue: string
+  ) {}
 }

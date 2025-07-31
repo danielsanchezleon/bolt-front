@@ -23,19 +23,14 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { channelOptions, alertOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
-
 import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { debounceTime, Subject, Subscription } from 'rxjs';
-
 import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
-
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../shared/services/metric.service';
 import { TableMetricInfo } from '../../shared/models/TableMetricInfo';
-
 import { SkeletonModule } from 'primeng/skeleton';
-
 import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
 import { AlertConditionDto } from '../../shared/dto/AlertConditionDto';
 import { AlertConditionHistoryDto } from '../../shared/dto/AlertConditionHistoryDto';
@@ -48,8 +43,8 @@ import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
 import { EndpointAlertDto } from '../../shared/dto/EndpointAlertDto';
 import { EndpointDto } from '../../shared/dto/EndpointDto';
 import { FilterLogDto } from '../../shared/dto/FilterLogDto';
-import { TeamDto } from '../../shared/dto/TeamDto';
 import { AlertService } from '../../shared/services/alert.service';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 export class MetricOption {
   id: string;
@@ -137,6 +132,7 @@ type ThresholdFormGroup = FormGroup<{
   min: FormControl<number | null>;
   maxIncluded: FormControl<boolean>;
   max: FormControl<number | null>;
+  status: FormControl<boolean>;
 }>;
 
 type ThresholdFormArray = FormArray<ThresholdFormGroup>;
@@ -167,7 +163,7 @@ type PermissionFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-create-simple-condition-alert',
-  imports: [SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
@@ -379,7 +375,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       minIncluded: this._fb.control(true),
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
-      max: this._fb.control(null)
+      max: this._fb.control(null),
+      status: this._fb.control(true)
     }) as ThresholdFormGroup;
 
     this.thresholdArray.push(group);
@@ -750,6 +747,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + templateVariableOptions[i].value + '}}');
   }
 
+  onClickAddTagTemplateVariableToMessage(i: number) {
+    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + this.tagIntersectionOptions[i].value + '}}');
+  }
+
   onClickAddConditionalBlockToDetails(i: number) {
     this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' + conditionalBlockOptions[i].value + '}}');
   }
@@ -828,7 +829,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let alertMetrics: AlertMetricDto[] = [];
 
     for (let selectedMetric of this.selectedMetrics) {
-      alertMetrics.push(new AlertMetricDto(selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
+      alertMetrics.push(new AlertMetricDto(selectedMetric.metric.bbdd, selectedMetric.metric.table_name, selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
     }
 
     alertIndicators.push(new AlertIndicatorDto('A', alertMetrics));
@@ -838,8 +839,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
-      alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null, null));
-      alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, alertClauses));
+      alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null));
+      alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, threshold.get('status')?.value!, alertClauses));
     }
 
     //ALERTA

@@ -6,7 +6,6 @@ export class AlertClauseDto
     public threshold: number,
     public endBrackets: number | null,
     public order: number | null,
-    public externalOperation: string | null,
-    public indicatorName: string | null
+    public externalOperation: number | null,
   ) {}
 }

@@ -21,10 +21,8 @@ export const conditionalBlockOptions = [
 ];
 
 export const templateVariableOptions = [
-    {value: 'host_name', label: 'host_name', description: 'Nombre del host', type: 'tv'},
     {value: 'metric_name', label: 'metric_name', description: 'Nombre de la métrica', type: 'tv'},
     {value: 'metric_value', label: 'metric_value', description: 'Valor actual de la métrica', type: 'tv'},
     {value: 'alert_level', label: 'alert_level', description: 'Nivel de criticidad de la alerta', type: 'tv'},
-    {value: 'alert_description', label: 'alert_description', description: 'Descripción de la alerta', type: 'tv'},
     {value: 'timestamp', label: 'timestamp', description: 'Marca de tiempo del evento', type: 'tv'},
 ];

@@ -156,13 +156,14 @@
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" style="width: 2px; height: 32px; background-color: lightgray;"></div>
                         <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="thresholdComparationOptions" appendTo="body" size="small" placeholder="{{dimension}}"/>
                     </div>
-                    <div *ngIf="thresholdArray.controls.length > 1" class="threshold-options">
-                        <div>
+                    <div class="threshold-options">
+                        <p-toggleswitch formControlName="status"/>
+                        <div *ngIf="thresholdArray.controls.length > 1">
                             <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (thresholdArray.controls.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickThresholdArrowDown(i);"/>
                             <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0" icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickThresholdArrowUp(i);"/>
                         </div>
-                        <div style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-button [pTooltip]="'Eliminar umbral'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedThreshold(i);"/>
+                        <div *ngIf="thresholdArray.controls.length > 1" style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                        <p-button *ngIf="thresholdArray.controls.length > 1" [pTooltip]="'Eliminar umbral'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickRemoveSelectedThreshold(i);"/>
                     </div>
                 </div>
 
@@ -578,6 +579,10 @@
             <div class="font-16 font-w-600">Variables de plantilla</div>
         </div>
         <div class="options-container">
+            <div class="option-container" *ngFor="let tagIntersectionOption of tagIntersectionOptions; let i = index;" (click)="onClickAddTagTemplateVariableToMessage(i);">
+                <div class="font-12 font-w-600 title">{{tagIntersectionOption.label}}</div>
+                <div class="font-12 text-gray">{{tagIntersectionOption.value}}</div>
+            </div>
             <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;" (click)="onClickAddTemplateVariableToMessage(i);">
                 <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>
                 <div class="font-12 text-gray">{{templateVariableOption.description}}</div>
