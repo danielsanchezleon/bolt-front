@@ -6,7 +6,7 @@ import { AccordionComponent } from '../../shared/components/accordion/accordion.
 import { Router } from '@angular/router';
 import { MetricOptions, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl } from '@angular/forms';
-import { MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
+import { MultiSelectChangeEvent, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
@@ -140,8 +140,8 @@ type ThresholdFormArray = FormArray<ThresholdFormGroup>;
 type SilencePeriodFormGroup = FormGroup<{
   id: FormControl<string>;
   days: FormControl<any[] | null>;
-  from: FormControl<string | null>;
-  to: FormControl<string | null>;
+  from: FormControl<Date | null>;
+  to: FormControl<Date | null>;
 }>;
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
@@ -189,6 +189,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   tagIntersectionOptions: any[] = [];
   operationOptions: any[] = []
 
+  dimensionValuesMap: Map<string, string[]> = new Map();
+  selectedDimensionValuesMap: Map<string, Map<string, string[]>> = new Map();
+
   timeWindowOptions: any[] = [];
   discardTimeOptions: any[] = [];
   periodicityOptions: any[] = [];
@@ -200,6 +203,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   thresholdTypeOptions: any[] = [];
   thresholdComparationOptions: any[] = [];
   thresholdArray: ThresholdFormArray;
+  lastThresholdArrayLength: number = 0;
 
   activationRecoverEvaluationOptions: any[] = [];
   activationRecoverForm: FormGroup;
@@ -214,7 +218,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   channelOptions: any[] = [];
   alertOptions: any[] = [];
   endpointArray: EndpointFormArray;
-  iconMap: Map<number, string> = new Map<number, string>();
+  iconMap: Map<string, string> = new Map<string, string>();
 
   tagForm: FormGroup;
   tagList: Tag[] = [];
@@ -324,6 +328,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.thresholdTypeOptions = thresholdTypeOptions;
     this.thresholdComparationOptions = thresholdComparationOptions;
     this.createThreshold();
+    this.selectedDimensionValuesMap.set('1', new Map());
 
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
 
@@ -348,6 +353,18 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.permissionTeamOptions = permissionTeamOptions;
     this.permissionTypeOptions = permissionTypeOptions;
     this.createPermission();
+
+    this.thresholdArray.valueChanges.subscribe((thresholds) => {
+      if (this.lastThresholdArrayLength != this.thresholdArray.length)
+      {        
+        this.lastThresholdArrayLength = this.thresholdArray.length;
+      
+        this.selectedDimensionValuesMap.clear();
+        thresholds.forEach((threshold: any) => {
+          this.selectedDimensionValuesMap.set(threshold.id, new Map());
+        });
+      }
+    });
   }
 
   watchGroupValidity(group: ThresholdFormGroup) {
@@ -399,8 +416,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
         maxControl?.clearValidators();
         minIncludedControl?.clearValidators();
         maxIncludedControl?.clearValidators();
-
-        console.log()
       } else if (comp.value === 2 || comp.value === 3) {
         // Solo rango requerido
         valueControl?.clearValidators();
@@ -425,6 +440,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     // Ejecutar validación inicial según el valor inicial
     comparationControl?.updateValueAndValidity();
+
+    this.lastThresholdArrayLength = this.thresholdArray.length;
   }
 
   allValuesCompleted(): boolean {
@@ -533,6 +550,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.checkSteps();
     this.generateResultMetric();
     this.getMetricTagsIntersection();
+
+    this.dimensionValuesMap.clear();
+
+    this.selectedMetrics.forEach((metric) => {
+      metric.metric.dimension.forEach((dimension) => {
+        this.getDimensionValues(metric.metric.bbdd, metric.metric.table_name, metric.metric.metric, dimension);
+      });
+    });
   }
 
   generateResultMetric() {
@@ -807,7 +832,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     for (let endpoint of this.endpointArray.controls) {
       let endpointDto: EndpointDto = new EndpointDto(endpoint.get('channel')?.value.label, endpoint.get('channel')?.value.value, endpoint.get('value')?.value!)
-      endpointAlerts.push(new EndpointAlertDto(endpoint.get('alerts')?.value!, endpointDto))
+      let severities: string[] = [];
+
+      for (let severity of endpoint.get('alerts')?.value!)
+      {
+        severities.push(severity.value);
+      }
+
+      endpointAlerts.push(new EndpointAlertDto(severities, endpointDto))
     }
 
     //PERIODOS DE SILENCIO
@@ -816,10 +848,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     if (this.allSilencePeriodFieldsCompleted())
     {
       for (let silencePeriod of this.silencePeriodArray.controls) {
-        let days: number[] = silencePeriod.get('days')?.value!;
+        let days: any[] = silencePeriod.get('days')?.value!;
 
         for (let i = 0; i < days.length; i++) {
-          alertSilences.push(new AlertSilenceDto(days[i], silencePeriod.get('from')?.value!, silencePeriod.get('to')?.value!));
+          let fromHour = silencePeriod.get('from')?.value!.getHours().toString().padStart(2, '0');
+          let fromMinutes = silencePeriod.get('from')?.value!.getMinutes().toString().padStart(2, '0');
+          let toHour = silencePeriod.get('to')?.value!.getHours().toString().padStart(2, '0');
+          let toMinutes = silencePeriod.get('to')?.value!.getMinutes().toString().padStart(2, '0');
+          alertSilences.push(new AlertSilenceDto(days[i].value, fromHour+':'+fromMinutes, toHour+':'+toMinutes));
         }
       }
     }
@@ -840,7 +876,19 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
       alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null));
-      alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, threshold.get('status')?.value!, alertClauses));
+
+      let conditionFilters: ConditionFilterDto[] = [];
+      let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value!)!;
+
+      for (let key of dimensionValuesMap.keys())
+      {
+        for (let value of dimensionValuesMap.get(key)!)
+        {
+          conditionFilters.push(new ConditionFilterDto(key, value));
+        }
+      }
+
+      alertConditions.push(new AlertConditionDto(threshold.get('type')?.value.value, threshold.get('status')?.value!, alertClauses, conditionFilters));
     }
 
     //ALERTA
@@ -871,18 +919,18 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     alertDto.alertConditionHistories = alertConditionHistories;
     alertDto.filterLogs = filterLogs;
 
-    console.log(alertDto);
+    this.alertService.createSimpleAlert(alertDto).subscribe(
+      (response) => 
+      {
 
-    // this.alertService.createAlert(alertDto).subscribe(
-    //   (response) => 
-    //   {
+      },
+      (error) =>
+      {
 
-    //   },
-    //   (error) =>
-    //   {
+      }
+    )
 
-    //   }
-    // )
+    console.log(alertDto)
   }
 
   onClickRemoveSelectedThreshold(index: number) {
@@ -924,5 +972,34 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     this.checkSteps();
     this.generateResultMetric();
+  }
+
+  //Dimension values
+  getDimensionValues(bbdd: string, table_name: string, metric: string, dimension: string)
+  {
+    this.alertService.getDimensionValues(bbdd, table_name, metric, dimension).subscribe(
+      (response) => {
+        if (!this.dimensionValuesMap.has(dimension)) 
+        {
+          this.dimensionValuesMap.set(dimension, response);
+        }
+        else
+        {
+          let existingArray = this.dimensionValuesMap.get(dimension)!;
+          const intersection = existingArray.filter(valor => response.includes(valor));
+          this.dimensionValuesMap.set(dimension, intersection);
+        }
+      },
+      (error) => {
+
+      }
+    )
+  }
+
+  onChangeDimensionValuesSelection(threshold: any, dimension: string, event: MultiSelectChangeEvent) 
+  {
+    let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value)!;
+    dimensionValuesMap.set(dimension, event.value);
+    this.selectedDimensionValuesMap.set(threshold.get('id')?.value, dimensionValuesMap);
   }
 }

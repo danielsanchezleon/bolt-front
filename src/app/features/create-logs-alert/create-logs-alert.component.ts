@@ -167,7 +167,7 @@ export class CreateLogsAlertComponent implements OnInit {
   channelOptions: any[] = [];
   alertOptions: any[] = [];
   endpointArray: EndpointFormArray;
-  iconMap: Map<number, string> = new Map<number, string>();
+  iconMap: Map<string, string> = new Map<string, string>();
 
   tagForm: FormGroup;
   tagList: Tag[] = [];

@@ -154,7 +154,7 @@
                             </div>
                         </div>
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="thresholdComparationOptions" appendTo="body" size="small" placeholder="{{dimension}}"/>
+                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="dimensionValuesMap.get(dimension)" (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body" size="small" placeholder="{{dimension}}"/>
                     </div>
                     <div class="threshold-options">
                         <p-toggleswitch formControlName="status"/>
