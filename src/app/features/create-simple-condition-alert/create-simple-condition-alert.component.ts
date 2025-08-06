@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { Router } from '@angular/router';
 import { MetricOptions, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions } from '../../shared/constants/metric-options';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl } from '@angular/forms';
 import { MultiSelectChangeEvent, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
@@ -163,7 +163,7 @@ type PermissionFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-create-simple-condition-alert',
-  imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, FloatingGraphComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './create-simple-condition-alert.component.html',
   styleUrl: './create-simple-condition-alert.component.scss'
 })
@@ -249,11 +249,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   isSuccess: boolean = false;
   isError: boolean = false;
 
-  //Steps
-  step2Disabled: boolean = true;
-  step3Disabled: boolean = true;
-  step4Disabled: boolean = true;
-
   constructor(
     private router: Router,
     private _fb: FormBuilder,
@@ -302,12 +297,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       details: ['', []],
       proccedure: ['', []]
     });
-
-    let sub: Subscription = this.notificationMessageForm.get('message')?.valueChanges.subscribe(() => {
-      this.checkSteps();
-    }) as Subscription;
-
-    this.subscriptions.push(sub);
   }
 
   ngOnInit(): void {
@@ -380,7 +369,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       if (control) {
         const sub = control.valueChanges.subscribe(() => {
           group.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-          this.checkSteps(); // <- fuerza revalidación general
         });
         this.subscriptions.push(sub);
       }
@@ -404,6 +392,12 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.thresholdArray.push(group);
 
     this.selectedDimensionValuesMap.set(group.get('id')?.value!, new Map());
+
+    this.groupByForm.get('groupBy')?.value.forEach( (groupBy: any) => {
+      let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
+      dimensionValuesMap.set(groupBy, this.dimensionValuesMap.get(groupBy)!);
+      this.selectedDimensionValuesMap.set(group.get('id')?.value!, dimensionValuesMap);
+    })
 
     this.watchGroupValidity(group);
 
@@ -438,9 +432,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       maxControl?.updateValueAndValidity();
       minIncludedControl?.updateValueAndValidity();
       maxIncludedControl?.updateValueAndValidity();
-
-      this.checkSteps();
-
     }) as Subscription;
 
     this.subscriptions.push(dynamicValidationSub);
@@ -463,9 +454,26 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       days: this._fb.control(null),
       from: this._fb.control(null),
       to: this._fb.control(null)
+    },
+    {
+      validators: this.timeValidator
     }) as SilencePeriodFormGroup;
 
+    group.get('from')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+    group.get('to')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+
     this.silencePeriodArray.push(group);
+  }
+
+  timeValidator(group: AbstractControl): { [key: string]: any } | null {
+    const from = group.get('from')?.value;
+    const to = group.get('to')?.value;
+
+    if (from && to && to <= from) {
+      return { horaInvalida: true };
+    }
+
+    return null;
   }
 
   allSilencePeriodFieldsCompleted(): boolean {
@@ -554,7 +562,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     this.selectedMetricList = [];
 
-    this.checkSteps();
     this.generateResultMetric();
     this.getMetricTagsIntersection();
 
@@ -602,8 +609,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       selectedMetric.id = this.letters[i];
     });
 
-    this.checkSteps();
-
     if (this.selectedMetrics.length > 0) {
       this.generateResultMetric();
       this.getMetricTagsIntersection();
@@ -621,7 +626,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       selectedMetric.id = this.letters[i];
     });
 
-    this.checkSteps();
     this.generateResultMetric();
   }
 
@@ -636,36 +640,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       selectedMetric.id = this.letters[i];
     });
 
-    this.checkSteps();
     this.generateResultMetric();
-  }
-
-  checkSteps() {
-    //Step 2
-    if (this.selectedMetrics.length > 0) {
-      this.step2Disabled = false;
-    }
-    else {
-      this.step2Disabled = true;
-      this.step3Disabled = true;
-      this.step4Disabled = true;
-    }
-
-    if (this.allValuesCompleted()) {
-      this.step3Disabled = false;
-      this.step4Disabled = false;
-    }
-    else {
-      this.step3Disabled = true;
-      this.step4Disabled = true;
-    }
-
-    if (this.notificationMessageForm.get('message')?.valid) {
-      this.step4Disabled = false;
-    }
-    else {
-      this.step4Disabled = true;
-    }
   }
 
   onClickCustomizeMetric() {
@@ -832,6 +807,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.isSuccess = false;
     this.isError = false;
 
+    console.log(this.selectedDimensionValuesMap)
+
     //FILTER LOGS
     let filterLogs: FilterLogDto[] = [];
 
@@ -956,8 +933,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.thresholdArray.controls.forEach((threshold, i) => {
       threshold.get('id')?.setValue((i + 1).toString());
     });
-
-    this.checkSteps();
   }
 
   onClickThresholdArrowDown(index: number) {
@@ -971,7 +946,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       threshold.get('id')?.setValue((i + 1).toString());
     });
 
-    this.checkSteps();
     this.generateResultMetric();
   }
 
@@ -986,7 +960,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       threshold.get('id')?.setValue((i + 1).toString());
     });
 
-    this.checkSteps();
     this.generateResultMetric();
   }
 
@@ -1027,5 +1000,97 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   onClickGoToMofifyAlert()
   {
     this.router.navigate(['modificar-alerta']);
+  }
+
+  getActivationTime()
+  {
+    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+
+    return this.formatTime(timeWindow * this.activationRecoverForm.get('activation1')?.value.value);
+  }
+
+  getRecoverTime()
+  {
+    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+
+    return this.formatTime(timeWindow * this.activationRecoverForm.get('recover1')?.value.value);
+  }
+
+  formatTime(totalSeconds: number): string 
+  {
+    let days = Math.floor(totalSeconds / 86400);
+    let hours = Math.floor((totalSeconds % 86400) / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+
+    const parts: string[] = [];
+
+    if (days) parts.push(`${days} día${days > 1 ? 's' : ''}`);
+    if (hours) parts.push(`${hours} h`);
+    if (minutes) parts.push(`${minutes} m`);
+    if (seconds) parts.push(`${seconds} s`);
+
+    if (parts.length === 0) return '0 s';
+    if (parts.length === 1) return parts[0];
+    if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
+
+    return parts.slice(0, -1).join(', ') + ' y ' + parts.slice(-1);
+  }
+
+  disasterSelected()
+  {
+    let selected: boolean = false;
+
+    this.thresholdArray.controls.forEach((group) => {
+      if (group.get('type')?.value.value == 0)
+        selected = true;
+    });
+
+    return selected;
+  }
+
+  criticalSelected()
+  {
+    let selected: boolean = false;  
+
+    this.thresholdArray.controls.forEach((group) => {
+      if (group.get('type')?.value.value == 1)
+        selected = true;
+    });
+
+    return selected;
+  }
+
+  majorSelected()
+  {
+    let selected: boolean = false;
+
+    this.thresholdArray.controls.forEach((group) => {
+      if (group.get('type')?.value.value == 2)
+        selected = true;
+    });
+
+    return selected;
+  }
+
+  warningSelected()
+  {
+    let selected: boolean = false;
+
+    this.thresholdArray.controls.forEach((group) => {
+      if (group.get('type')?.value.value == 3)
+        selected = true;
+    });
+
+    return selected;
+  }
+
+  onChangeGroupBy(event: MultiSelectChangeEvent)
+  {
+    this.thresholdArray.controls.forEach((group) => {
+      let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
+      dimensionValuesMap.set(event.itemValue.value, this.dimensionValuesMap.get(event.itemValue.value)!);
+      this.selectedDimensionValuesMap.set(group.get('id')?.value!, dimensionValuesMap);
+    })
   }
 }

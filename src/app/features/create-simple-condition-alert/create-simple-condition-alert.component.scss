@@ -165,6 +165,18 @@
             padding: 16px;
         }
 
+        .error {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+
+            border: 1px solid lightgray;
+            border-radius: 8px;
+            background-color: #ffd7d7;
+            padding: 16px;
+        }
+
         .threshold-container {
 
             display: flex;

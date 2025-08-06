@@ -87,7 +87,7 @@
                     <div class="font-16 font-w-600">Agrupaciones</div>
                     <form class="group-by-options" [formGroup]="groupByForm">
                         <p-floatlabel class="full-width-selector" variant="on">
-                            <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector" [filter]="true" appendTo="body" formControlName="groupBy"/>
+                            <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector" [filter]="true" appendTo="body" formControlName="groupBy" (onChange)="onChangeGroupBy($event);"/>
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                         <p-floatlabel class="full-width-selector" variant="on">
@@ -117,7 +117,7 @@
             <p-skeleton *ngIf="loadingAllMetricList" width="100%" height="91px" borderRadius="16px" />
         </app-accordion>
 
-        <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true" [disabled]="step2Disabled">
+        <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true">
             <div class="step-2-container">
                 <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
                 <div class="notice c-blue">
@@ -127,7 +127,7 @@
                     </div>
                 </div>
 
-                <div class="threshold-container" *ngFor="let threshold of thresholdArray.controls; let i = index;" [formGroup]="threshold">
+                <div class="threshold-container" *ngFor="let threshold of thresholdArray.controls; let i = index;">
                     <div class="threshold-left">
                         <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.get('id')?.value}}</div>
                         <div class="type-buttons-container">
@@ -136,27 +136,29 @@
                             <div class="type-button-container" [ngClass]="{'major': threshold.get('type')?.value == thresholdTypeOptions[2]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[2]);">Major</div>
                             <div class="type-button-container" [ngClass]="{'warning': threshold.get('type')?.value == thresholdTypeOptions[3]}" (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[3]);">Warning</div>
                         </div>
-                        <p-select formControlName="comparation" class="select" [options]="thresholdComparationOptions" optionLabel="label" appendTo="body" size="small"/>
-                        <p-inputnumber class="threshold-value" *ngIf="threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1" formControlName="value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Valor"/>
-                        <div *ngIf="threshold.get('comparation')?.value.value == 2 || threshold.get('comparation')?.value.value == 3" class="range-container">
-                            <div>
-                                <p-checkbox formControlName="minIncluded" [binary]="true" size="small"/>
-                                &nbsp;
-                                <label>Incl.</label>
-                            </div>
-                            <p-inputnumber class="threshold-value" formControlName="min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Min"/>
-                            -
-                            <p-inputnumber class="threshold-value" formControlName="max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Max"/>
-                            <div>
-                                <p-checkbox formControlName="maxIncluded" [binary]="true" size="small"/>
-                                &nbsp;
-                                <label>Incl.</label>
+                        <div [formGroup]="threshold">
+                            <p-select formControlName="comparation" class="select" [options]="thresholdComparationOptions" optionLabel="label" appendTo="body" size="small"/>
+                            <p-inputnumber class="threshold-value" *ngIf="threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1" formControlName="value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Valor"/>
+                            <div *ngIf="threshold.get('comparation')?.value.value == 2 || threshold.get('comparation')?.value.value == 3" class="range-container">
+                                <div>
+                                    <p-checkbox formControlName="minIncluded" [binary]="true" size="small"/>
+                                    &nbsp;
+                                    <label>Incl.</label>
+                                </div>
+                                <p-inputnumber class="threshold-value" formControlName="min" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Min"/>
+                                -
+                                <p-inputnumber class="threshold-value" formControlName="max" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Max"/>
+                                <div>
+                                    <p-checkbox formControlName="maxIncluded" [binary]="true" size="small"/>
+                                    &nbsp;
+                                    <label>Incl.</label>
+                                </div>
                             </div>
                         </div>
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="dimensionValuesMap.get(dimension)" (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"/>
+                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;" class="multiselect" [options]="dimensionValuesMap.get(dimension)" [ngModel]="dimensionValuesMap.get(dimension)" (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"/>
                     </div>
-                    <div class="threshold-options">
+                    <div class="threshold-options" [formGroup]="threshold">
                         <p-toggleswitch formControlName="status"/>
                         <div *ngIf="thresholdArray.controls.length > 1">
                             <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000" *ngIf="i < (thresholdArray.controls.length - 1)" icon="pi pi-arrow-down" [rounded]="true" [text]="true" severity="secondary" (onClick)="onClickThresholdArrowDown(i);"/>
@@ -180,14 +182,14 @@
                                 <div>¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
                                 <div class="activation-recover-card-data">
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="activation1"/>
-                                    <div class="font-16">de los últimos</div>
+                                    <div class="font-16">de las últimas</div>
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="activation2"/>
-                                    <div class="font-16">minutos</div>
+                                    <div class="font-16">evaluaciones</div>
                                 </div>
-                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en {{activationRecoverForm.get('activation1')?.value.label}} de los últimos {{activationRecoverForm.get('activation2')?.value.label}} minutos falla</div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en {{activationRecoverForm.get('activation1')?.value.label}} de los últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
+                                    <div class="font-16">Tiempo: <span class="font-w-600">{{getActivationTime()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -201,14 +203,14 @@
                                 <div>¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
                                 <div class="activation-recover-card-data">
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="recover1"/>
-                                    <div class="font-16">de los últimos</div>
+                                    <div class="font-16">de las últimas</div>
                                     <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select" optionLabel="label" appendTo="body" formControlName="recover2"/>
-                                    <div class="font-16">minutos</div>
+                                    <div class="font-16">evaluaciones</div>
                                 </div>
-                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en {{activationRecoverForm.get('recover1')?.value.label}} de los últimos {{activationRecoverForm.get('recover2')?.value.label}} minutos falla</div>
+                                <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en {{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo estimado entre <span class="font-w-600">10 minutos y 10 minutos</span></div>
+                                    <div class="font-16">Tiempo: <span class="font-w-600">{{getRecoverTime()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -217,7 +219,15 @@
 
                 <app-inner-accordion [title]="'Periodos de silencio'">
                     <div class="silence-periods-container">
-                        <div class="silence-period-container" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;" [formGroup]="silencePeriod">
+
+                        <div *ngIf="!silencePeriodArray.valid" class="error c-red">
+                            <i class="pi pi-info-circle"></i>
+                            <div>
+                                <span class="font-w-700">Error</span>: Existen periodos de silencio con errores. La hora de fin debe ser mayor a la hora de inicio.
+                            </div>
+                        </div>
+
+                        <div class="silence-period-container" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;" [formGroup]="silencePeriod" [ngStyle]="{'outline': silencePeriod.valid ? '0px' : '2px solid red'}">
                             <div class="checkboxes-container">
                                 <i class="pi pi-calendar c-blue"></i>
                                 <div *ngFor="let silencePeriodDay of silencePeriodDayOptions;" style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
@@ -261,7 +271,7 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true" [disabled]="step3Disabled">
+        <app-accordion [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true">
             <div class="step-3-container">
                 <div class="endpoint-list-container">
                     <div class="font-20 font-w-600">Lista de endpoints</div>
@@ -275,10 +285,10 @@
                             </div>
 
                             <div class="alerts-container">
-                                <div class="type-button-container" [ngClass]="{'disaster': endpoint.get('alerts')?.value?.includes(alertOptions[0]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[0])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[0]);">Disaster</div>
-                                <div class="type-button-container" [ngClass]="{'critical': endpoint.get('alerts')?.value?.includes(alertOptions[1]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[1])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[1]);">Critical</div>
-                                <div class="type-button-container" [ngClass]="{'major': endpoint.get('alerts')?.value?.includes(alertOptions[2])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[2]);">Major</div>
-                                <div class="type-button-container" [ngClass]="{'warning': endpoint.get('alerts')?.value?.includes(alertOptions[3])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[3]);">Warning</div>
+                                <div *ngIf="disasterSelected()" class="type-button-container" [ngClass]="{'disaster': endpoint.get('alerts')?.value?.includes(alertOptions[0]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[0])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[0]);">Disaster</div>
+                                <div *ngIf="criticalSelected()" class="type-button-container" [ngClass]="{'critical': endpoint.get('alerts')?.value?.includes(alertOptions[1]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[1])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[1]);">Critical</div>
+                                <div *ngIf="majorSelected()" class="type-button-container" [ngClass]="{'major': endpoint.get('alerts')?.value?.includes(alertOptions[2])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[2]);">Major</div>
+                                <div *ngIf="warningSelected()" class="type-button-container" [ngClass]="{'warning': endpoint.get('alerts')?.value?.includes(alertOptions[3])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[3]);">Warning</div>
                             </div>
                             <p-button *ngIf="endpointArray.length > 1" [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="deleteEndpoint(i);"/>
                         </div>
@@ -366,7 +376,7 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true" [disabled]="step4Disabled">
+        <app-accordion [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true">
             <div class="step-4-container">
                 <div class="notice c-blue">
                     <i class="pi pi-info-circle"></i>
@@ -475,11 +485,11 @@
                 <div class="font-16 font-w-600">Opciones de activación de recuperación</div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de los últimos {{activationRecoverForm.get('activation2')?.value.label}} minutos</div>
+                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de las últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de los últimos {{activationRecoverForm.get('recover2')?.value.label}} minutos</div>
+                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones</div>
                 </div>
             </div>
             <div *ngIf="allSilencePeriodFieldsCompleted()" class="modal-step-content">
@@ -605,9 +615,9 @@
             <div class="font-16 font-w-600">Variables de plantilla</div>
         </div>
         <div class="options-container">
-            <div class="option-container" *ngFor="let tagIntersectionOption of tagIntersectionOptions; let i = index;" (click)="onClickAddTagTemplateVariableToMessage(i);">
-                <div class="font-12 font-w-600 title">{{tagIntersectionOption.label}}</div>
-                <div class="font-12 text-gray">{{tagIntersectionOption.value}}</div>
+            <div class="option-container" *ngFor="let groupByOption of groupByForm.get('groupBy')?.value; let i = index;" (click)="onClickAddTagTemplateVariableToMessage(i);">
+                <div class="font-12 font-w-600 title">{{groupByOption}}</div>
+                <div class="font-12 text-gray">{{groupByOption}}</div>
             </div>
             <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;" (click)="onClickAddTemplateVariableToMessage(i);">
                 <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>

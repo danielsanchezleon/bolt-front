@@ -22,7 +22,7 @@ export class AlertDto
     public alertText: string,
     public alertDetail: string,
     public alertTags: any[],
-    public evaluationFrequency: string,
+    public evaluationFrequency: number,
     public evaluationPeriod: string,
     public alertType: number,
     public offset: number,
