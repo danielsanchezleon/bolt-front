@@ -807,8 +807,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.isSuccess = false;
     this.isError = false;
 
-    console.log(this.selectedDimensionValuesMap)
-
     //FILTER LOGS
     let filterLogs: FilterLogDto[] = [];
 
@@ -884,8 +882,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     //ALERTA
     let alertDto: AlertDto = new AlertDto(
-      "",
-      "",
       this.notificationMessageForm.get('message')?.value,
       this.notificationMessageForm.get('details')?.value,
       this.tagList,

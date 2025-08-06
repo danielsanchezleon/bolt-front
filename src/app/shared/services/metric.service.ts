@@ -2,13 +2,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TableMetricInfo } from '../models/TableMetricInfo';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MetricService {
 
-  private apiUrl = 'http://localhost:8081/api/v1/starrocks/tables-metrics-info';
+  private apiUrl = environment.apiUrl + '/v1/starrocks/tables-metrics-info';
 
   constructor(private http: HttpClient) {}
 
