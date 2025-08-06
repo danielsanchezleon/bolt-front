@@ -172,6 +172,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   subscriptions: Subscription[] = [];
 
   //Step 1
+  filterValue: string = "";
   private filterSubject = new Subject<string>();
   loadingAllMetricList: boolean = false;
   loadingMetricList: boolean = false;
@@ -243,6 +244,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   //Modal
   modalVisible: boolean = false;
+  isDetails: boolean = false;
+  isLoading: boolean = false;
+  isSuccess: boolean = false;
+  isError: boolean = false;
 
   //Steps
   step2Disabled: boolean = true;
@@ -308,7 +313,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   ngOnInit(): void {
     //Step 1
 
-    this.getAllMetrics();
+    // this.getAllMetrics();
 
     this.filterSubject
       .pipe(debounceTime(1000)) // Espera 1 segundo desde la última tecla
@@ -354,17 +359,17 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.permissionTypeOptions = permissionTypeOptions;
     this.createPermission();
 
-    this.thresholdArray.valueChanges.subscribe((thresholds) => {
-      if (this.lastThresholdArrayLength != this.thresholdArray.length)
-      {        
-        this.lastThresholdArrayLength = this.thresholdArray.length;
+    // this.thresholdArray.valueChanges.subscribe((thresholds) => {
+    //   if (this.lastThresholdArrayLength != this.thresholdArray.length)
+    //   {
+    //     this.lastThresholdArrayLength = this.thresholdArray.length;
       
-        this.selectedDimensionValuesMap.clear();
-        thresholds.forEach((threshold: any) => {
-          this.selectedDimensionValuesMap.set(threshold.id, new Map());
-        });
-      }
-    });
+    //     this.selectedDimensionValuesMap.clear();
+    //     thresholds.forEach((threshold: any) => {
+    //       this.selectedDimensionValuesMap.set(threshold.id, new Map());
+    //     });
+    //   }
+    // });
   }
 
   watchGroupValidity(group: ThresholdFormGroup) {
@@ -397,6 +402,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     }) as ThresholdFormGroup;
 
     this.thresholdArray.push(group);
+
+    this.selectedDimensionValuesMap.set(group.get('id')?.value!, new Map());
 
     this.watchGroupValidity(group);
 
@@ -813,11 +820,18 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent) {
-    this.filterSubject.next(event.filter);
+    this.filterValue = event.filter
+
+    if (event.filter.length > 2)
+      this.filterSubject.next(event.filter);
   }
 
   onClickConfirmCreateAlert() 
   {
+    this.isLoading = true;
+    this.isSuccess = false;
+    this.isError = false;
+
     //FILTER LOGS
     let filterLogs: FilterLogDto[] = [];
 
@@ -922,18 +936,20 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.alertService.createSimpleAlert(alertDto).subscribe(
       (response) => 
       {
-
+        this.isLoading = false;
+        this.isSuccess = true;
       },
       (error) =>
       {
-
+        this.isLoading = false;
+        this.isError = true;
       }
     )
-
-    console.log(alertDto)
   }
 
   onClickRemoveSelectedThreshold(index: number) {
+
+    this.selectedDimensionValuesMap.delete(this.thresholdArray.controls.at(index)?.get('id')?.value!);
 
     this.thresholdArray.controls.splice(index, 1);
 
@@ -1001,5 +1017,15 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value)!;
     dimensionValuesMap.set(dimension, event.value);
     this.selectedDimensionValuesMap.set(threshold.get('id')?.value, dimensionValuesMap);
+  }
+
+  onClickGoToCreateAlert()
+  {
+    this.router.navigate(['crear-alerta']);
+  }
+
+  onClickGoToMofifyAlert()
+  {
+    this.router.navigate(['modificar-alerta']);
   }
 }

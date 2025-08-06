@@ -7,14 +7,14 @@
             <div *ngIf="!loadingAllMetricList" class="consult-configuration-container">
                 <div class="metric-selection-container">
                     <div class="metric-select">
-                        <p-multiselect class="full-width-selector" [loading]="loadingMetricList" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="metric" [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona alguna métrica'" appendTo="body">
+                        <p-multiselect class="full-width-selector" [loading]="loadingMetricList" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="metric" [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona alguna métrica'" emptyMessage=" " emptyFilterMessage=" " appendTo="body">
                             <ng-template let-metric #item>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <div class="font-w-600">{{metric.metric}}</div>
-                                        <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
+                                        <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension.slice(0, 5)" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
+                                        <div *ngIf="metric.dimension.slice(5).length > 0">[···]</div>
                                     </div>
-                                    <div *ngIf="metric.comments" class="font-12 text-gray">{{metric?.description}}</div>
                                 </div>
                             </ng-template>
                         </p-multiselect>
@@ -154,7 +154,7 @@
                             </div>
                         </div>
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="dimensionValuesMap.get(dimension)" (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body" size="small" placeholder="{{dimension}}"/>
+                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value;" class="multiselect" [options]="dimensionValuesMap.get(dimension)" (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"/>
                     </div>
                     <div class="threshold-options">
                         <p-toggleswitch formControlName="status"/>
@@ -271,7 +271,7 @@
                             <div class="channel-data-container">
                                 <i class="pi {{iconMap.get(endpoint.get('channel')?.value?.value)}}"></i>
                                 <p-select [options]="channelOptions" class="select" optionLabel="label" appendTo="body" formControlName="channel"/>
-                                <div class="text-gray">prueba&#64;test.com</div>
+                                <input type="text" pInputText formControlName="value" />
                             </div>
 
                             <div class="alerts-container">
@@ -399,10 +399,28 @@
     </div>
 </app-page-wrapper>
 
-<app-floating-graph></app-floating-graph>
+<!-- <app-floating-graph></app-floating-graph> -->
 
 <app-modal [title]="'Crear alerta'" [visible]="modalVisible">
-    <div class="modal-steps">
+    <div class="modal-container">
+        <div *ngIf="!isSuccess && !isError && !isDetails" class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-bell" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Estás a punto de crear una alerta</div>
+            <div class="font-12 text-gray">Ten en cuenta que los cambios no se pueden deshacer. Puedes asegurarte que has introducido los datos correctos pulsando <span class="font-w-700" style="cursor: pointer;" (click)="isDetails = true;">aquí</span>.</div>
+        </div>
+        <div *ngIf="isSuccess" class="modal-icon-container">
+            <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se ha creado la alerta con éxito</div>
+            <div class="font-12 text-gray">Puedes volver a crear otra alerta, ver las alertas creadas o volver al inicio.</div>
+        </div>
+        <div *ngIf="isError" class="modal-icon-container">
+            <i class="pi pi-times c-red" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Ha habido algún error al crear la alerta</div>
+            <div class="font-12 text-gray"></div>
+        </div>
+    </div>
+    <div *ngIf="!isSuccess && !isError && isDetails" class="modal-steps">
         <div class="modal-step">
             <div class="font-16 font-w-700 c-blue">Paso 1: Configuración de la consulta</div>
             <div class="modal-step-content">
@@ -556,7 +574,15 @@
             </div>
         </div>
     </div>
-    <div class="modal-actions">
+    <div *ngIf="!isSuccess && !isError" class="modal-actions">
+        <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;"/>
+        <p-button label="Confirmar" severity="primary" (onClick)="isDetails = false; onClickConfirmCreateAlert();" [loading]="isLoading"/>
+    </div>
+    <div *ngIf="isSuccess" class="modal-actions">
+        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();"/>
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();"/>
+    </div>
+    <div *ngIf="isError" class="modal-actions">
         <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;"/>
         <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCreateAlert();"/>
     </div>
