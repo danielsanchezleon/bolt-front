@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # ========================================
+  # FRONTEND - Aplicación Angular (Producción)
+  # ========================================
+  frontend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: bolt-frontend
+    ports:
+      - "80:80"
+    networks:
+      - bolt_network
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ========================================
+  # BACKEND - Aplicación Spring Boot (Producción)
+  # ========================================
+  backend:
+    # NOTA: Tu compañero debe ajustar esta ruta al proyecto del backend
+    build:
+      context: ../bolt_revolution_bck  # Ajusta la ruta al proyecto del backend
+      dockerfile: Dockerfile
+    container_name: bolt_backend_prod
+    restart: unless-stopped
+    env_file:
+      - ../bolt_revolution_bck/.env.azure  # Ajusta la ruta del archivo .env
+    environment:
+      # Configuración Spring para producción
+      SPRING_PROFILES_ACTIVE: production
+      LOGGING_LEVEL_ROOT: WARN
+      LOGGING_LEVEL_COM_TELEFONICA_BOLT: INFO
+      
+      # JVM settings para producción
+      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=70.0 -XX:+UseG1GC"
+    ports:
+      - "8081:8081"
+    networks:
+      - bolt_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+networks:
+  bolt_network:
+    driver: bridge
