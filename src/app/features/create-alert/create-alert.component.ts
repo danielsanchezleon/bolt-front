@@ -14,7 +14,14 @@ export class CreateAlertComponent
 {
   alertTypeSelected: boolean = false;
 
-  constructor(private router: Router){}
+  constructor(private router: Router)
+  {
+    const navigation = this.router.getCurrentNavigation();
+    const isThreshold = navigation?.extras.state?.['isThreshold'];
+
+    if (isThreshold)
+      this.alertTypeSelected = true;
+  }
 
   onClickNavigateToHome()
   {

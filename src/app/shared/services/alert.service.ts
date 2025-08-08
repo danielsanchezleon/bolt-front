@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AlertDto } from '../dto/AlertDto';
 import { environment } from '../../../environments/environment';
+import { AlertViewDto } from '../models/AlertViewDto';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +13,14 @@ export class AlertService {
   private apiUrl = environment.apiUrl + '/v1/alert';
 
   constructor(private http: HttpClient) { }
+
+  getAllAlerts(filterText: string): Observable<AlertViewDto[]>
+  {
+    let params: HttpParams = new HttpParams();
+    params = params.append('filterText', filterText);
+
+    return this.http.get<AlertViewDto[]>(this.apiUrl + '/getAllAlerts', {params: params});
+  }
 
   createSimpleAlert(alertDto: AlertDto): Observable<any>
   {

@@ -12,9 +12,8 @@
     <div class="filter-container">
         <p-iconfield style="width: 100%;">
             <p-inputicon class="pi pi-search" />
-            <input style="width: 100%;" type="text" pInputText
-                placeholder="Buscar alertas por nombre, descripción o etiquetas"
-                (input)="applyFilterGlobal($event, 'contains')" />
+            <input style="width: 100%;" [formControl]="filterTextControl" type="text" pInputText placeholder="Buscar alertas por nombre, descripción o etiquetas" />
+            <p-inputicon class="pi pi-times" />
         </p-iconfield>
         <p-button icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
             label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true"
@@ -33,7 +32,7 @@
                 <label>Mensaje</label>
             </p-floatlabel>
             <p-floatlabel variant="on">
-                <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="timeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="timeWindow" />
+                <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="timeWindow" />
                 <label for="timeWindowLabel">Ventana de tiempo</label>
             </p-floatlabel>
             <p-floatlabel variant="on">
@@ -49,7 +48,7 @@
     </div>
 
     <div class="table-container">
-        <p-table id="dt" #dt [value]="filteredTestAlerts" [size]="'small'" [showGridlines]="true" [stripedRows]="true">
+        <p-table id="dt" #dt [value]="alertListFiltered" [size]="'small'" [showGridlines]="true" [stripedRows]="true">
             <ng-template #header>
                 <tr>
                     <th class="th-blue" style="width: 4rem; text-align: center;"><p-tableHeaderCheckbox /></th>
@@ -59,25 +58,25 @@
                     <th class="th-blue">Umbrales</th>
                     <th class="th-blue">Metadatos</th>
                     <th class="th-blue">Endpoints</th>
-                    <th class="th-blue">Última vez</th>
-                    <th class="th-blue">Saltos últimas 24h</th>
+                    <!-- <th class="th-blue">Última vez</th> -->
+                    <!-- <th class="th-blue">Saltos últimas 24h</th> -->
                     <th class="th-blue">Ventana de tiempo</th>
                     <th class="th-blue">Periodicidad</th>
                 </tr>
             </ng-template>
-            <ng-template #body let-testAlert>
+            <ng-template #body let-alert>
                 <tr>
                     <td class="text-align: center;">
-                        <p-tableCheckbox [value]="testAlert" />
+                        <p-tableCheckbox [value]="alert" />
                     </td>
                     <td class="title-container">
                         <div class="title font-w-600">
-                            {{testAlert.name}}
+                            {{alert.name}}
                         </div>
                         <div class="owner-container">
                             <div class="owner text-gray font-w-600">
                                 <i class="pi pi-user font-8"></i>
-                                <span class="font-12">{{testAlert.createdBy}}</span>
+                                <span class="font-12">Admin</span>
                             </div>
 
                             <div class="owner c-yellow font-w-600">
@@ -87,29 +86,29 @@
                         </div>
                     </td>
                     <td class="message-column">
-                        <span [title]="testAlert.description">{{testAlert.description}}</span>
+                        <span [title]="alert.description">{{alert.alertText}}</span>
                     </td>
                     <td class="font-12 text-gray">
-                        {{testAlert.createdAt}}
+                        {{alert.relativeTime}}
                     </td>
                     <td>
                         <div (click)="op1.toggle($event)" class="font-12 threshold-button-container font-w-600">
-                            {{testAlert.definedThresholds.length
-                            == 1 ? '1 umbral' : testAlert.definedThresholds.length + ' umbrales'}}</div>
+                            {{alert.conditions.length
+                            == 1 ? '1 umbral' : alert.conditions.length + ' umbrales'}}</div>
                         <p-popover #op1>
                             <div class="popover-container">
-                                <div class="font-w-600">Umbrales - {{testAlert.name}}</div>
+                                <div class="font-w-600">Umbrales - {{alert.name}}</div>
                                 <div class="threshold-container"
-                                    *ngFor="let threshold of testAlert.definedThresholds; let i = index;">
+                                    *ngFor="let condition of alert.conditions; let i = index;">
                                     <div class="id-container font-w-600">{{i}}</div>
-                                    <p-select size="small" [(ngModel)]="threshold.criticalityLevel"
+                                    <p-select size="small" [(ngModel)]="condition.severity"
                                         [options]="thresholdTypeOptions" optionLabel="label" optionValue="value"
                                         appendTo="body" />
-                                    <p-select size="small" [(ngModel)]="threshold.type"
+                                    <!-- <p-select size="small" [(ngModel)]="condition.type"
                                         [options]="thresholdComparationOptions" optionLabel="label" optionValue="value"
                                         appendTo="body" />
-                                    <p-inputnumber size="small" [(ngModel)]="threshold.value1" mode="decimal"
-                                        [minFractionDigits]="0" [maxFractionDigits]="6" />
+                                    <p-inputnumber size="small" [(ngModel)]="condition.value1" mode="decimal"
+                                        [minFractionDigits]="0" [maxFractionDigits]="6" /> -->
                                 </div>
                             </div>
                         </p-popover>
@@ -117,7 +116,7 @@
                     <td>
                         <div (click)="op2.toggle($event)" class="tag-button-container font-w-600"><i
                                 class="pi pi-tag font-12"></i><span
-                                class="font-12">{{testAlert.definedTags.length}}</span></div>
+                                class="font-12">{{alert.alertTags.length}}</span></div>
                         <p-popover #op2>
                             <div class="popover-container">
                                 <div class="font-w-600">Etiquetas y metadatos</div>
@@ -131,41 +130,41 @@
                                             size="small" />
                                         <label for="value">Valor *</label>
                                     </p-floatlabel>
-                                    <p-button label="Añadir" icon="pi pi-plus" (onClick)="onClickAddTag(testAlert);"
+                                    <p-button label="Añadir" icon="pi pi-plus" (onClick)="onClickAddTag(alert);"
                                         severity="secondary" [disabled]="!tagForm.valid" />
                                 </form>
                                 <div class="font-16 font-w-600">Etiquetas añadidas</div>
-                                <div *ngIf="testAlert.definedTags.length == 0" class="font-12 text-gray">Ninguna etiqueta añadida aún</div>
-                                <div *ngIf="testAlert.definedTags.length > 0" class="tags-container">
-                                    <div class="tag-container" *ngFor="let definedTag of testAlert.definedTags; let i = index;">
+                                <div *ngIf="alert.alertTags.length == 0" class="font-12 text-gray">Ninguna etiqueta añadida aún</div>
+                                <div *ngIf="alert.alertTags.length > 0" class="tags-container">
+                                    <div class="tag-container" *ngFor="let alertTag of alert.alertTags; let i = index;">
                                         <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
-                                        <div class="font-12">{{definedTag.name + ': ' + definedTag.value}}</div>
+                                        <div class="font-12">{{alertTag.name + ': ' + alertTag.value}}</div>
                                         <i class="pi pi-times remove-icon" style="font-size: 0.75rem;"
-                                            (click)="onClickRemoveTag(testAlert, i);"></i>
+                                            (click)="onClickRemoveTag(alert, i);"></i>
                                     </div>
                                 </div>
                             </div>
                         </p-popover>
                     </td>
                     <td>
-                        <div class="endpoints-container">
-                            <div class="font-12 font-w-700">{{testAlert.definedEndpoints.length}}</div>
-                            <div [title]="definedEndpoint.label" class="icon" *ngFor="let definedEndpoint of testAlert.definedEndpoints;" [ngClass]="{'bg-blue': definedEndpoint.value == 'email', 'bg-red': definedEndpoint.value == 'teams', 'bg-yellow': definedEndpoint.value == 'webhook', 'bg-green': definedEndpoint.value == 'pagerduty'}">
-                                <i class="pi {{definedEndpoint.icon}} font-12 c-clue" [ngClass]="{'c-blue': definedEndpoint.value == 'email', 'c-red': definedEndpoint.value == 'teams', 'c-yellow': definedEndpoint.value == 'webhook', 'c-green': definedEndpoint.value == 'pagerduty'}"></i>
+                        <div *ngIf="alert.endpoints" class="endpoints-container">
+                            <div class="font-12 font-w-700">{{alert.endpoints.length}}</div>
+                            <div [title]="endpoint.name" class="icon" *ngFor="let endpoint of alert.endpoints;" [ngClass]="{'bg-blue': endpoint.type == 'email', 'bg-red': endpoint.type == 'teams', 'bg-yellow': endpoint.type == 'webhook', 'bg-green': endpoint.type == 'pagerduty'}">
+                                <i class="pi {{endpoint.icon}} font-12 c-clue" [ngClass]="{'c-blue': endpoint.value == 'email', 'c-red': endpoint.value == 'teams', 'c-yellow': endpoint.value == 'webhook', 'c-green': endpoint.value == 'pagerduty'}"></i>
                             </div>
                         </div>
                     </td>
-                    <td class="font-12 text-gray">
-                        {{testAlert.lastTriggered}}
+                    <!-- <td class="font-12 text-gray">
+                        {{alert.lastTriggered}}
                     </td>
                     <td class="font-12 text-gray">
-                        {{testAlert.triggersLastDay == 1 ? '1 vez' : testAlert.triggersLastDay + ' veces'}}
+                        {{alert.triggersLastDay == 1 ? '1 vez' : alert.triggersLastDay + ' veces'}}
+                    </td> -->
+                    <td>
+                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
                     </td>
                     <td>
-                        <p-select size="small" [(ngModel)]="testAlert.timeWindow" [options]="timeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
-                    </td>
-                    <td>
-                        <p-select size="small" [(ngModel)]="testAlert.periodicity" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body"/>
                     </td>
                 </tr>
             </ng-template>

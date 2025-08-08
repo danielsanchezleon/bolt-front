@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
@@ -17,8 +17,11 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { PopoverModule } from 'primeng/popover';
 import { SelectModule } from 'primeng/select';
 import { thresholdTypeOptions, thresholdComparationOptions } from '../../shared/constants/threshold-options';
-import { timeWindowOptions, periodicityOptions } from '../../shared/constants/metric-options';
+import { modifyAlertTimeWindowOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { AlertService } from '../../shared/services/alert.service';
+import { AlertViewDto } from '../../shared/models/AlertViewDto';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({
   selector: 'app-modify-alert',
@@ -43,22 +46,26 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
     ])
   ]
 })
-export class ModifyAlertComponent {
-  testAlerts: any[] = [];
-  filteredTestAlerts: any[] = [];
+export class ModifyAlertComponent implements OnInit
+{
+  filterTextControl: FormControl = new FormControl('');
+
+  alertList: AlertViewDto[] = [];
+  alertListFiltered: AlertViewDto[] = [];
+
   filterPanelOpen: boolean = false;
 
   thresholdTypeOptions: any[] = [];
   thresholdComparationOptions: any[] = [];
 
-  timeWindowOptions: any[] = [];
+  modifyAlertTimeWindowOptions: any[] = [];
   periodicityOptions: any[] = [];
 
   tagForm: FormGroup;
 
   filterForm: FormGroup;
 
-  constructor(private router: Router, private _fb: FormBuilder) {
+  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService) {
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
       value: ['', [Validators.required]]
@@ -72,29 +79,30 @@ export class ModifyAlertComponent {
     });
   }
 
-  ngOnInit() {
-    this.testAlerts = testAlerts;
-    this.filteredTestAlerts = testAlerts;
+  ngOnInit() 
+  {
+    this.getAllAlerts('');
+
+    this.filterTextControl.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()).subscribe(
+      (filterText) => 
+      {
+        console.log(filterText)
+        if (filterText.length > 2)
+        {
+          this.getAllAlerts(filterText);
+        }
+      }
+    );
 
     this.thresholdTypeOptions = thresholdTypeOptions;
     this.thresholdComparationOptions = thresholdComparationOptions;
 
-    this.timeWindowOptions = timeWindowOptions;
+    this.modifyAlertTimeWindowOptions = modifyAlertTimeWindowOptions;
     this.periodicityOptions = periodicityOptions;
   }
 
   onClickNavigateToHome() {
     this.router.navigate(['']);
-  }
-
-  applyFilterGlobal($event: any, stringVal: any) {
-    const filterValue: string = ($event.target as HTMLInputElement).value.toLowerCase();
-
-    this.filteredTestAlerts = this.testAlerts.filter((testAlert) =>
-      Object.values(testAlert).some(value =>
-        String(value).toLowerCase().includes(filterValue)
-      )
-    );
   }
 
   onClickAddTag(testAlert: any) {
@@ -119,21 +127,34 @@ export class ModifyAlertComponent {
   {
     const filters = this.filterForm.value;
 
-    this.filteredTestAlerts = this.testAlerts.filter((testAlert) => 
+    this.alertListFiltered = this.alertList.filter((alert) => 
     {
       const matchesName =
-        !filters.name || testAlert.name.toLowerCase().includes(filters.name.toLowerCase());
+        !filters.name || alert.name!.toLowerCase().includes(filters.name.toLowerCase());
 
       const matchesMessage =
-        !filters.message || testAlert.description.toLowerCase().includes(filters.message.toLowerCase());
+        !filters.message || alert.alertText!.toLowerCase().includes(filters.message.toLowerCase());
 
       const matchesTimeWindow =
-        !filters.timeWindow || testAlert.timeWindow === filters.timeWindow;
+        !filters.timeWindow || alert.evaluationFrequency! === filters.timeWindow;
 
       const matchesPeriodicity =
-        !filters.periodicity || testAlert.periodicity === filters.periodicity;
+        !filters.periodicity || alert.evaluationPeriod! === filters.periodicity;
 
       return matchesName && matchesMessage && matchesTimeWindow && matchesPeriodicity;
     });
+  }
+
+  getAllAlerts(filterText: string)
+  {
+    this.alertService.getAllAlerts(filterText).subscribe(
+      (response) => {
+        this.alertList = response;
+        this.alertListFiltered = response;
+      },
+      (error) => {
+
+      }
+    )
   }
 }

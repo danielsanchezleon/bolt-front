@@ -990,7 +990,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickGoToCreateAlert()
   {
-    this.router.navigate(['crear-alerta']);
+    this.router.navigate(['crear-alerta'], {
+      state: { isThreshold: true }
+    });
   }
 
   onClickGoToMofifyAlert()
