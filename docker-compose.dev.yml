@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  # Frontend en modo desarrollo
+  frontend-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: bolt-frontend-dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    networks:
+      - bolt-dev-network
+    command: npm start
+
+networks:
+  bolt-dev-network:
+    driver: bridge
