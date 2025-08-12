@@ -66,7 +66,7 @@ export class EndpointsComponent
 
   onClickNavigateToCreateEndpoint()
   {
-    this.router.navigate(['create-endpoint']);
+    this.router.navigate(['crear-endpoint']);
   }
 
   getEndpoints()

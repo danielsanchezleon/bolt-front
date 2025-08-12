@@ -13,7 +13,7 @@
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <div class="font-w-600">{{metric.metric}}</div>
                                         <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension.slice(0, 5)" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
-                                        <div *ngIf="metric.dimension.slice(5).length > 0">[···]</div>
+                                        <div *ngIf="metric.dimension.slice(5).length > 0" [pTooltip]="metric.dimension.slice(5)" tooltipPosition="top" showDelay="250">[···]</div>
                                     </div>
                                 </div>
                             </ng-template>

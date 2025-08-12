@@ -21,7 +21,7 @@ export const routes: Routes = [
     component: CreateSimpleConditionAlertComponent,
   },
   {
-    path: 'create-endpoint',
+    path: 'crear-endpoint',
     component: CreateEndpointComponent,
   },
   {
