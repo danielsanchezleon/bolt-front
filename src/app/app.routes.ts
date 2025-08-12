@@ -5,6 +5,7 @@ import { CreateSimpleConditionAlertComponent } from './features/create-simple-co
 import { EndpointsComponent } from './features/endpoints/endpoints.component';
 import { ModifyAlertComponent } from './features/modify-alert/modify-alert.component';
 import { CreateLogsAlertComponent } from './features/create-logs-alert/create-logs-alert.component';
+import { CreateEndpointComponent } from './features/create-endpoint/create-endpoint.component';
 
 export const routes: Routes = [
   {
@@ -18,6 +19,10 @@ export const routes: Routes = [
   {
     path: 'condicion-simple',
     component: CreateSimpleConditionAlertComponent,
+  },
+  {
+    path: 'create-endpoint',
+    component: CreateEndpointComponent,
   },
   {
     path: 'endpoints',

@@ -21,3 +21,85 @@
         }
     }
 }
+
+.table-container
+{
+    background-color: white;
+    padding: 16px;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+
+    margin-top: 24px;
+}
+
+.filter-container
+{
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: center;
+
+    .outlined-button
+    {   
+        width: fit-content;
+        background-color: white !important;
+        border-radius: 8px;
+    }
+}
+
+.accordion-content 
+{
+    overflow: hidden;
+    background-color: white;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    margin-top: 24px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    form
+    {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min-content, 256px));
+        gap: 24px;
+        align-items: start;
+    }
+
+    .buttons-container
+    {
+        display: flex;
+        flex-direction: row;
+        justify-content: end;
+        align-items: center;
+        gap: 24px;
+    }
+}
+
+#on_label
+{
+    width: 256px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table thead th:first-child {
+    border-top-left-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table thead th:last-child {
+    border-top-right-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 8px;
+}
+
+.th-blue {
+    background-color: #2563eb;
+    color: white;
+}

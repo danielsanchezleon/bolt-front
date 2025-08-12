@@ -20,7 +20,7 @@ import { thresholdTypeOptions, thresholdComparationOptions } from '../../shared/
 import { modifyAlertTimeWindowOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AlertService } from '../../shared/services/alert.service';
-import { AlertViewDto } from '../../shared/models/AlertViewDto';
+import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({

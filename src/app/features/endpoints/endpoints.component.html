@@ -5,7 +5,7 @@
         <div class="page-title">
             <div class="page-title-top">
                 <div class="font-32 font-w-700">Gestión de endpoints</div>
-                <p-button label="Nuevo endpoint" icon="pi pi-plus" />
+                <p-button label="Nuevo endpoint" icon="pi pi-plus" (onClick)="onClickNavigateToCreateEndpoint();"/>
             </div>
             <div>Administra los puntos de contacto para notificaciones de alertas</div>
         </div>
@@ -14,7 +14,42 @@
             <div class="list-title">
                 <div class="font-24 font-w-600">Listado de endpoints</div>
             </div>
-            <app-table [data]="endpointTable"></app-table>
+
+            <div class="filter-container">
+                <p-iconfield style="width: 100%;">
+                    <p-inputicon class="pi pi-search" />
+                    <input style="width: 100%;" type="text" pInputText placeholder="Busca por nombre, URL/Destino, Tipo..." [(ngModel)]="filterText" (input)="applyFilterGlobal($event, 'contains')" />
+                    <p-inputicon class="pi pi-times" style="cursor: pointer;" (click)="$event.stopPropagation(); endpointListFiltered = endpointList; filterText = '';"/>
+                </p-iconfield>
+            </div>
+
+            <div class="table-container">
+                <p-table id="dt" #dt [value]="endpointListFiltered" [size]="'large'" [showGridlines]="'false'" [stripedRows]="'true'">
+                    <ng-template #header>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>URL/Destino</th>
+                            <th style="text-align: center;">Tipo</th>
+                            <th style="text-align: center;">Alertas configuradas</th>
+                            <th style="text-align: center;">Fecha</th>
+                            <th style="text-align: center;">Acciones</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-endpoint>
+                        <tr>
+                            <td style="font-weight: 600;"><div>{{endpoint.name}}</div></td>
+                            <td><div>{{endpoint.destination}}</div></td>
+                            <td style="text-align: center;"><p-tag severity="info" [value]="endpoint.type.label" [rounded]="true" [ngStyle]="{'font-size':'12px'}"/></td>
+                            <td style="text-align: center;"><div>{{endpoint.configuredAlerts}}</div></td>
+                            <td style="text-align: center;"><div>{{endpoint.date | date: 'dd/MM/y hh:mm'}}</div></td>
+                            <td style="text-align: center;">
+                                <p-menu #menu [model]="tableActions" [popup]="true" appendTo="body" />
+                                <p-button [rounded]="true" [text]="true" (click)="selectedEndpoint = endpoint; menu.toggle($event)" icon="pi pi-ellipsis-h" severity="secondary"/>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
         </div>
     </div>
 </app-page-wrapper>

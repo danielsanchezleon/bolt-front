@@ -1,0 +1,80 @@
+<app-page-wrapper>
+    <p-button icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary" (onClick)="onClickNavigateToEndpoints()"/>
+
+    <div class="create-endpoint-container">
+        <div class="page-title">
+            <div class="page-title-top">
+                <div class="font-32 font-w-700">Creación de endpoints</div>
+            </div>
+            <div>Crea un punto de contacto para notificaciones de alertas</div>
+        </div>
+
+        <div class="create-endpoint-form-container" [formGroup]="endpointForm">
+            <div class="form-container">
+                <p-select class="form-input" [options]="endpointTypes" formControlName="type" optionLabel="label" placeholder="Selecciona un tipo"/>
+                <p-floatlabel class="form-input" variant="on">
+                    <input pInputText autocomplete="off" formControlName="destination"/>
+                    <label>Destino</label>
+                </p-floatlabel>
+                <p-floatlabel class="form-input" variant="on">
+                    <input pInputText autocomplete="off" formControlName="name"/>
+                    <label>Nombre</label>
+                </p-floatlabel>
+            </div>
+            <p-button label="Crear endpoint" severity="primary" [disabled]="!endpointForm.valid" (onClick)="modalVisible = true;"/>
+        </div>
+    </div>
+</app-page-wrapper>
+
+<app-modal [title]="'Crear alerta'" [visible]="modalVisible">
+    <div class="modal-container">
+        <div *ngIf="!isSuccess && !isError" class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-paperclip" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Estás a punto de crear un endpoint</div>
+            <div class="font-12 text-gray">Ten en cuenta que los cambios no se pueden deshacer. Asegúrate que has introducido los datos correctos.</div>
+        </div>
+        <div *ngIf="isSuccess" class="modal-icon-container">
+            <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se ha creado el endpoint con éxito</div>
+            <div class="font-12 text-gray">Puedes volver a crear otro endpoint o ver los endpoints creados.</div>
+        </div>
+        <div *ngIf="isError" class="modal-icon-container">
+            <i class="pi pi-times c-red" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Ha habido algún error al crear el endpoint</div>
+            <div class="font-12 text-gray"></div>
+        </div>
+    </div>
+    <div *ngIf="!isSuccess && !isError" class="modal-steps">
+        <div class="modal-step">
+            <div class="modal-step-content">
+                <div class="title-description-block-1">
+                    <div class="title">Tipo</div>
+                    <div class="description">{{endpointForm.get('type')?.value?.label}}</div>
+                </div>
+                <div class="separator"></div>
+                <div class="title-description-block-1">
+                    <div class="title">Destino</div>
+                    <div class="description">{{endpointForm.get('destination')?.value}}</div>
+                </div>
+                <div class="separator"></div>
+                <div class="title-description-block-1">
+                    <div class="title">Nombre</div>
+                    <div class="description">{{endpointForm.get('name')?.value}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div *ngIf="!isSuccess && !isError" class="modal-actions">
+        <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;"/>
+        <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCreateEndpoint();" [loading]="isLoading"/>
+    </div>
+    <div *ngIf="isSuccess" class="modal-actions">
+        <p-button label="Crear otro endpoint" severity="secondary" (onClick)="modalVisible = false; endpointForm.reset(); isSuccess = false; isError = false;"/>
+        <p-button label="Mis endpoints" severity="primary" (onClick)="onClickNavigateToEndpoints();"/>
+    </div>
+    <div *ngIf="isError" class="modal-actions">
+        <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;"/>
+        <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCreateEndpoint();"/>
+    </div>
+</app-modal>

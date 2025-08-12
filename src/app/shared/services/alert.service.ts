@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AlertDto } from '../dto/AlertDto';
 import { environment } from '../../../environments/environment';
-import { AlertViewDto } from '../models/AlertViewDto';
+import { AlertViewDto } from '../dto/alert/AlertViewDto';
 
 @Injectable({
   providedIn: 'root'
