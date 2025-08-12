@@ -5,20 +5,44 @@ import { FormsModule } from '@angular/forms';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
+import { AlertService } from '../../shared/services/alert.service';
+import { HomePanelsViewDto } from '../../shared/dto/home/HomePanelsViewDto';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-home',
-  imports: [PageWrapperComponent, CommonModule, FormsModule, SelectButtonModule, TableModule],
+  imports: [PageWrapperComponent, CommonModule, FormsModule, SelectButtonModule, TableModule, SkeletonModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {
 
-  alerts = [];
+  alerts: any[] = [];
 
-  constructor(private router: Router) {}
+  isLoading: boolean = false;
+  homePanels?: HomePanelsViewDto;;
 
-  ngOnInit() {}
+  constructor(private router: Router, private alertService: AlertService) {}
+
+  ngOnInit() 
+  {
+    this.getHomePanels();
+  }
+
+  getHomePanels()
+  {
+    this.isLoading = true;
+
+    this.alertService.getHomePanels().subscribe(
+      (response) => {
+        this.isLoading = false;
+        this.homePanels = response;
+      },
+      (error) => {
+        this.isLoading = false;
+      }
+    )
+  }
 
   onClickNavigateToCreateAlert()
   {
