@@ -1,49 +1,55 @@
 <app-page-wrapper>
   <div class="cards-container">
-    <div class="card-container-disabled">
+    <div *ngIf="!isLoading" class="card-container">
       <div class="card-title-description">
-        <div class="font-16 text-white">Alertas configuradas</div>
-        <div class="font-12 text-white">(Total de alertas creadas en el sistema)</div>
+        <div class="font-16">Alertas configuradas</div>
+        <div class="font-12 text-gray">(Total de alertas creadas en el sistema)</div>
       </div>
       <div class="card-container-information">
-        <div class="font-32 text-white font-w-700">40</div>
-        <div class="icon-wrapper bg-gray">
-          <i class="pi pi-bell font-20 text-white"></i>
+        <div class="font-32 font-w-700">{{homePanels?.configuredAlerts}}</div>
+        <div class="icon-wrapper bg-blue">
+          <i class="pi pi-bell c-blue font-20"></i>
         </div>
       </div>
     </div>
 
-    <div class="card-container-disabled">
+    <p-skeleton *ngIf="isLoading" width="347px" height="146px" borderRadius="8px" />
+
+    <div *ngIf="!isLoading" class="card-container">
       <div class="card-title-description">
-        <div class="font-16 text-white">Alertas deshabilitadas</div>
-        <div class="font-12 text-white">(Alertas desactivadas que no se dispararán)</div>
+        <div class="font-16">Alertas deshabilitadas</div>
+        <div class="font-12 text-gray">(Alertas desactivadas que no se dispararán)</div>
       </div>
       <div class="card-container-information">
         <div class="information-number">
-          <div class="font-32 font-w-700 text-white">10</div>
-          <div class="font-16 text-white">(25%)</div>
+          <div class="font-32 font-w-700">{{homePanels?.disabledAlerts}}</div>
+          <div class="font-16">({{homePanels?.disabledAlertsPercent}}&nbsp;%)</div>
         </div>
-        <div class="icon-wrapper bg-gray">
-          <i class="pi pi-bell-slash font-20 text-white"></i>
+        <div class="icon-wrapper bg-orange">
+          <i class="pi pi-bell-slash font-20 c-orange"></i>
         </div>
       </div>
     </div>
 
-    <div class="card-container-disabled">
+    <p-skeleton *ngIf="isLoading" width="347px" height="146px" borderRadius="8px" />
+
+    <div *ngIf="!isLoading" class="card-container">
       <div class="card-title-description">
-        <div class="font-16 text-white">Alertas sin destino</div>
-        <div class="font-12 text-white">(Alertas sin canal de notificación configurado)</div>
+        <div class="font-16">Alertas sin destino</div>
+        <div class="font-12 text-gray">(Alertas sin canal de notificación configurado)</div>
       </div>
       <div class="card-container-information">
         <div class="information-number">
-          <div class="font-32 font-w-700 text-white">5</div>
-          <div class="font-16 text-white">(12.5%)</div>
+          <div class="font-32 font-w-700">{{homePanels?.withoutDestinationAlerts}}</div>
+          <div class="font-16">({{homePanels?.withoutDestinationAlertsPercent}}&nbsp;%)</div>
         </div>
-        <div class="icon-wrapper bg-gray">
-          <i class="pi pi-exclamation-triangle font-20 text-white"></i>
+        <div class="icon-wrapper bg-red">
+          <i class="pi pi-exclamation-triangle font-20 c-red"></i>
         </div>
       </div>
     </div>
+
+    <p-skeleton *ngIf="isLoading" width="347px" height="146px" borderRadius="8px" />
 
     <div class="card-container-disabled">
       <div class="font-16 text-white">Alertas sin datos</div>

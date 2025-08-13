@@ -3,7 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AlertDto } from '../dto/AlertDto';
 import { environment } from '../../../environments/environment';
-import { AlertViewDto } from '../models/AlertViewDto';
+import { AlertViewDto } from '../dto/alert/AlertViewDto';
+import { HomePanelsViewDto } from '../dto/home/HomePanelsViewDto';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,11 @@ export class AlertService {
   private apiUrl = environment.apiUrl + '/v1/alert';
 
   constructor(private http: HttpClient) { }
+
+  getHomePanels(): Observable<HomePanelsViewDto>
+  {
+    return this.http.get<HomePanelsViewDto>(this.apiUrl + '/getHomePanels');
+  }
 
   getAllAlerts(filterText: string): Observable<AlertViewDto[]>
   {

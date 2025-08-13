@@ -13,7 +13,7 @@
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <div class="font-w-600">{{metric.metric}}</div>
                                         <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension.slice(0, 5)" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
-                                        <div *ngIf="metric.dimension.slice(5).length > 0">[···]</div>
+                                        <div *ngIf="metric.dimension.slice(5).length > 0" [pTooltip]="metric.dimension.slice(5)" tooltipPosition="top" showDelay="250">[···]</div>
                                     </div>
                                 </div>
                             </ng-template>
@@ -117,7 +117,7 @@
             <p-skeleton *ngIf="loadingAllMetricList" width="100%" height="91px" borderRadius="16px" />
         </app-accordion>
 
-        <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true">
+        <app-accordion [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true" [disabled]="selectedMetrics.length == 0">
             <div class="step-2-container">
                 <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
                 <div class="notice c-blue">
@@ -271,7 +271,7 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true">
+        <app-accordion [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true" [disabled]="selectedMetrics.length == 0">
             <div class="step-3-container">
                 <div class="endpoint-list-container">
                     <div class="font-20 font-w-600">Lista de endpoints</div>
@@ -376,7 +376,7 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true">
+        <app-accordion [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true" [disabled]="selectedMetrics.length == 0">
             <div class="step-4-container">
                 <div class="notice c-blue">
                     <i class="pi pi-info-circle"></i>

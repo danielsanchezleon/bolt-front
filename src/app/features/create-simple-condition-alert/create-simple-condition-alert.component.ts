@@ -552,6 +552,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   onClickSelectMetrics() {
+
+    this.groupByForm.get('groupBy')?.setValue([]);
+
     let offset: number = this.selectedMetrics.length;
 
     this.selectedMetricList.forEach((selectedMetric, i) => {
@@ -601,6 +604,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickRemoveSelectedMetric(index: number) {
 
+    this.groupByForm.get('groupBy')?.setValue([]);
+
     this.metricList.push(this.selectedMetrics[index].metric);
 
     this.selectedMetrics.splice(index, 1);
@@ -612,6 +617,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     if (this.selectedMetrics.length > 0) {
       this.generateResultMetric();
       this.getMetricTagsIntersection();
+
+      this.dimensionValuesMap.clear();
+
+      this.selectedMetrics.forEach((metric) => {
+        metric.metric.dimension.forEach((dimension) => {
+          this.getDimensionValues(metric.metric.bbdd, metric.metric.table_name, metric.metric.metric, dimension);
+        });
+      });
     }
   }
 
