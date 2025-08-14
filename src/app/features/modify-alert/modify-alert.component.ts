@@ -22,10 +22,11 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { AlertService } from '../../shared/services/alert.service';
 import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { SkeletonModule } from 'primeng/skeleton';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent],
+  imports: [FormsModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -50,6 +51,8 @@ export class ModifyAlertComponent implements OnInit
 {
   filterTextControl: FormControl = new FormControl('');
 
+  isLoading: boolean = false;
+  isError: boolean = false;
   alertList: AlertViewDto[] = [];
   alertListFiltered: AlertViewDto[] = [];
 
@@ -147,12 +150,19 @@ export class ModifyAlertComponent implements OnInit
 
   getAllAlerts(filterText: string)
   {
+    this.isLoading = true;
+    this.isError = false;
+
     this.alertService.getAllAlerts(filterText).subscribe(
       (response) => {
+        this.isLoading = false;
+        this.isError = false;
         this.alertList = response;
         this.alertListFiltered = response;
       },
       (error) => {
+        this.isLoading = false;
+        this.isError = true;
 
       }
     )

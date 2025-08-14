@@ -11,8 +11,6 @@
     padding: 16px;
     border: 1px solid lightgray;
     border-radius: 8px;
-
-    margin-top: 24px;
 }
 
 .filter-container {
@@ -244,4 +242,18 @@ th
 
         cursor: help;
     }
+}
+
+.notice {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    background-color: white;
+    padding: 16px;
+
+    margin-top: 16px;
 }

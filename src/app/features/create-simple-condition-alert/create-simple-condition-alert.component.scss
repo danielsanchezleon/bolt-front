@@ -248,13 +248,11 @@
                     width: 200px;
                 }
 
-                ::ng-deep .threshold-value input
-                {
+                ::ng-deep .threshold-value input {
                     width: 128px !important;
                 }
 
-                .range-container
-                {
+                .range-container {
                     display: flex;
                     flex-direction: row;
                     align-items: center;
@@ -412,6 +410,32 @@
             flex-direction: column;
             gap: 16px;
 
+            .endpoint-form-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+
+                gap: 16px;
+
+                border: 1px solid lightgray;
+                border-radius: 8px;
+                padding: 16px;
+
+                .endpoint-form-data-container {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 16px;
+
+                    width: 100%;
+
+                    .select {
+                        flex: 1;
+                    }
+                }
+            }
+
             .channel-list-container {
                 display: flex;
                 flex-direction: column;
@@ -428,7 +452,7 @@
                     align-items: center;
 
                     border-radius: 8px;
-                    padding: 16px;
+                    padding: 8px;
                     background-color: white;
 
                     .channel-data-container {
@@ -453,8 +477,6 @@
                             border-radius: 24px;
                             padding: 3px 8px;
                             font-weight: 600;
-
-                            cursor: pointer;
                         }
 
                         .disaster {
@@ -629,15 +651,13 @@
     width: 100%;
 }
 
-.modal-container
-{
+.modal-container {
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
 
-    .modal-icon-container
-    {
+    .modal-icon-container {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -649,15 +669,14 @@
     }
 }
 
-.spin
-{
+.spin {
     animation: spin 0.5s linear infinite;
 }
 
 @keyframes spin {
-  100% {
-    transform: rotate(360deg);
-  }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .modal-steps {

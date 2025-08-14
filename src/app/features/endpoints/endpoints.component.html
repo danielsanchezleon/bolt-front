@@ -15,41 +15,90 @@
                 <div class="font-24 font-w-600">Listado de endpoints</div>
             </div>
 
-            <div class="filter-container">
-                <p-iconfield style="width: 100%;">
-                    <p-inputicon class="pi pi-search" />
-                    <input style="width: 100%;" type="text" pInputText placeholder="Busca por nombre, URL/Destino, Tipo..." [(ngModel)]="filterText" (input)="applyFilterGlobal($event, 'contains')" />
-                    <p-inputicon class="pi pi-times" style="cursor: pointer;" (click)="$event.stopPropagation(); endpointListFiltered = endpointList; filterText = '';"/>
-                </p-iconfield>
+            <div *ngIf="!isLoading && isError" class="notice">
+                <i class="pi pi-info-circle c-blue"></i>
+                <div>
+                    Ha habido un error al obtener la información
+                </div>
             </div>
 
-            <div class="table-container">
-                <p-table id="dt" #dt [value]="endpointListFiltered" [size]="'large'" [showGridlines]="'false'" [stripedRows]="'true'">
-                    <ng-template #header>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>URL/Destino</th>
-                            <th style="text-align: center;">Tipo</th>
-                            <th style="text-align: center;">Alertas configuradas</th>
-                            <th style="text-align: center;">Fecha</th>
-                            <th style="text-align: center;">Acciones</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template #body let-endpoint>
-                        <tr>
-                            <td style="font-weight: 600;"><div>{{endpoint.name}}</div></td>
-                            <td><div>{{endpoint.destination}}</div></td>
-                            <td style="text-align: center;"><p-tag severity="info" [value]="endpoint.type.label" [rounded]="true" [ngStyle]="{'font-size':'12px'}"/></td>
-                            <td style="text-align: center;"><div>{{endpoint.configuredAlerts}}</div></td>
-                            <td style="text-align: center;"><div>{{endpoint.date | date: 'dd/MM/y hh:mm'}}</div></td>
-                            <td style="text-align: center;">
-                                <p-menu #menu [model]="tableActions" [popup]="true" appendTo="body" />
-                                <p-button [rounded]="true" [text]="true" (click)="selectedEndpoint = endpoint; menu.toggle($event)" icon="pi pi-ellipsis-h" severity="secondary"/>
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
+            <div class="table-group-container">
+                <div class="filter-container">
+                    <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
+                        <p-inputicon class="pi pi-search" />
+                        <input style="width: 100%;" type="text" pInputText placeholder="Busca por nombre, URL/Destino, Tipo..." [(ngModel)]="filterText" (input)="onFilterEndpointsChange();"/>
+                        <p-inputicon class="pi pi-times" style="cursor: pointer;" (click)="$event.stopPropagation(); endpointListFiltered = endpointList; filterText = '';"/>
+                    </p-iconfield>
+                    <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="39px" borderRadius="8px" />
+                </div>
+
+                <div *ngIf="!isLoading && !isError" class="table-container">
+                    <p-table id="dt" #dt [value]="endpointListFiltered" [showGridlines]="'false'" [stripedRows]="'true'">
+                        <ng-template #header>
+                            <tr>
+                                <th>Nombre</th>
+                                <th style="text-align: center;">Datos</th>
+                                <th style="text-align: center;">Tipo</th>
+                                <th style="text-align: center;">Alertas configuradas</th>
+                                <th style="text-align: center;">Fecha</th>
+                                <th style="text-align: center;">Acciones</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template #body let-endpoint>
+                            <tr>
+                                <td style="font-weight: 600;"><div>{{endpoint.name}}</div></td>
+                                <td style="text-align: center;"><i class="pi pi-eye" style="cursor: pointer;" (click)="op.toggle($event)"></i>
+                                <p-popover #op>
+                                    <div *ngIf="endpoint.type == 'email'" class="popover-container">
+                                        <div class="font-12 font-w-700">Destinatarios</div>
+                                        <div class="addresses">
+                                            <div class="address font-12" *ngFor="let address of endpoint.data.addresses.split(';'); let last = last;">
+                                                <span>{{address}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="key-value-container">
+                                            <div class="font-12 font-w-700">Mensaje</div>
+                                            <div class="font-12">{{endpoint.data.message! ? endpoint.data.message : 'Sin definir'}}</div>
+                                        </div>
+                                        <div class="key-value-container">
+                                            <div class="font-12 font-w-700">Asunto</div>
+                                            <div class="font-12">{{endpoint.data.subject! ?  endpoint.data.subject : 'Sin definir'}}</div>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="endpoint.type == 'pagerduty'" class="popover-container">
+                                        <div class="key-value-container">
+                                            <div class="font-12 font-w-700">Integration key</div>
+                                            <div class="font-12">{{endpoint.data.integrationKey}}</div>
+                                        </div>
+                                    </div>
+                                </p-popover>
+                                </td>
+                                <td style="text-align: center;"><p-tag severity="info" [value]="endpoint.type" [rounded]="true" [ngStyle]="{'font-size':'12px'}"/></td>
+                                <td style="text-align: center;"><div>{{endpoint.configuredAlerts}}</div></td>
+                                <td style="text-align: center;"><div>{{endpoint.date | date: 'dd/MM/y HH:mm'}}</div></td>
+                                <td style="text-align: center;">
+                                    <p-menu #menu [model]="tableActions" [popup]="true" appendTo="body" />
+                                    <p-button [rounded]="true" [text]="true" (click)="selectedEndpoint = endpoint; menu.toggle($event)" icon="pi pi-ellipsis-h" severity="secondary"/>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+
+                    <p-paginator
+                        (onPageChange)="onPageChange($event)"
+                        [first]="first"
+                        [rows]="size"
+                        [totalRecords]="endpointPage.totalElements"
+                        [showCurrentPageReport]="true"
+                        [showPageLinks]="false"
+                        [showJumpToPageDropdown]="false"
+                        currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
+                        [rowsPerPageOptions]="[5, 10, 20, 50]"
+                        [showPageLinks]="true"/>
+                </div>
             </div>
         </div>
+
+        <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
     </div>
 </app-page-wrapper>

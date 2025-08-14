@@ -189,7 +189,7 @@
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en {{activationRecoverForm.get('activation1')?.value.label}} de los últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo: <span class="font-w-600">{{getActivationTime()}}</span></div>
+                                    <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getActivationTime1()}} y {{getActivationTime2()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +210,7 @@
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en {{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo: <span class="font-w-600">{{getRecoverTime()}}</span></div>
+                                    <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getRecoverTime1()}} y {{getRecoverTime2()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -276,23 +276,30 @@
                 <div class="endpoint-list-container">
                     <div class="font-20 font-w-600">Lista de endpoints</div>
                     <div class="font-16">Define cómo y donde quieres recibir las alertas según su nivel de criticidad.</div>
-                    <div class="channel-list-container">
-                        <div class="channel-container" *ngFor="let endpoint of endpointArray.controls; let i = index;" [formGroup]="endpoint">
+                    <div class="endpoint-form-container" [formGroup]="endpointForm">
+                        <div class="endpoint-form-data-container">
+                            <p-select [options]="endpointTypeOptions" optionLabel="label" appendTo="body" placeholder="Selecciona un tipo" formControlName="type" (onChange)="onChangeStep3EndpointType();"/>
+                            <p-select [options]="endpointFieldValues" class="select" optionLabel="name" appendTo="body" placeholder="Selecciona un endpoint" formControlName="endpoint"/>
+                            <p-multiselect [options]="severityOptions" class="select" optionLabel="label" placeholder="Seleciona las severidades" formControlName="severities" />
+                        </div>
+                        <p-button label="Añadir" icon="pi pi-plus" severity="secondary" [disabled]="!endpointForm.valid" (onClick)="onClickAddEndpoint();"/>
+                    </div>
+                    <div *ngIf="endpointList.length > 0" class="channel-list-container">
+                        <div class="font-16 font-w-600">Endpoints definidos</div>
+                        <div class="channel-container" *ngFor="let endpoint of endpointList; let i = index;">
                             <div class="channel-data-container">
-                                <i class="pi {{iconMap.get(endpoint.get('channel')?.value?.value)}}"></i>
-                                <p-select [options]="channelOptions" class="select" optionLabel="label" appendTo="body" formControlName="channel"/>
-                                <input type="text" pInputText formControlName="value" />
+                                <input size="small" type="text" pInputText [(ngModel)]="endpoint.type.label" readonly="readonly" [ngStyle]="{'pointer-events': 'none'}"/>
+                                <input size="small" type="text" pInputText [(ngModel)]="endpoint.endpoint.name" readonly="readonly" [ngStyle]="{'pointer-events': 'none'}"/>
                             </div>
 
                             <div class="alerts-container">
-                                <div *ngIf="disasterSelected()" class="type-button-container" [ngClass]="{'disaster': endpoint.get('alerts')?.value?.includes(alertOptions[0]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[0])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[0]);">Disaster</div>
-                                <div *ngIf="criticalSelected()" class="type-button-container" [ngClass]="{'critical': endpoint.get('alerts')?.value?.includes(alertOptions[1]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[1])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[1]);">Critical</div>
-                                <div *ngIf="majorSelected()" class="type-button-container" [ngClass]="{'major': endpoint.get('alerts')?.value?.includes(alertOptions[2])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[2]);">Major</div>
-                                <div *ngIf="warningSelected()" class="type-button-container" [ngClass]="{'warning': endpoint.get('alerts')?.value?.includes(alertOptions[3])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[3]);">Warning</div>
+                                <div *ngIf="endpoint.severities.includes(severityOptions[0])" class="type-button-container disaster">Disaster</div>
+                                <div *ngIf="endpoint.severities.includes(severityOptions[1])" class="type-button-container critical">Critical</div>
+                                <div *ngIf="endpoint.severities.includes(severityOptions[2])" class="type-button-container major">Major</div>
+                                <div *ngIf="endpoint.severities.includes(severityOptions[3])" class="type-button-container warning">Warning</div>
                             </div>
-                            <p-button *ngIf="endpointArray.length > 1" [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="deleteEndpoint(i);"/>
+                            <p-button [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="onClickDeleteEndpoint(i);"/>
                         </div>
-                        <p-button label="Añadir otro canal" icon="pi pi-plus" (onClick)="createEndpoint();" severity="secondary"/>
                     </div>
                 </div>
                 <div class="add-label-container">
@@ -524,12 +531,11 @@
             <div class="font-16 font-w-700 c-blue">Paso 3: Destinatarios</div>
             <div class="modal-step-content">
                 <div class="font-16 font-w-600">Endpoints seleccionados</div>
-                <div class="title-description-block-1" *ngFor="let endpoint of endpointArray.controls; let i = index;">
-                    <div class="title">Endpoint {{endpoint.get('id')?.value}}</div>
-                    <div class="description">{{endpoint.get('channel')?.value.label}}</div>
-                    <div class="description">{{endpoint.get('value')?.value}}</div>
-                    <div *ngIf="endpoint.get('alerts')?.value!.length > 0" class="description">
-                        <span *ngFor="let alert of endpoint.get('alerts')?.value; let last = last;">{{alert.label}}<span *ngIf="!last">, </span></span>
+                <div class="title-description-block-1" *ngFor="let endpoint of endpointList; let i = index;">
+                    <div class="description">{{endpoint.endpoint.name}}</div>
+                    <div class="description">{{endpoint.type.label}}</div>
+                    <div class="description">
+                        <span *ngFor="let severity of endpoint.severities; let last = last;">{{severity.label}}<span *ngIf="!last">, </span></span>
                     </div>
                 </div>
             </div>

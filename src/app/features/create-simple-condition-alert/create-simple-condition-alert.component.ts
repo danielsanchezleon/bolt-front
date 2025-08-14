@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { Router } from '@angular/router';
 import { MetricOptions, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions } from '../../shared/constants/metric-options';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl, Form } from '@angular/forms';
 import { MultiSelectChangeEvent, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
@@ -20,7 +20,7 @@ import { InnerAccordionComponent } from '../../shared/components/inner-accordion
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { channelOptions, alertOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
+import { endpointTypeOptions, severityOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
@@ -41,10 +41,11 @@ import { AlertPermissionDto } from '../../shared/dto/AlertPermissionDto';
 import { AlertSilenceDto } from '../../shared/dto/AlertSilenceDto';
 import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
 import { EndpointAlertDto } from '../../shared/dto/EndpointAlertDto';
-import { EndpointDto } from '../../shared/dto/EndpointDto';
 import { FilterLogDto } from '../../shared/dto/FilterLogDto';
 import { AlertService } from '../../shared/services/alert.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { EndpointService } from '../../shared/services/endpoint.service';
+import { EndpointViewDto } from '../../shared/dto/endpoint/EndpointViewDto';
 
 export class MetricOption {
   id: string;
@@ -59,47 +60,15 @@ export class MetricOption {
   }
 }
 
-export class Threshold {
-  id: string;
-  type: string;
-  comparation: string;
-  order: number;
-  value?: number;
+export class Endpoint {
+  type: any;
+  endpoint: any;
+  severities: any[];
 
-  constructor(id: string, type: string, comparation: string, order: number, value?: number) {
-    this.id = id;
+  constructor(type: any, endpoint: any, severities: any[]) {
     this.type = type;
-    this.comparation = comparation;
-    this.order = order;
-
-    if (value) {
-      this.value = value;
-    }
-  }
-}
-
-export class SilencePeriod {
-  id: string;
-  days?: string[];
-  from?: string;
-  to?: string;
-
-  constructor(id: string) {
-    this.id = id;
-    this.days = [];
-  }
-}
-
-export class Channel {
-  id: string;
-  channel: string;
-  value?: string;
-  alerts: string[];
-
-  constructor(id: string) {
-    this.id = id;
-    this.channel = 'email';
-    this.alerts = [];
+    this.endpoint = endpoint;
+    this.severities = severities;
   }
 }
 
@@ -145,15 +114,6 @@ type SilencePeriodFormGroup = FormGroup<{
 }>;
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
-
-type EndpointFormGroup = FormGroup<{
-  id: FormControl<string>;
-  channel: FormControl<any>;
-  value: FormControl<string>;
-  alerts: FormControl<any[]>;
-}>;
-
-type EndpointFormArray = FormArray<EndpointFormGroup>;
 
 type PermissionFormGroup = FormGroup<{
   id: FormControl<string>;
@@ -216,10 +176,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   errorBehaviorForm: FormGroup;
 
   //Step 3
-  channelOptions: any[] = [];
-  alertOptions: any[] = [];
-  endpointArray: EndpointFormArray;
-  iconMap: Map<string, string> = new Map<string, string>();
+  endpointsByTypeMap: any;
+  endpointFieldValues: EndpointViewDto[] = [];
+  endpointForm: FormGroup;
+
+  endpointList: Endpoint[] = [];
+
+  endpointTypeOptions: any[] = [];
+  severityOptions: any[] = [];
 
   tagForm: FormGroup;
   tagList: Tag[] = [];
@@ -253,7 +217,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     private router: Router,
     private _fb: FormBuilder,
     private metricService: MetricService,
-    private alertService: AlertService) {
+    private alertService: AlertService,
+    private endpointService: EndpointService) {
     //Step 1
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
@@ -285,7 +250,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     //Step 3
 
-    this.endpointArray = this._fb.array<EndpointFormGroup>([]);
+    this.endpointForm = this._fb.group({
+      type: ['', [Validators.required]],
+      endpoint: [{value: '', disabled: true}, [Validators.required]],
+      severities: [{value: [], disabled: true}, [Validators.required]]
+    });
 
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
@@ -332,13 +301,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.errorBehaviorOptions = errorBehaviorOptions;
 
     //Step 3
-    this.channelOptions = channelOptions;
-    this.alertOptions = alertOptions;
-    this.createEndpoint();
+    this.getEndpointsByType();
 
-    for (const option of channelOptions) {
-      this.iconMap.set(option.value, option.icon);
-    }
+    this.endpointTypeOptions = endpointTypeOptions;
+    this.severityOptions = severityOptions;
 
     this.conditionalBlockOptions = conditionalBlockOptions;
     this.templateVariableOptions = templateVariableOptions;
@@ -488,21 +454,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   deleteSilencePeriod(i: number) {
     this.silencePeriodArray.removeAt(i);
-  }
-
-  createEndpoint() {
-    const group: EndpointFormGroup = this._fb.group({
-      id: this._fb.control((this.endpointArray.length + 1).toString()),
-      channel: this._fb.control(channelOptions[0]),
-      value: this._fb.control('prueba@test.com'),
-      alerts: this._fb.control(Array.of())
-    }) as EndpointFormGroup;
-
-    this.endpointArray.push(group);
-  }
-
-  deleteEndpoint(i: number) {
-    this.endpointArray.removeAt(i);
   }
 
   createPermission() {
@@ -768,7 +719,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   onClickAddTagTemplateVariableToMessage(i: number) {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + this.tagIntersectionOptions[i].value + '}}');
+    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + this.groupByForm.get('groupBy')?.value[i] + '}}');
   }
 
   onClickAddConditionalBlockToDetails(i: number) {
@@ -832,16 +783,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //ENDPOINTS
     let endpointAlerts: EndpointAlertDto[] = [];
 
-    for (let endpoint of this.endpointArray.controls) {
-      let endpointDto: EndpointDto = new EndpointDto(endpoint.get('channel')?.value.label, endpoint.get('channel')?.value.value, endpoint.get('value')?.value!)
-      let severities: string[] = [];
-
-      for (let severity of endpoint.get('alerts')?.value!)
-      {
-        severities.push(severity.value);
-      }
-
-      endpointAlerts.push(new EndpointAlertDto(severities, endpointDto))
+    for (let endpoint of this.endpointList) 
+    {
+      let endpointAlert: EndpointAlertDto = new EndpointAlertDto(endpoint.severities.map(severity => severity.value), endpoint.endpoint.id);
+      endpointAlerts.push(endpointAlert);
     }
 
     //PERIODOS DE SILENCIO
@@ -1013,18 +958,32 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.router.navigate(['modificar-alerta']);
   }
 
-  getActivationTime()
+  getActivationTime1()
   {
     let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
     return this.formatTime(timeWindow * this.activationRecoverForm.get('activation1')?.value.value);
   }
 
-  getRecoverTime()
+  getActivationTime2()
+  {
+    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+
+    return this.formatTime(timeWindow * this.activationRecoverForm.get('activation2')?.value.value);
+  }
+
+  getRecoverTime1()
   {
     let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
     return this.formatTime(timeWindow * this.activationRecoverForm.get('recover1')?.value.value);
+  }
+
+  getRecoverTime2()
+  {
+    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+
+    return this.formatTime(timeWindow * this.activationRecoverForm.get('recover2')?.value.value);
   }
 
   formatTime(totalSeconds: number): string 
@@ -1103,5 +1062,38 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       dimensionValuesMap.set(event.itemValue.value, this.dimensionValuesMap.get(event.itemValue.value)!);
       this.selectedDimensionValuesMap.set(group.get('id')?.value!, dimensionValuesMap);
     })
+  }
+
+  getEndpointsByType()
+  {
+    this.endpointService.getEndpointsByType().subscribe(
+      (response: any) => {
+        this.endpointsByTypeMap = response;
+      },
+      (error: any) => {
+
+      }
+    );
+  }
+
+  onChangeStep3EndpointType()
+  {
+    this.endpointFieldValues = this.endpointsByTypeMap[this.endpointForm.get('type')?.value.value] || [];
+    this.endpointForm.get('endpoint')?.enable();
+    this.endpointForm.get('severities')?.enable();
+  }
+
+  onClickAddEndpoint()
+  {
+    this.endpointList.push(new Endpoint(this.endpointForm.get('type')?.value, this.endpointForm.get('endpoint')?.value, this.endpointForm.get('severities')?.value));
+
+    this.endpointForm.reset();
+    this.endpointForm.get('endpoint')?.disable();
+    this.endpointForm.get('severities')?.disable();
+  }
+
+  onClickDeleteEndpoint (i: number) 
+  {
+    this.endpointList.splice(i, 1);
   }
 }

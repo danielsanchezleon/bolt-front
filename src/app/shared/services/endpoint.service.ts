@@ -19,14 +19,21 @@ export class EndpointService {
     return this.http.post<any>(this.apiUrl + '/createEndpoint', endpointDto);
   }
 
-  getEndpoints(filterText: string | null): Observable<EndpointViewDto[]>
+  getEndpoints(page: number, size: number, filterText: string | null): any
   {
     let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size)
 
     if (filterText != null)
       params = params.append('filterText', filterText);
 
-    return this.http.get<EndpointViewDto[]>(this.apiUrl + '/getEndpoints', {params: params});
+    return this.http.get<any>(this.apiUrl + '/getEndpoints', {params: params});
+  }
+
+  getEndpointsByType(): any
+  {
+    return this.http.get<any>(this.apiUrl + '/getEndpointsByType');
   }
 
   deleteEndpoint(id: number): Observable<any>

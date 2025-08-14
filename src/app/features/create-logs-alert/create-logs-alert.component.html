@@ -180,15 +180,15 @@
                         <div class="channel-container" *ngFor="let endpoint of endpointArray.controls; let i = index;" [formGroup]="endpoint">
                             <div class="channel-data-container">
                                 <i class="pi {{iconMap.get(endpoint.get('channel')?.value?.value)}}"></i>
-                                <p-select [options]="channelOptions" class="select" optionLabel="label" appendTo="body" formControlName="channel"/>
+                                <p-select [options]="endpointTypeOptions" class="select" optionLabel="label" appendTo="body" formControlName="channel"/>
                                 <div class="text-gray">prueba&#64;test.com</div>
                             </div>
 
                             <div class="alerts-container">
-                                <div class="type-button-container" [ngClass]="{'disaster': endpoint.get('alerts')?.value?.includes(alertOptions[0]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[0])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[0]);">Disaster</div>
-                                <div class="type-button-container" [ngClass]="{'critical': endpoint.get('alerts')?.value?.includes(alertOptions[1]), 'text-white': endpoint.get('alerts')?.value?.includes(alertOptions[1])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[1]);">Critical</div>
-                                <div class="type-button-container" [ngClass]="{'major': endpoint.get('alerts')?.value?.includes(alertOptions[2])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[2]);">Major</div>
-                                <div class="type-button-container" [ngClass]="{'warning': endpoint.get('alerts')?.value?.includes(alertOptions[3])}" (click)="onClickSetEndpointAlert(endpoint, alertOptions[3]);">Warning</div>
+                                <div class="type-button-container" [ngClass]="{'disaster': endpoint.get('alerts')?.value?.includes(severityOptions[0]), 'text-white': endpoint.get('alerts')?.value?.includes(severityOptions[0])}" (click)="onClickSetEndpointAlert(endpoint, severityOptions[0]);">Disaster</div>
+                                <div class="type-button-container" [ngClass]="{'critical': endpoint.get('alerts')?.value?.includes(severityOptions[1]), 'text-white': endpoint.get('alerts')?.value?.includes(severityOptions[1])}" (click)="onClickSetEndpointAlert(endpoint, severityOptions[1]);">Critical</div>
+                                <div class="type-button-container" [ngClass]="{'major': endpoint.get('alerts')?.value?.includes(severityOptions[2])}" (click)="onClickSetEndpointAlert(endpoint, severityOptions[2]);">Major</div>
+                                <div class="type-button-container" [ngClass]="{'warning': endpoint.get('alerts')?.value?.includes(severityOptions[3])}" (click)="onClickSetEndpointAlert(endpoint, severityOptions[3]);">Warning</div>
                             </div>
                             <p-button *ngIf="endpointArray.length > 1" [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="deleteEndpoint(i);"/>
                         </div>

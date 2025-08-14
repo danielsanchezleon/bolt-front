@@ -19,7 +19,7 @@ import { InnerAccordionComponent } from '../../shared/components/inner-accordion
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { channelOptions, alertOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
+import { endpointTypeOptions, severityOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 
@@ -164,8 +164,8 @@ export class CreateLogsAlertComponent implements OnInit {
   errorBehaviorForm: FormGroup;
 
   //Step 3
-  channelOptions: any[] = [];
-  alertOptions: any[] = [];
+  endpointTypeOptions: any[] = [];
+  severityOptions: any[] = [];
   endpointArray: EndpointFormArray;
   iconMap: Map<string, string> = new Map<string, string>();
 
@@ -272,11 +272,11 @@ export class CreateLogsAlertComponent implements OnInit {
     this.errorBehaviorOptions = errorBehaviorOptions;
 
     //Step 3
-    this.channelOptions = channelOptions;
-    this.alertOptions = alertOptions;
+    this.endpointTypeOptions = endpointTypeOptions;
+    this.severityOptions = severityOptions;
     this.createEndpoint();
 
-    for (const option of channelOptions) {
+    for (const option of endpointTypeOptions) {
       this.iconMap.set(option.value, option.icon);
     }
 
@@ -346,7 +346,7 @@ export class CreateLogsAlertComponent implements OnInit {
   createEndpoint() {
     const group: EndpointFormGroup = this._fb.group({
       id: this._fb.control((this.endpointArray.length + 1).toString()),
-      channel: this._fb.control(channelOptions[0]),
+      channel: this._fb.control(endpointTypeOptions[0]),
       value: this._fb.control('prueba@test.com'),
       alerts: this._fb.control(Array.of())
     }) as EndpointFormGroup;
