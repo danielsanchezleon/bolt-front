@@ -20,6 +20,7 @@ export class HomeComponent {
   alerts: any[] = [];
 
   isLoading: boolean = false;
+  isError: boolean = false;
   homePanels?: HomePanelsViewDto;;
 
   constructor(private router: Router, private alertService: AlertService) {}
@@ -32,6 +33,7 @@ export class HomeComponent {
   getHomePanels()
   {
     this.isLoading = true;
+    this.isError = false;
 
     this.alertService.getHomePanels().subscribe(
       (response) => {
@@ -40,6 +42,7 @@ export class HomeComponent {
       },
       (error) => {
         this.isLoading = false;
+        this.isError = true;
       }
     )
   }

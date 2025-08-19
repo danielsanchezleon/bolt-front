@@ -1,11 +1,9 @@
-export const channelOptions = [
+export const endpointTypeOptions = [
     {value: 'email', label: 'Email', icon: 'pi-envelope'},
-    {value: 'teams', label: 'Teams', icon: 'pi-comment'},
-    {value: 'webhook', label: 'Webhook', icon: 'pi-comments'},
     {value: 'pagerduty', label: 'PagerDuty', icon: 'pi-sitemap'}
 ];
 
-export const alertOptions = [
+export const severityOptions = [
     {value: 'DISASTER', label: 'Disaster'},
     {value: 'CRITICAL', label: 'Critical'},
     {value: 'MAJOR', label: 'Major'},

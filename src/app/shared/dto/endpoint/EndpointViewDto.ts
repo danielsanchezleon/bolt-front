@@ -1,11 +1,9 @@
-import { EndpointTypeDto } from "./EndpointTypeDto";
-
 export class EndpointViewDto
 {
     id?: number;
     name?: string;
-    destination?: string;
-    type?: EndpointTypeDto;
+    data?: Map<string, any>;
+    type?: string;
     configuredAlerts?: string;
     date?: Date;
 }

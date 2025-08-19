@@ -1,15 +1,13 @@
-import { EndpointTypeDto } from "./EndpointTypeDto";
-
 export class EndpointDto
 {
+    type?: string;
+    data?: Record<string, any>;
     name?: string;
-    destination?: string;
-    type?: EndpointTypeDto;
 
-    constructor (name: string, destination: string, type: EndpointTypeDto)
+    constructor (type?: string, data?: Record<string, any>, name?: string)
     {
-        this.name = name;
-        this.destination = destination;
         this.type = type;
+        this.data = data;
+        this.name = name;
     }
 }

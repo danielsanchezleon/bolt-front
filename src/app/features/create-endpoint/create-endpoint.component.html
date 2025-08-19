@@ -9,19 +9,77 @@
             <div>Crea un punto de contacto para notificaciones de alertas</div>
         </div>
 
-        <div class="create-endpoint-form-container" [formGroup]="endpointForm">
-            <div class="form-container">
-                <p-select class="form-input" [options]="endpointTypes" formControlName="type" optionLabel="label" placeholder="Selecciona un tipo"/>
-                <p-floatlabel class="form-input" variant="on">
-                    <input pInputText autocomplete="off" formControlName="destination"/>
-                    <label>Destino</label>
-                </p-floatlabel>
-                <p-floatlabel class="form-input" variant="on">
-                    <input pInputText autocomplete="off" formControlName="name"/>
-                    <label>Nombre</label>
-                </p-floatlabel>
+        <div class="create-endpoint-form-container">
+
+            <div class="titled-container">
+                <div class="font-16 font-w-600">Información general *</div>
+                <div class="form-container" [formGroup]="endpointForm">
+                    <p-select class="form-input" [options]="endpointTypes" formControlName="type" optionLabel="label" placeholder="Selecciona un tipo" (onChange)="onChangeEndpointTypeSelection();"/>
+                    <p-floatlabel class="form-input" variant="on">
+                        <input pInputText autocomplete="off" formControlName="name"/>
+                        <label>Nombre</label>
+                    </p-floatlabel>
+                </div>
             </div>
-            <p-button label="Crear endpoint" severity="primary" [disabled]="!endpointForm.valid" (onClick)="modalVisible = true;"/>
+
+            <div *ngIf="endpointForm.get('type')?.value?.value == 'email'" class="titled-container">
+                <div class="font-16 font-w-600">Destinatarios *</div>
+                <div class="email-form-container">
+                    <div class="notice c-blue">
+                        <i class="pi pi-info-circle"></i>
+                        <div>
+                            Si quieres introducir varios destinatarios, puedes hacerlo más rápido escribiendo cada uno separado por ";" (A;B;C...)
+                        </div>
+                    </div>
+
+                    <div class="fields-container">
+                        <input class="form-input" pInputText autocomplete="off" placeholder="Introduce un destinatario" [formControl]="addressControl"/>
+                        <p-button icon="pi pi-plus" label="Añadir destinatario" severity="secondary" (onClick)="onClickAddAddress();" [disabled]="!addressControl.valid"/>
+                    </div>
+                    
+                    <div *ngIf="addresses.length > 0" class="font-12 font-w-600">Destinatarios añadidos</div>
+                    <div *ngIf="addresses.length > 0" class="labels-container">
+                        <div class="label-container" *ngFor="let address of addresses; let i = index;">
+                            <i class="pi pi-envelope" style="font-size: 0.75rem;"></i>
+                            <span class="font-12">{{address}}</span>
+                            <i class="pi pi-times remove-icon" style="font-size: 0.75rem;" (click)="onClickRemoveAddress(i);"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="endpointForm.get('type')?.value?.value == 'email'" class="titled-container">
+                <div class="font-16 font-w-600">Configuración opcional</div>
+                <div class="email-form-container" [formGroup]="emailOptionalSettingsForm">
+                    <div class="notice c-blue">
+                        <i class="pi pi-info-circle"></i>
+                        <div>
+                            Puedes introducir un <strong>mensaje</strong> y/o un <strong>asunto</strong> opcionales. Puedes hacer uso de los mismos en la plantilla de Mensaje a la hora de crear la alerta usando las variables &#10100;&#10100;optional.message&#10101;&#10101; y &#10100;&#10100;optional.subject&#10101;&#10101;.
+                        </div>
+                    </div>
+                    <div class="fields-container">
+                        <p-floatlabel class="form-input" variant="on">
+                            <input pInputText autocomplete="off" formControlName="message"/>
+                            <label>Mensaje</label>
+                        </p-floatlabel>
+                        <p-floatlabel class="form-input" variant="on">
+                            <input pInputText autocomplete="off" formControlName="subject"/>
+                            <label>Asunto</label>
+                        </p-floatlabel>
+                    </div>
+                </div>
+            </div>
+
+            <div *ngIf="endpointForm.get('type')?.value?.value == 'pagerduty'" class="titled-container">
+                <div class="font-16 font-w-600">Integration key *</div>
+                <div class="email-form-container">
+                    <div class="fields-container">
+                        <input class="form-input" pInputText autocomplete="off" [formControl]="integrationKeyControl" placeholder="Clave de integración con Pagerduty"/>
+                    </div>
+                </div>
+            </div>
+
+            <p-button label="Crear endpoint" severity="primary" [disabled]="!endpointForm.valid || (endpointForm.get('type')?.value?.value == 'email' && addresses.length == 0) || (endpointForm.get('type')?.value?.value == 'pagerduty' && !integrationKeyControl.valid)" (onClick)="modalVisible = true;"/>
         </div>
     </div>
 </app-page-wrapper>
@@ -31,7 +89,7 @@
         <div *ngIf="!isSuccess && !isError" class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-paperclip" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Estás a punto de crear un endpoint</div>
+            <div class="font-16 font-w-600">Estás a punto de crear un endpoint de tipo <strong>{{endpointForm.get('type')?.value?.label}}</strong></div>
             <div class="font-12 text-gray">Ten en cuenta que los cambios no se pueden deshacer. Asegúrate que has introducido los datos correctos.</div>
         </div>
         <div *ngIf="isSuccess" class="modal-icon-container">
@@ -47,6 +105,7 @@
     </div>
     <div *ngIf="!isSuccess && !isError" class="modal-steps">
         <div class="modal-step">
+            <div class="font-w-600">Información general</div>
             <div class="modal-step-content">
                 <div class="title-description-block-1">
                     <div class="title">Tipo</div>
@@ -54,13 +113,39 @@
                 </div>
                 <div class="separator"></div>
                 <div class="title-description-block-1">
-                    <div class="title">Destino</div>
-                    <div class="description">{{endpointForm.get('destination')?.value}}</div>
+                    <div class="title">Nombre</div>
+                    <div class="description">{{endpointForm.get('name')?.value}}</div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="endpointForm.get('type')?.value?.value == 'email'" class="modal-step">
+            <div class="font-w-600">Destinatarios</div>
+            <div class="modal-step-content">
+                <div class="title-description-block-1" *ngFor="let address of addresses;">
+                    <div class="description">{{address}}</div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="endpointForm.get('type')?.value?.value == 'email'" class="modal-step">
+            <div class="font-w-600">Configuración opcional</div>
+            <div class="modal-step-content">
+                <div class="title-description-block-1">
+                    <div class="title">Mensaje</div>
+                    <div class="description">{{emailOptionalSettingsForm.get('message')?.value ? emailOptionalSettingsForm.get('message')?.value : 'Sin definir'}}</div>
                 </div>
                 <div class="separator"></div>
                 <div class="title-description-block-1">
-                    <div class="title">Nombre</div>
-                    <div class="description">{{endpointForm.get('name')?.value}}</div>
+                    <div class="title">Asunto</div>
+                    <div class="description">{{emailOptionalSettingsForm.get('subject')?.value ? emailOptionalSettingsForm.get('subject')?.value : 'Sin definir'}}</div>
+                </div>
+            </div>
+        </div>
+        <div *ngIf="endpointForm.get('type')?.value?.value == 'pagerduty'" class="modal-step">
+            <div class="font-w-600">Integration key</div>
+            <div class="modal-step-content">
+                <div class="title-description-block-1">
+                    <div class="title">Integration key</div>
+                    <div class="description">{{integrationKeyControl.value}}</div>
                 </div>
             </div>
         </div>
@@ -70,7 +155,7 @@
         <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCreateEndpoint();" [loading]="isLoading"/>
     </div>
     <div *ngIf="isSuccess" class="modal-actions">
-        <p-button label="Crear otro endpoint" severity="secondary" (onClick)="modalVisible = false; endpointForm.reset(); isSuccess = false; isError = false;"/>
+        <p-button label="Crear otro endpoint" severity="secondary" (onClick)="modalVisible = false; endpointForm.reset(); addresses = []; isSuccess = false; isError = false;"/>
         <p-button label="Mis endpoints" severity="primary" (onClick)="onClickNavigateToEndpoints();"/>
     </div>
     <div *ngIf="isError" class="modal-actions">

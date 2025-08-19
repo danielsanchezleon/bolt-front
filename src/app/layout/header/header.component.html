@@ -1,5 +1,5 @@
-<div class="header-container">
-    <div *ngIf="router.url !== '/'" class="font-16 text-white font-w-700 title" (click)="onClickNavigateToHome();">
+<div class="header-container" [ngClass]="{'center-content': router.url === '/login'}" [ngStyle]="{'position': router.url === '/login' ? 'fixed' : 'static'}">
+    <div *ngIf="router.url !== '/' && router.url !== '/login'" class="font-16 text-white font-w-700 title" (click)="onClickNavigateToHome();">
         <i class="pi pi-home"></i>
         <div>Motor de alertado</div>
     </div>
@@ -10,10 +10,15 @@
 
     <img src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60">
     
-    <div class="actions-container">
+    <div *ngIf="router.url !== '/login'" class="actions-container">
         <div class="action-container text-white" (click)="onClickNavigateToEndpoints();">
             <i class="pi pi-cog"></i>
             <div class="font-16 font-w-600">Configuración</div>
+        </div>
+
+        <div class="action-container text-white" (click)="onClickLogout();">
+            <i class="pi pi-sign-out"></i>
+            <div class="font-16 font-w-600">Salir</div>
         </div>
     </div>
 </div>

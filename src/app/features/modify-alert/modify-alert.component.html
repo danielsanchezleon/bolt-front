@@ -5,20 +5,30 @@
     <div class="modify-alert-container">
         <div class="page-title">
             <div class="font-32 font-w-700">Modificación de alertas</div>
-            <div>Modifica y elimina las alertas generadas (Esta pantalla estará disponible próximamente)</div>
+            <div>Gestiona las alertas que has generado</div>
+        </div>
+    </div>
+
+    <div *ngIf="!isLoading && isError" class="notice">
+        <i class="pi pi-info-circle c-blue"></i>
+        <div>
+            Ha habido un error al obtener la información
         </div>
     </div>
 
     <div class="filter-container">
-        <p-iconfield style="width: 100%;">
+        <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
             <p-inputicon class="pi pi-search" />
             <input style="width: 100%;" [formControl]="filterTextControl" type="text" pInputText placeholder="Buscar alertas por nombre, descripción o etiquetas" />
             <p-inputicon class="pi pi-times" />
         </p-iconfield>
-        <p-button icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
+        <p-skeleton *ngIf="isLoading && !isError" width="1343px" height="39px" borderRadius="8px" />
+
+        <p-button *ngIf="!isLoading && !isError" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
             label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true"
             [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button"
             (onClick)="filterPanelOpen = !filterPanelOpen;" />
+        <p-skeleton *ngIf="isLoading && !isError" width="92px" height="39px" borderRadius="8px" />
     </div>
 
     <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
@@ -47,7 +57,7 @@
         </div>
     </div>
 
-    <div class="table-container">
+    <div *ngIf="!isLoading && !isError" class="table-container">
         <p-table id="dt" #dt [value]="alertListFiltered" [size]="'small'" [showGridlines]="true" [stripedRows]="true">
             <ng-template #header>
                 <tr>
@@ -170,4 +180,6 @@
             </ng-template>
         </p-table>
     </div>
+
+    <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
 </app-page-wrapper>
