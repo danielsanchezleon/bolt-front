@@ -1,5 +1,7 @@
 .header-container
 {
+    z-index: 2 !important;
+
     width: 100%;
     height: 60px;
     background-color: #2563eb;
@@ -55,4 +57,9 @@
             background-color: #4275e4;
         }
     }
+}
+
+.center-content
+{
+    justify-content: center;
 }
