@@ -13,7 +13,7 @@
         </div>
         <div class="form-container" [formGroup]="loginForm">
             <p-floatlabel class="field" variant="on">
-                <input #usernameOrEmailInput class="field" pInputText formControlName="usernameOrEmail" autocomplete="off" />
+                <input #usernameOrEmailInput class="field" pInputText formControlName="usernameOrEmail" autocomplete="off" (keydown.enter)="onClickRequestAccess()"/>
                 <label><i class="pi pi-user">&nbsp;</i>Usuario/Correo</label>
             </p-floatlabel>
             <p-floatlabel class="field" variant="on">
