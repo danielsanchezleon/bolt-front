@@ -61,4 +61,16 @@ export class AuthService {
     else
       return null;
   }
+
+  getTeam(): number | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const payload = this.decodePayload(token);
+
+    if (payload.team)
+      return payload.team;
+    else
+      return null;
+  }
 }

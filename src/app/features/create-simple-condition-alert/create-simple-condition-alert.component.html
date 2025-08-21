@@ -4,16 +4,35 @@
     <div class="steps-container">
         <div class="font-32 font-w-600">Condición simple</div>
         <app-accordion [title]="'Paso 1: Configura la consulta'" [highlightTitle]="true" [isOpen]="true">
+
             <div *ngIf="!loadingAllMetricList" class="consult-configuration-container">
+                <div class="notice c-blue">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <span class="font-w-700">Importante</span>: Solo se permite seleccionar {{metricOptions.maxMetricNumber}} métricas como máximo
+                    </div>
+                </div>
                 <div class="metric-selection-container">
                     <div class="metric-select">
-                        <p-multiselect class="full-width-selector" [loading]="loadingMetricList" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="metric" [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona alguna métrica'" emptyMessage=" " emptyFilterMessage=" " appendTo="body">
+                        <p-multiselect class="full-width-selector" [loading]="loadingMetricList" [options]="metricList" [(ngModel)]="selectedMetricList" [filter]="true" (onFilter)="onFilterMetricsChange($event);" optionLabel="metric" [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona alguna métrica'" emptyMessage=" " emptyFilterMessage=" " appendTo="body" [maxSelectedLabels]="0">
                             <ng-template let-metric #item>
                                 <div style="display: flex; flex-direction: column; gap: 8px;">
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <div class="font-w-600">{{metric.metric}}</div>
                                         <div class="font-w-600 font-12" *ngFor="let dimension of metric.dimension.slice(0, 5)" style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">{{dimension}}</div>
                                         <div *ngIf="metric.dimension.slice(5).length > 0" [pTooltip]="metric.dimension.slice(5)" tooltipPosition="top" showDelay="250">[···]</div>
+                                    </div>
+                                </div>
+                            </ng-template>
+                            <ng-template #footer>
+                                <div *ngIf="selectedMetricList.length > 0" style="padding: 8px; display: flex; flex-direction: column; gap: 8px; border: 1px solid lightgray; border-radius: 8px; margin: 8px;">
+                                    <div class="font-12 font-w-600" sty>Métricas seleccionadas:</div>
+                                    <div class="labels-container">
+                                        <div class="label-container" *ngFor="let selectedMetric of selectedMetricList; let i = index;" >
+                                            <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
+                                            <div class="font-12">{{selectedMetric.metric}}</div>
+                                            <i class="pi pi-times remove-icon" style="font-size: 0.75rem;" (click)="onClickRemoveSelectMetric(i);"></i>
+                                        </div>
                                     </div>
                                 </div>
                             </ng-template>
@@ -364,18 +383,16 @@
                                 </form>
                             </p-tabpanel>
                             <p-tabpanel value="1">
-                                <form [formGroup]="notificationMessageForm">
-                                    <div class="notification-message-form">
-                                        <label class="font-w-600">Mensaje de la alerta:</label>
-                                        <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" formControlName="message" readonly="readonly"></textarea>
+                                <div class="notification-message-form">
+                                    <label class="font-w-600">Mensaje de la alerta:</label>
+                                    <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" [ngModel]="notificationMessageForm.get('message')?.value" readonly="readonly" style="pointer-events: none;"></textarea>
 
-                                        <label class="font-w-600">Detalles adicionales:</label>
-                                        <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" formControlName="details" readonly="readonly"></textarea>
+                                    <label class="font-w-600">Detalles adicionales:</label>
+                                    <textarea class="full-w-field" pTextarea rows="2" [autoResize]="true" [ngModel]="notificationMessageForm.get('details')?.value" readonly="readonly" style="pointer-events: none;"></textarea>
 
-                                        <label class="font-w-600">Procedimiento (OPI):</label>
-                                        <input class="full-w-field" pInputText formControlName="proccedure" readonly="readonly" />
-                                    </div>
-                                </form>
+                                    <label class="font-w-600">Procedimiento (OPI):</label>
+                                    <input class="full-w-field" pInputText readonly="readonly" [ngModel]="notificationMessageForm.get('proccedure')?.value" style="pointer-events: none;" />
+                                </div>
                             </p-tabpanel>
                         </p-tabpanels>
                     </p-tabs>
@@ -395,14 +412,14 @@
                 <div class="permissions-container">
                     <div class="permission-container" *ngFor="let permission of permissionList; let i = index;">
                         <div class="permission-form-container">
-                            <p-select [options]="permissionTeamOptions" class="select" optionLabel="label" appendTo="body" [(ngModel)]="permission.team" placeholder="Selecciona un equipo"/>
+                            <p-select [options]="teamList" class="select" optionLabel="name" appendTo="body" [(ngModel)]="permission.team" placeholder="Selecciona un equipo" [optionDisabled]="'disabled'" [disabled]="i == 0" (onChange)="onChangeTeam($event);"/>
                             <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;" *ngFor="let permissionTypeOption of permissionTypeOptions; let j = index;">
-                                <p-radiobutton size="small" name="type" [value]="permissionTypeOption" [(ngModel)]="permission.type" [inputId]="permissionTypeOption.value + j" />
+                                <p-radiobutton size="small" name="type" [value]="permissionTypeOption" [(ngModel)]="permission.type" [inputId]="permissionTypeOption.value + j" [disabled]="i == 0"/>
                                 <i class="pi {{permissionTypeOption.icon}} c-blue"></i>
                                 <label [for]="permissionTypeOption.value + j">{{permissionTypeOption.label}}</label>
                             </div>
                         </div>
-                        <p-button *ngIf="permissionList.length > 1" [pTooltip]="'Eliminar permiso'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="deletePermission(i);"/>
+                        <p-button *ngIf="permissionList.length > 1 && i > 0" [pTooltip]="'Eliminar permiso'" tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger" (onClick)="deletePermission(i);"/>
                     </div>
 
                     <p-button label="Añadir otro permiso" icon="pi pi-plus" (onClick)="createPermission();" severity="secondary"/>

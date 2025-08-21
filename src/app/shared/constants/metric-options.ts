@@ -32,9 +32,11 @@ export const metricOperationOptions = [
 
 export const operationOptions = [
     {value: 0, label: 'Media'},
+    {value: 1, label: 'Suma'},
     {value: 2, label: 'Mínimo'},
     {value: 3, label: 'Máximo'},
-    {value: 4, label: 'Count'}
+    {value: 4, label: 'Count'},
+    {value: 5, label: 'Último'},
 ];
 
 export const timeWindowOptions = [

@@ -5,6 +5,7 @@ import { AlertDto } from '../dto/AlertDto';
 import { environment } from '../../../environments/environment';
 import { AlertViewDto } from '../dto/alert/AlertViewDto';
 import { HomePanelsViewDto } from '../dto/home/HomePanelsViewDto';
+import { TeamViewDto } from '../dto/TeamViewDto';
 
 @Injectable({
   providedIn: 'root'
@@ -39,5 +40,10 @@ export class AlertService {
     params = params.append('bbdd', bbdd).append('table_name', table_name).append('metric', metric).append('dimension', dimension);
 
     return this.http.get<any>(this.apiUrl + '/getDimensionValues', {params: params});
+  }
+
+  getAllTeams(): Observable<TeamViewDto[]>
+  {
+    return this.http.get<TeamViewDto[]>(this.apiUrl + '/getAllTeams');
   }
 }

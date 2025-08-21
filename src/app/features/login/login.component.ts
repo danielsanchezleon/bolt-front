@@ -39,6 +39,7 @@ export class LoginComponent
   {
     if (this.loginForm.valid)
     {
+      sessionStorage.removeItem('token');
       this.isLoading = true;
       this.isError = false;
 
