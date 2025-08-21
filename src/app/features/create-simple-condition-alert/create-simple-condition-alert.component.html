@@ -410,7 +410,7 @@
                 </div>
 
                 <div class="permissions-container">
-                    <div class="permission-container" *ngFor="let permission of permissionList; let i = index;">
+                    <div class="permission-container" *ngFor="let permission of permissionList; let i = index;" [ngStyle]="{'border': permission.team == null || permission.type == null ? '2px solid red' : 'none'}">
                         <div class="permission-form-container">
                             <p-select [options]="teamList" class="select" optionLabel="name" appendTo="body" [(ngModel)]="permission.team" placeholder="Selecciona un equipo" [optionDisabled]="'disabled'" [disabled]="i == 0" (onChange)="onChangeTeam($event);"/>
                             <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;" *ngFor="let permissionTypeOption of permissionTypeOptions; let j = index;">
@@ -428,7 +428,7 @@
         </app-accordion>
 
         <div class="end-button-container">
-            <p-button label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary" [disabled]="selectedMetrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid"/>
+            <p-button label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary" [disabled]="selectedMetrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()"/>
         </div>
     </div>
 </app-page-wrapper>
@@ -591,18 +591,12 @@
 
         <div class="modal-step">
             <div class="font-16 font-w-700 c-blue">Paso 4: Permisos</div>
-            <div *ngIf="allPermissionsCompleted();" class="modal-step-content">
+            <div class="modal-step-content">
                 <div class="font-16 font-w-600">Permisos añadidos</div>
                 <div class="title-description-block-1" *ngFor="let permission of permissionList; let i = index;">
                     <div class="title">Permiso {{(i + 1)}}</div>
                     <div class="description">{{permission.team.label}}</div>
                     <div class="description">{{permission.type.label}}</div>
-                </div>
-            </div>
-            <div *ngIf="!allPermissionsCompleted();" class="modal-step-content">
-                <div class="font-16 font-w-600">Permisos añadidos</div>
-                <div class="title-description-block-1">
-                    <div class="description c-red">Existen campos sin rellenar en los permisos añadidos. Si no se rellenan los campos que faltan, no se asociarán permisos a la alerta *</div>
                 </div>
             </div>
         </div>

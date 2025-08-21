@@ -478,7 +478,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   allPermissionsCompleted(): boolean {
     return this.permissionList.every(permission => {
       let team = permission.team;
-      return team !== null && team !== undefined;
+      let type = permission.type;
+      return team !== null && team !== undefined && type !== null && type !== undefined;
     });
   }
 
