@@ -524,47 +524,12 @@
                     }
                 }
             }
-
-            .labels-container {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 16px;
-
-                .label-container {
-                    width: fit-content;
-                    display: flex;
-                    flex-direction: row;
-                    align-items: center;
-                    gap: 8px;
-
-                    background-color: #ebebeb;
-                    border-radius: 24px;
-                    padding: 4px 8px;
-
-                    .remove-icon {
-                        cursor: pointer;
-                    }
-                }
-            }
         }
 
         .notification-message-container {
             display: flex;
             flex-direction: column;
             gap: 16px;
-
-            .notice {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                gap: 16px;
-
-                border: 1px solid lightgray;
-                border-radius: 8px;
-                background-color: #dbeafe;
-                padding: 16px;
-            }
 
             .tabs {
                 border: 1px solid lightgray;
@@ -774,6 +739,41 @@
 
         .option-container:hover {
             background-color: #f0f0f0;
+        }
+    }
+}
+
+.notice {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    background-color: #dbeafe;
+    padding: 16px;
+}
+
+.labels-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    .label-container {
+        width: fit-content;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+
+        background-color: #ebebeb;
+        border-radius: 24px;
+        padding: 4px 8px;
+
+        .remove-icon {
+            cursor: pointer;
         }
     }
 }

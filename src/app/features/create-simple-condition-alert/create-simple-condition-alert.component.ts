@@ -46,6 +46,8 @@ import { AlertService } from '../../shared/services/alert.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { EndpointService } from '../../shared/services/endpoint.service';
 import { EndpointViewDto } from '../../shared/dto/endpoint/EndpointViewDto';
+import { TeamViewDto } from '../../shared/dto/TeamViewDto';
+import { AuthService } from '../../shared/services/auth.service';
 
 export class MetricOption {
   id: string;
@@ -86,8 +88,9 @@ export class Permission {
   team: any;
   type: any;
 
-  constructor() {
-    this.type = permissionTypeOptions[0];
+  constructor(team?: TeamViewDto, type?: any) {
+    this.team = team;
+    this.type = type;
   }
 }
 
@@ -202,9 +205,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   notificationMessageForm: FormGroup;
 
   //Step 4
-  permissionTeamOptions: any[] = [];
   permissionTypeOptions: any[] = [];
   permissionList: Permission[] = [];
+  teamList: TeamViewDto[] = [];
 
   //Modal
   modalVisible: boolean = false;
@@ -218,7 +221,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     private _fb: FormBuilder,
     private metricService: MetricService,
     private alertService: AlertService,
-    private endpointService: EndpointService) {
+    private endpointService: EndpointService,
+    private authService: AuthService) {
     //Step 1
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
@@ -310,9 +314,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.templateVariableOptions = templateVariableOptions;
 
     //Step 4
-    this.permissionTeamOptions = permissionTeamOptions;
     this.permissionTypeOptions = permissionTypeOptions;
-    this.createPermission();
+    this.getAllTeams();
 
     // this.thresholdArray.valueChanges.subscribe((thresholds) => {
     //   if (this.lastThresholdArrayLength != this.thresholdArray.length)
@@ -460,7 +463,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.permissionList.push(new Permission());
   }
 
-  deletePermission(i: number) {
+  deletePermission(i: number) 
+  {
+    if (this.permissionList[i].team)
+      this.teamList[this.teamList.findIndex(team => team.id == this.permissionList[i].team.id)].disabled = false;
     this.permissionList.splice(i, 1);
   }
 
@@ -472,7 +478,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   allPermissionsCompleted(): boolean {
     return this.permissionList.every(permission => {
       let team = permission.team;
-      return team !== null && team !== undefined;
+      let type = permission.type;
+      return team !== null && team !== undefined && type !== null && type !== undefined;
     });
   }
 
@@ -487,7 +494,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   private get allowedChars(): string[] {
-    return ['+', '-', '*', '/', '(', ')', ...this.allowedLetters()];
+    return ['+', '-', '*', '/', '(', ')', ...this.allowedLetters(), '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
   }
 
   allowCharacters(event: KeyboardEvent) {
@@ -1095,5 +1102,33 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   onClickDeleteEndpoint (i: number) 
   {
     this.endpointList.splice(i, 1);
+  }
+
+  getAllTeams()
+  {
+    this.permissionList = [];
+
+    this.alertService.getAllTeams().subscribe(
+      (response) => 
+      {
+        this.teamList = response;
+
+        this.permissionList.push(new Permission(this.teamList.filter(team => team.id == this.authService.getTeam())[0], permissionTypeOptions[1]));
+        this.teamList[this.teamList.findIndex(team => team.id == this.authService.getTeam())].disabled = true;
+      },
+      (error) => 
+      {
+      }
+    );
+  }
+
+  onChangeTeam(event: any)
+  {
+    this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
+  }
+
+  onClickRemoveSelectMetric(i: number)
+  {
+    this.selectedMetricList.splice(i, 1);
   }
 }
