@@ -124,6 +124,9 @@ type ThresholdFormGroup = FormGroup<{
   maxIncluded: FormControl<boolean>;
   max: FormControl<number | null>;
   status: FormControl<boolean>;
+  startBrackets: FormControl<number | null>;
+  endBrackets: FormControl<number | null>;
+  externalOperation: FormControl<string | null>;
 }>;
 
 type ThresholdFormArray = FormArray<ThresholdFormGroup>;
@@ -136,12 +139,6 @@ type SilencePeriodFormGroup = FormGroup<{
 }>;
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
-
-type PermissionFormGroup = FormGroup<{
-  id: FormControl<string>;
-  team: FormControl<string>;
-  permission: FormControl<string>
-}>;
 
 @Component({
   selector: 'app-create-simple-condition-alert',
@@ -350,7 +347,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       name: this._fb.control(this.letters[indicatorIndex]),
       metrics: this._fb.array<MetricFormGroup>([]),
       hasFinalOperation: this._fb.control(false),
-      constantOp: this._fb.control(this.matOperations[3]),
+      constantOp: this._fb.control(this.matOperations[2]),
       constantValue: this._fb.control(100)
     }) as IndicatorFormGroup;
 
@@ -505,7 +502,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
       max: this._fb.control(null),
-      status: this._fb.control(true)
+      status: this._fb.control(true),
+      startBrackets: this._fb.control(null),
+      endBrackets: this._fb.control(null),
+      externalOperation: this._fb.control(null)
     }) as ThresholdFormGroup;
 
     this.thresholdArray.push(group);
@@ -776,6 +776,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //PERMISSIONS
     let alertPermissions: AlertPermissionDto[] = [];
 
+    for (let permission of this.permissionList)
+    {
+      alertPermissions.push(new AlertPermissionDto(permission.type.value.includes('rw') ? true : false, permission.team.id));
+    }
+
     //CONDITION HISTORIES
     let alertConditionHistories: AlertConditionHistoryDto[] = [];
 
@@ -807,21 +812,25 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     }
 
     //METRICAS
-    // let alertIndicators: AlertIndicatorDto[] = [];
-    // let alertMetrics: AlertMetricDto[] = [];
+    let alertIndicators: AlertIndicatorDto[] = [];
+    let alertMetrics: AlertMetricDto[] = [];
 
-    // for (let selectedMetric of this.selectedMetrics) {
-    //   alertMetrics.push(new AlertMetricDto(selectedMetric.metric.bbdd, selectedMetric.metric.table_name, selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
-    // }
+    for (let indicator of this.indicatorArray.controls)
+    {
+      for (let metric of indicator.controls.metrics.controls) {
+        alertMetrics.push(new AlertMetricDto(metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!, metric.get('order')?.value!));
+      }
 
-    // alertIndicators.push(new AlertIndicatorDto('A', alertMetrics));
+      alertIndicators.push(new AlertIndicatorDto(indicator.get('name')?.value!, alertMetrics, indicator.get('constantOp')?.value!.value!, indicator.get('constantValue')?.value!.toString()!));
+    }
 
     //UMBRALES
     let alertConditions: AlertConditionDto[] = [];
 
     for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
-      alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null));
+
+      alertClauses.push(new AlertClauseDto(threshold.get('startBrackets')?.value!, threshold.get('comparation')?.value.value, threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1 ? threshold.get('value')?.value! : threshold.get('min')?.value!, threshold.get('endBrackets')?.value!, threshold.get('order')?.value!, threshold.get('externalOperation')?.value!, threshold.get('minIncluded')?.value ? threshold.get('min')?.value! : threshold.get('min')?.value! + 0.01, threshold.get('max')?.value!, threshold.get('maxIncluded')?.value ? threshold.get('max')?.value! : threshold.get('max')?.value! - 0.01));
 
       let conditionFilters: ConditionFilterDto[] = [];
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value!)!;
@@ -858,7 +867,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     alertDto.alertConditions = alertConditions;
     alertDto.alertSilences = alertSilences;
     alertDto.endpointAlerts = endpointAlerts;
-    // alertDto.alertIndicators = alertIndicators;
+    alertDto.alertIndicators = alertIndicators;
     alertDto.alertPermissions = alertPermissions;
     alertDto.alertConditionHistories = alertConditionHistories;
     alertDto.filterLogs = filterLogs;

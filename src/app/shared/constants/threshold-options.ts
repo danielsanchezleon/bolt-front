@@ -8,8 +8,8 @@ export const thresholdTypeOptions = [
 export const thresholdComparationOptions = [
     {value: 0, label: 'Mayor que'},
     {value: 1, label: 'Menor que'},
-    // {value: 2, label: 'Dentro del rango'},
-    // {value: 3, label: 'Fuera del rango'}
+    {value: 2, label: 'Dentro del rango'},
+    {value: 3, label: 'Fuera del rango'}
 ];
 
 export const activationRecoverEvaluationOptions = [

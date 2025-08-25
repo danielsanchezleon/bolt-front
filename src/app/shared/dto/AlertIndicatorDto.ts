@@ -4,6 +4,8 @@ export class AlertIndicatorDto
 {
   constructor(
     public name: string,
-    public alertMetrics: AlertMetricDto[] = []
+    public alertMetrics: AlertMetricDto[] = [],
+    public constantOp: number,
+    public constantValue: string
   ) {}
 }

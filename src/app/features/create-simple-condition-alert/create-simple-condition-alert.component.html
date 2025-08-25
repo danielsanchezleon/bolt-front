@@ -71,7 +71,7 @@
                                     </div>
                                     <p-select [options]="matOperations" formControlName="constantOp"
                                     optionLabel="label" appendTo="body" (onChange)="onChangeHasFinalOperation(i);" />
-                                    <input type="text" pInputText formControlName="constantValue" (input)="onChangeHasFinalOperation(i);"/>
+                                    <input type="text" [maxlength]="10" pInputText formControlName="constantValue" (input)="onChangeHasFinalOperation(i);"/>
                                 </div>
                             </div>
                         </div>
@@ -195,11 +195,13 @@
                         </div>
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0"
                             style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;"
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="dimensions-container">
+                            <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;"
                             class="multiselect" [options]="dimensionValuesMap.get(dimension)"
                             [ngModel]="dimensionValuesMap.get(dimension)"
                             (onChange)="onChangeDimensionValuesSelection(threshold, dimension, $event);" appendTo="body"
                             size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1" />
+                        </div>
                     </div>
                     <div class="threshold-options" [formGroup]="threshold">
                         <p-toggleswitch formControlName="status" />
