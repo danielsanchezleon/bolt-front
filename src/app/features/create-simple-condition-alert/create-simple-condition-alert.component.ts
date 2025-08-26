@@ -25,7 +25,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
-import { debounceTime, Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Subject, Subscription, switchMap } from 'rxjs';
 import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../shared/services/metric.service';
@@ -48,19 +48,6 @@ import { EndpointService } from '../../shared/services/endpoint.service';
 import { EndpointViewDto } from '../../shared/dto/endpoint/EndpointViewDto';
 import { TeamViewDto } from '../../shared/dto/TeamViewDto';
 import { AuthService } from '../../shared/services/auth.service';
-
-export class MetricOption {
-  id: string;
-  metric: TableMetricInfo;
-  operation: any = { value: 0, label: 'Sumar ( + )', symbol: '+', description: 'Sumar con la métrica anterior' };
-  order: number;
-
-  constructor(id: string, metric: TableMetricInfo, order: number) {
-    this.id = id;
-    this.metric = metric;
-    this.order = order;
-  }
-}
 
 export class Endpoint {
   type: any;
@@ -94,6 +81,38 @@ export class Permission {
   }
 }
 
+class MetricOperation
+{
+  value: number;
+  label: string;
+  symbol: string;
+  description: string;
+
+  constructor(value: number, label: string, symbol: string, description: string) {
+    this.value = value;
+    this.label = label;
+    this.symbol = symbol;
+    this.description = description;
+  }
+}
+
+type MetricFormGroup = FormGroup<{
+  id: FormControl<string>;
+  metric: FormControl<TableMetricInfo | null>;
+  operation: FormControl<MetricOperation>;
+  options: FormControl<TableMetricInfo[]>;
+}>;
+
+type IndicatorFormGroup = FormGroup<{
+  name: FormControl<string>;
+  metrics: FormArray<MetricFormGroup>;
+  hasFinalOperation: FormControl<boolean>;
+  constantOp: FormControl<MetricOperation | null>;
+  constantValue: FormControl<number | null>;
+}>;
+
+type IndicatorFormArray = FormArray<IndicatorFormGroup>;
+
 type ThresholdFormGroup = FormGroup<{
   id: FormControl<string>;
   type: FormControl<any>;
@@ -105,6 +124,9 @@ type ThresholdFormGroup = FormGroup<{
   maxIncluded: FormControl<boolean>;
   max: FormControl<number | null>;
   status: FormControl<boolean>;
+  startBrackets: FormControl<number | null>;
+  endBrackets: FormControl<number | null>;
+  externalOperation: FormControl<string | null>;
 }>;
 
 type ThresholdFormArray = FormArray<ThresholdFormGroup>;
@@ -118,12 +140,6 @@ type SilencePeriodFormGroup = FormGroup<{
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
-type PermissionFormGroup = FormGroup<{
-  id: FormControl<string>;
-  team: FormControl<string>;
-  permission: FormControl<string>
-}>;
-
 @Component({
   selector: 'app-create-simple-condition-alert',
   imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
@@ -135,20 +151,15 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   subscriptions: Subscription[] = [];
 
   //Step 1
-  filterValue: string = "";
-  private filterSubject = new Subject<string>();
-  loadingAllMetricList: boolean = false;
+
+  indicatorArray: IndicatorFormArray;
+  matOperations: MetricOperation[] = [new MetricOperation(0, 'Sumar ( + )', '+', 'Sumar con la métrica anterior'), new MetricOperation(1, 'Restar ( - )', '-', 'Restar con la métrica anterior'), new MetricOperation(2, 'Multiplicar ( * )', '*', 'Multiplicar con la métrica anterior'), new MetricOperation(3, 'Dividir ( / )', '/', 'Dividir con la métrica anterior')];
+  private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
   loadingMetricList: boolean = false;
 
-  metricOptions: MetricOptions = new MetricOptions();
-  metricOperationOptions: any[] = [];
   metricList: TableMetricInfo[] = [];
-  selectedMetricList: TableMetricInfo[] = [];
-  selectedMetrics: MetricOption[] = [];
   letters: string[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  customizeMetric: boolean = false;
   resultMetric: string = '';
-  resultMetricLabel: string = '';
 
   tagIntersectionOptions: any[] = [];
   operationOptions: any[] = []
@@ -224,6 +235,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     private endpointService: EndpointService,
     private authService: AuthService) {
     //Step 1
+    this.indicatorArray = this._fb.array<IndicatorFormGroup>([]);
+
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
       operation: [operationOptions[0], []]
@@ -275,15 +288,23 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   ngOnInit(): void {
     //Step 1
 
-    // this.getAllMetrics();
+    this.createIndicator();
 
     this.filterSubject
-      .pipe(debounceTime(1000)) // Espera 1 segundo desde la última tecla
-      .subscribe(filtro => {
-        this.getMetrics(filtro);
+      .pipe(
+        debounceTime(1000), // Espera 1 segundo desde la última tecla
+        switchMap(({ term, metric }) => { 
+          this.loadingMetricList = true;
+          return this.metricService.getMetrics(term).pipe(
+            map(response => ({ response, metric }))
+          );
+        })
+      )
+      .subscribe(({ response, metric }) => {
+        metric.get('options')?.setValue(response);
+        this.loadingMetricList = false;
       });
 
-    this.metricOperationOptions = metricOperationOptions;
 
     this.operationOptions = operationOptions;
 
@@ -316,18 +337,144 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //Step 4
     this.permissionTypeOptions = permissionTypeOptions;
     this.getAllTeams();
+  }
 
-    // this.thresholdArray.valueChanges.subscribe((thresholds) => {
-    //   if (this.lastThresholdArrayLength != this.thresholdArray.length)
-    //   {
-    //     this.lastThresholdArrayLength = this.thresholdArray.length;
-      
-    //     this.selectedDimensionValuesMap.clear();
-    //     thresholds.forEach((threshold: any) => {
-    //       this.selectedDimensionValuesMap.set(threshold.id, new Map());
-    //     });
-    //   }
-    // });
+  createIndicator()
+  {
+    let indicatorIndex: number = this.indicatorArray.length;
+
+    const group: IndicatorFormGroup = this._fb.group({
+      name: this._fb.control(this.letters[indicatorIndex]),
+      metrics: this._fb.array<MetricFormGroup>([]),
+      hasFinalOperation: this._fb.control(false),
+      constantOp: this._fb.control(this.matOperations[2]),
+      constantValue: this._fb.control(100)
+    }) as IndicatorFormGroup;
+
+    this.indicatorArray.push(group);
+
+    this.createMetric(indicatorIndex);
+  }
+
+  removeIndicator(indicatorIndex: number)
+  {
+    this.indicatorArray.removeAt(indicatorIndex);
+
+    for (let indicator of this.indicatorArray.controls)
+    {
+      indicator.get('name')?.setValue(this.letters[this.indicatorArray.controls.indexOf(indicator)]);
+    }
+
+    this.getMetricTagsIntersection();
+  }
+
+  createMetric(indicatorIndex: number)
+  {
+    this.indicatorArray.at(indicatorIndex).controls.metrics.push(this._fb.group({
+      id: this._fb.control((this.indicatorArray.at(indicatorIndex).controls.metrics.length! + 1).toString()),
+      metric: this._fb.control(null),
+      operation: this._fb.control(this.matOperations[0]),
+      options: this._fb.control([] as TableMetricInfo[])
+    }) as MetricFormGroup);
+
+    this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
+  }
+
+  removeMetric(indicatorIndex: number, metricIndex: number)
+  {
+    this.indicatorArray.at(indicatorIndex).controls.metrics.removeAt(metricIndex);
+
+    for (let metric of this.indicatorArray.at(indicatorIndex).controls.metrics.controls)
+    {
+      metric.get('id')?.setValue((this.indicatorArray.at(indicatorIndex).controls.metrics.controls.indexOf(metric) + 1).toString());
+    }
+
+    this.getMetricTagsIntersection();
+
+    this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
+  }
+
+  onChangeMetricSelect(indicatorIndex: number)
+  {
+    this.generateResultMetric(indicatorIndex);
+
+    this.getMetricTagsIntersection();
+
+    this.dimensionValuesMap.clear();
+
+    for (const indicator of this.indicatorArray.controls) 
+    {
+      const metricsArray = indicator.controls.metrics;
+
+      for (const metricGroup of metricsArray.controls) 
+      {
+        const metricValue = metricGroup.get('metric')?.value;
+
+        if (metricValue && Array.isArray(metricValue.dimension)) 
+        {
+          metricValue.dimension.forEach((dimension: string) => {
+            this.getDimensionValues(metricValue.bbdd, metricValue.table_name, metricValue.metric, dimension);
+          })
+        }
+      }
+    }
+  }
+
+  generateResultMetric(indicatorIndex: number) {
+    this.resultMetric = '';
+
+    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach((metric, i) => {
+      this.resultMetric += this.indicatorArray.at(indicatorIndex).get('name')?.value + '.' + (i+1);
+
+      if (i < (this.indicatorArray.at(indicatorIndex).controls.metrics.controls.length - 1)) {
+        this.resultMetric += this.indicatorArray.at(indicatorIndex).controls.metrics.controls[i + 1].get('operation')?.value!.symbol;
+      }
+    });
+  }
+
+  onChangeSelectOperation(indicatorIndex: number) {
+    this.generateResultMetric(indicatorIndex);
+  }
+
+  getMetricTagsIntersection() {
+    this.groupByForm.get('groupBy')?.setValue([]);
+
+    let intersection: Set<string> | null = null;
+
+    for (const indicator of this.indicatorArray.controls) 
+    {
+      const metricsArray = indicator.controls.metrics;
+
+      for (const metricGroup of metricsArray.controls) {
+        const metricValue = metricGroup.get('metric')?.value;
+
+        if (metricValue && Array.isArray(metricValue.dimension)) {
+          const currentSet = new Set(metricValue.dimension);
+
+          if (intersection === null) 
+          {
+            intersection = currentSet;
+          } 
+          else 
+          {
+            intersection = new Set([...intersection].filter((dim: string) => currentSet.has(dim)));
+          }
+        }
+      }
+    }
+
+    if (intersection && intersection != null && intersection != undefined)
+      this.tagIntersectionOptions = Array.from(intersection).map(tag => ({ label: tag, value: tag }));
+  }
+
+  onChangeHasFinalOperation(indicatorIndex: number)
+  {
+    this.generateResultMetric(indicatorIndex);
+
+    if (this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.value)
+    {
+      this.resultMetric = '(' + this.resultMetric + ')' + this.indicatorArray.at(indicatorIndex).get('constantOp')?.value!.symbol + ' ' + this.indicatorArray.at(indicatorIndex).get('constantValue')?.value;
+    }
   }
 
   watchGroupValidity(group: ThresholdFormGroup) {
@@ -355,7 +502,10 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
       max: this._fb.control(null),
-      status: this._fb.control(true)
+      status: this._fb.control(true),
+      startBrackets: this._fb.control(null),
+      endBrackets: this._fb.control(null),
+      externalOperation: this._fb.control(null)
     }) as ThresholdFormGroup;
 
     this.thresholdArray.push(group);
@@ -483,152 +633,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     });
   }
 
-  private allowedLetters(): string[] {
-    let letters = [];
-
-    for (let i = 0; i < this.selectedMetrics.length; i++) {
-      letters.push(this.letters[i]);
-    }
-
-    return letters;
-  }
-
-  private get allowedChars(): string[] {
-    return ['+', '-', '*', '/', '(', ')', ...this.allowedLetters(), '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-  }
-
-  allowCharacters(event: KeyboardEvent) {
-    const char = event.key;
-
-    if (!this.allowedChars.includes(char)) {
-      event.preventDefault();
-    }
-  }
-
   onClickNavigateToCreateAlert() {
     this.router.navigate(['crear-alerta']);
-  }
-
-  onClickSelectMetrics() {
-
-    this.groupByForm.get('groupBy')?.setValue([]);
-
-    let offset: number = this.selectedMetrics.length;
-
-    this.selectedMetricList.forEach((selectedMetric, i) => {
-      this.selectedMetrics.push(new MetricOption(this.letters[offset + i], selectedMetric, (i + 1)));
-    });
-
-    this.metricList = this.metricList.filter(metricA => !this.selectedMetricList.some(metricB => metricB.metric === metricA.metric));
-
-    this.selectedMetricList = [];
-
-    this.generateResultMetric();
-    this.getMetricTagsIntersection();
-
-    this.dimensionValuesMap.clear();
-
-    this.selectedMetrics.forEach((metric) => {
-      metric.metric.dimension.forEach((dimension) => {
-        this.getDimensionValues(metric.metric.bbdd, metric.metric.table_name, metric.metric.metric, dimension);
-      });
-    });
-  }
-
-  generateResultMetric() {
-    this.resultMetric = '';
-    this.resultMetricLabel = '';
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      this.resultMetric += selectedMetric.id;
-      this.resultMetricLabel += selectedMetric.metric.metric;
-
-      if (i < (this.selectedMetrics.length - 1)) {
-        this.resultMetric += this.selectedMetrics[i + 1].operation.symbol;
-        this.resultMetricLabel += ' ' + this.selectedMetrics[i + 1].operation.symbol + ' ';
-      }
-    });
-  }
-
-  getMetricTagsIntersection() {
-    let commonTags = new Set(this.selectedMetrics[0].metric.dimension);
-
-    for (let selectedMetric of this.selectedMetrics.slice(1)) {
-      commonTags = new Set(selectedMetric.metric.dimension.filter(dim => commonTags.has(dim)));
-    }
-
-    this.tagIntersectionOptions = Array.from(commonTags).map(tag => ({ label: tag, value: tag }));
-  }
-
-  onClickRemoveSelectedMetric(index: number) {
-
-    this.groupByForm.get('groupBy')?.setValue([]);
-
-    this.metricList.push(this.selectedMetrics[index].metric);
-
-    this.selectedMetrics.splice(index, 1);
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    if (this.selectedMetrics.length > 0) {
-      this.generateResultMetric();
-      this.getMetricTagsIntersection();
-
-      this.dimensionValuesMap.clear();
-
-      this.selectedMetrics.forEach((metric) => {
-        metric.metric.dimension.forEach((dimension) => {
-          this.getDimensionValues(metric.metric.bbdd, metric.metric.table_name, metric.metric.metric, dimension);
-        });
-      });
-    }
-  }
-
-  onClickArrowDown(index: number) {
-    [this.selectedMetrics[index], this.selectedMetrics[index + 1]] = [this.selectedMetrics[index + 1], this.selectedMetrics[index]];
-
-    let orderAux: number = this.selectedMetrics[index].order;
-    this.selectedMetrics[index].order = this.selectedMetrics[index + 1].order;
-    this.selectedMetrics[index + 1].order = orderAux;
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.generateResultMetric();
-  }
-
-  onClickArrowUp(index: number) {
-    [this.selectedMetrics[index], this.selectedMetrics[index - 1]] = [this.selectedMetrics[index - 1], this.selectedMetrics[index]];
-
-    let orderAux: number = this.selectedMetrics[index].order;
-    this.selectedMetrics[index].order = this.selectedMetrics[index - 1].order;
-    this.selectedMetrics[index - 1].order = orderAux;
-
-    this.selectedMetrics.forEach((selectedMetric, i) => {
-      selectedMetric.id = this.letters[i];
-    });
-
-    this.generateResultMetric();
-  }
-
-  onClickCustomizeMetric() {
-    this.customizeMetric = true;
-  }
-
-  onChangeSelectOperation() {
-    this.generateResultMetric();
-  }
-
-  onClickSaveMetric() {
-    this.customizeMetric = false;
-  }
-
-  onClickCancelMetricCustomization() {
-    this.generateResultMetric();
-    this.customizeMetric = false;
   }
 
   onClickSetThresholdType(threshold: any, type: string) {
@@ -737,20 +743,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
   }
 
-  getAllMetrics() {
-    this.loadingAllMetricList = true;
-
-    this.metricService.getAllMetrics().subscribe(
-      (response) => {
-        this.metricList = response;
-        this.loadingAllMetricList = false;
-      },
-      (error) => {
-        this.loadingAllMetricList = false;
-      }
-    )
-  }
-
   getMetrics(filter: string) {
     this.loadingMetricList = true;
 
@@ -765,11 +757,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     )
   }
 
-  onFilterMetricsChange(event: MultiSelectFilterEvent) {
-    this.filterValue = event.filter
+  onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {
+    let term = event.filter?.trim() || '';
 
-    if (event.filter.length > 2)
-      this.filterSubject.next(event.filter);
+    if (term.length > 2)
+      this.filterSubject.next({term, metric});
   }
 
   onClickConfirmCreateAlert() 
@@ -783,6 +775,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     //PERMISSIONS
     let alertPermissions: AlertPermissionDto[] = [];
+
+    for (let permission of this.permissionList)
+    {
+      alertPermissions.push(new AlertPermissionDto(permission.type.value.includes('rw') ? true : false, permission.team.id));
+    }
 
     //CONDITION HISTORIES
     let alertConditionHistories: AlertConditionHistoryDto[] = [];
@@ -818,18 +815,22 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let alertIndicators: AlertIndicatorDto[] = [];
     let alertMetrics: AlertMetricDto[] = [];
 
-    for (let selectedMetric of this.selectedMetrics) {
-      alertMetrics.push(new AlertMetricDto(selectedMetric.metric.bbdd, selectedMetric.metric.table_name, selectedMetric.metric.metric, selectedMetric.operation.value, selectedMetric.order));
-    }
+    for (let indicator of this.indicatorArray.controls)
+    {
+      for (let metric of indicator.controls.metrics.controls) {
+        alertMetrics.push(new AlertMetricDto(metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!, metric.get('order')?.value!));
+      }
 
-    alertIndicators.push(new AlertIndicatorDto('A', alertMetrics));
+      alertIndicators.push(new AlertIndicatorDto(indicator.get('name')?.value!, alertMetrics, indicator.get('constantOp')?.value!.value!, indicator.get('constantValue')?.value!.toString()!));
+    }
 
     //UMBRALES
     let alertConditions: AlertConditionDto[] = [];
 
     for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
-      alertClauses.push(new AlertClauseDto(null, threshold.get('comparation')?.value.value, threshold.get('value')?.value!, null, null, null));
+
+      alertClauses.push(new AlertClauseDto(threshold.get('startBrackets')?.value!, threshold.get('comparation')?.value.value, threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1 ? threshold.get('value')?.value! : threshold.get('min')?.value!, threshold.get('endBrackets')?.value!, threshold.get('order')?.value!, threshold.get('externalOperation')?.value!, threshold.get('minIncluded')?.value ? threshold.get('min')?.value! : threshold.get('min')?.value! + 0.01, threshold.get('max')?.value!, threshold.get('maxIncluded')?.value ? threshold.get('max')?.value! : threshold.get('max')?.value! - 0.01));
 
       let conditionFilters: ConditionFilterDto[] = [];
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value!)!;
@@ -907,7 +908,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       threshold.get('id')?.setValue((i + 1).toString());
     });
 
-    this.generateResultMetric();
+    // this.generateResultMetric();
   }
 
   onClickThresholdArrowUp(index: number) {
@@ -921,7 +922,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       threshold.get('id')?.setValue((i + 1).toString());
     });
 
-    this.generateResultMetric();
+    // this.generateResultMetric();
   }
 
   //Dimension values
@@ -1125,10 +1126,5 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   onChangeTeam(event: any)
   {
     this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
-  }
-
-  onClickRemoveSelectMetric(i: number)
-  {
-    this.selectedMetricList.splice(i, 1);
   }
 }
