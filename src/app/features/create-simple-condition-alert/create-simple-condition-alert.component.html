@@ -153,16 +153,16 @@
                     <div class="threshold-left">
                         <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.get('id')?.value}}</div>
                         <div class="type-buttons-container">
-                            <div class="type-button-container"
+                            <div *ngIf="threshold.get('type')?.value == thresholdTypeOptions[0] || !isSeveritySelected(thresholdTypeOptions[0])" class="type-button-container"
                                 [ngClass]="{'disaster': threshold.get('type')?.value == thresholdTypeOptions[0], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[0]}"
                                 (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[0]);">Disaster</div>
-                            <div class="type-button-container"
+                            <div *ngIf="threshold.get('type')?.value == thresholdTypeOptions[1] || !isSeveritySelected(thresholdTypeOptions[1])" class="type-button-container"
                                 [ngClass]="{'critical': threshold.get('type')?.value == thresholdTypeOptions[1], 'text-white': threshold.get('type')?.value == thresholdTypeOptions[1]}"
                                 (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[1]);">Critical</div>
-                            <div class="type-button-container"
+                            <div *ngIf="threshold.get('type')?.value == thresholdTypeOptions[2] || !isSeveritySelected(thresholdTypeOptions[2])" class="type-button-container"
                                 [ngClass]="{'major': threshold.get('type')?.value == thresholdTypeOptions[2]}"
                                 (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[2]);">Major</div>
-                            <div class="type-button-container"
+                            <div *ngIf="threshold.get('type')?.value == thresholdTypeOptions[3] || !isSeveritySelected(thresholdTypeOptions[3])" class="type-button-container"
                                 [ngClass]="{'warning': threshold.get('type')?.value == thresholdTypeOptions[3]}"
                                 (click)="onClickSetThresholdType(threshold, thresholdTypeOptions[3]);">Warning</div>
                         </div>
@@ -222,7 +222,7 @@
                     </div>
                 </div>
 
-                <p-button label="Añadir otro umbral" icon="pi pi-plus" (onClick)="createThreshold();"
+                <p-button *ngIf="thresholdArray.length < 4" label="Añadir otro umbral" icon="pi pi-plus" (onClick)="createThreshold();"
                     severity="secondary" />
 
                 <app-inner-accordion [title]="'Opciones de activación y recuperación'">

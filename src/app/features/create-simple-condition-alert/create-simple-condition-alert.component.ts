@@ -494,7 +494,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   createThreshold() {
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
-      type: this._fb.control(thresholdTypeOptions[0]),
+      type: this._fb.control(this.getNextAvailableSeverity()),
       comparation: this._fb.control(thresholdComparationOptions[0]),
       order: this._fb.control(this.thresholdArray.length + 1),
       value: this._fb.control(null),
@@ -637,7 +637,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.router.navigate(['crear-alerta']);
   }
 
-  onClickSetThresholdType(threshold: any, type: string) {
+  onClickSetThresholdType(threshold: any, type: any) {
     threshold.get('type').setValue(type);
   }
 
@@ -821,7 +821,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
         alertMetrics.push(new AlertMetricDto(metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!, metric.get('order')?.value!));
       }
 
-      alertIndicators.push(new AlertIndicatorDto(indicator.get('name')?.value!, alertMetrics, indicator.get('constantOp')?.value!.value!, indicator.get('constantValue')?.value!.toString()!));
+      alertIndicators.push(new AlertIndicatorDto(indicator.get('name')?.value!, alertMetrics, indicator.get('constantOp')?.value!.value!, indicator.get('constantValue')?.value!));
     }
 
     //UMBRALES
@@ -830,16 +830,19 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     for (let threshold of this.thresholdArray.controls) {
       let alertClauses: AlertClauseDto[] = [];
 
-      alertClauses.push(new AlertClauseDto(threshold.get('startBrackets')?.value!, threshold.get('comparation')?.value.value, threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1 ? threshold.get('value')?.value! : threshold.get('min')?.value!, threshold.get('endBrackets')?.value!, threshold.get('order')?.value!, threshold.get('externalOperation')?.value!, threshold.get('minIncluded')?.value ? threshold.get('min')?.value! : threshold.get('min')?.value! + 0.01, threshold.get('max')?.value!, threshold.get('maxIncluded')?.value ? threshold.get('max')?.value! : threshold.get('max')?.value! - 0.01));
+      alertClauses.push(new AlertClauseDto(threshold.get('startBrackets')?.value!, threshold.get('comparation')?.value.value, threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1 ? threshold.get('value')?.value! : threshold.get('min')?.value!, threshold.get('endBrackets')?.value!, threshold.get('order')?.value!, threshold.get('externalOperation')?.value!, threshold.get('minIncluded')?.value!, threshold.get('max')?.value!, threshold.get('maxIncluded')?.value!));
 
       let conditionFilters: ConditionFilterDto[] = [];
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value!)!;
 
       for (let key of dimensionValuesMap.keys())
       {
-        for (let value of dimensionValuesMap.get(key)!)
+        if (dimensionValuesMap.get(key)?.length! < this.dimensionValuesMap.get(key)?.length!)
         {
-          conditionFilters.push(new ConditionFilterDto(key, value));
+          for (let value of dimensionValuesMap.get(key)!)
+          {
+            conditionFilters.push(new ConditionFilterDto(key, value));
+          }
         }
       }
 
@@ -952,6 +955,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(threshold.get('id')?.value)!;
     dimensionValuesMap.set(dimension, event.value);
     this.selectedDimensionValuesMap.set(threshold.get('id')?.value, dimensionValuesMap);
+
+    // console.log('this.selectedDimensionValuesMap.get(threshold.get("id")?.value)?.get(dimension)?.length: ' + this.selectedDimensionValuesMap.get(threshold.get('id')?.value)?.get(dimension)?.length);
+    // console.log('this.dimensionValuesMap.get(dimension)?.length: ' + this.dimensionValuesMap.get(dimension)?.length);
   }
 
   onClickGoToCreateAlert()
@@ -1126,5 +1132,43 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   onChangeTeam(event: any)
   {
     this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
+  }
+
+  isSeveritySelected(type: any)
+  {
+    let isSelected = false;
+
+    this.thresholdArray.controls.forEach(threshold => {
+      if (threshold.get('type')?.value.value == type.value)
+        isSelected = true;
+    });
+
+    return isSelected;
+  }
+
+  getNextAvailableSeverity()
+  {
+    if (this.isSeveritySelected(this.thresholdTypeOptions[0]))
+    {
+      if (this.isSeveritySelected(this.thresholdTypeOptions[1]))
+      {
+        if (this.isSeveritySelected(this.thresholdTypeOptions[2]))
+        {
+          return this.thresholdTypeOptions[3];
+        }
+        else
+        {
+          return this.thresholdTypeOptions[2];
+        }
+      }
+      else
+      {
+        return this.thresholdTypeOptions[1];
+      }
+    }
+    else
+    {
+      return this.thresholdTypeOptions[0];
+    }
   }
 }
