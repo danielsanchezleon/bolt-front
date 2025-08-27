@@ -36,13 +36,13 @@
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <div
                                                 style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-                                                <div class="font-w-600">{{metric.metric}}</div>
+                                                <div class="font-w-600">{{metric.metric}} - {{metric.table_name}} - {{metric.bbdd}}</div>
                                                 <div class="font-w-600 font-12"
-                                                    *ngFor="let dimension of metric.dimension.slice(0, 5)"
+                                                    *ngFor="let dimension of metric.dimension.slice(0, 0)"
                                                     style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">
                                                     {{dimension}}</div>
-                                                <div *ngIf="metric.dimension.slice(5).length > 0"
-                                                    [pTooltip]="metric.dimension.slice(5)" tooltipPosition="top"
+                                                <div *ngIf="metric.dimension.slice(0).length > 0"
+                                                    [pTooltip]="metric.dimension.slice(0)" tooltipPosition="top"
                                                     showDelay="250">[···]</div>
                                             </div>
                                         </div>
@@ -149,7 +149,7 @@
                     </div>
                 </div>
 
-                <div class="threshold-container" *ngFor="let threshold of thresholdArray.controls; let i = index;">
+                <div class="threshold-container" *ngFor="let threshold of thresholdArray.controls; let i = index;" [ngStyle]="{'border': ((threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1) && threshold.get('value')?.value == undefined) || ((threshold.get('comparation')?.value.value == 2 || threshold.get('comparation')?.value.value == 3) && (threshold.get('min')?.value == undefined || threshold.get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
                     <div class="threshold-left">
                         <div class="id-wrapper font-12 font-w-600 text-white">{{threshold.get('id')?.value}}</div>
                         <div class="type-buttons-container">
