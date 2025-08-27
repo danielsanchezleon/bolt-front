@@ -7,8 +7,8 @@ export class AlertClauseDto
     public endBrackets: number | null,
     public order: number | null,
     public externalOperation: string | null,
-    public threshold_include: number | null,
+    public threshold_include: boolean | null,
     public threshold_up: number | null,
-    public threshold_include_up: number | null
+    public threshold_include_up: boolean | null
   ) {}
 }

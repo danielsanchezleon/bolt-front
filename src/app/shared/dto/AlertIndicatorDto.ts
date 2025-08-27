@@ -6,6 +6,6 @@ export class AlertIndicatorDto
     public name: string,
     public alertMetrics: AlertMetricDto[] = [],
     public constantOp: number,
-    public constantValue: string
+    public constantValue: number
   ) {}
 }
