@@ -8,6 +8,7 @@ import { CreateLogsAlertComponent } from './features/create-logs-alert/create-lo
 import { CreateEndpointComponent } from './features/create-endpoint/create-endpoint.component';
 import { LoginComponent } from './features/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
+import { TestComponent } from './features/test/test.component';
 
 export const routes: Routes = [
   {
@@ -47,6 +48,11 @@ export const routes: Routes = [
   {
     path: 'logs',
     component: CreateLogsAlertComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'test',
+    component: TestComponent,
     canActivate: [AuthGuard]
   }
 ];

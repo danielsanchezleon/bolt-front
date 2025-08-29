@@ -1,0 +1,49 @@
+<app-page-wrapper>
+    <div class="cards-container">
+        <div class="card-container">
+            <div class="title font-16">Alertas configuradas</div>
+            <div class="desc font-12 text-gray">(Total de alertas creadas en el sistema)</div>
+            <div class="bottom">
+                <div class="num font-24 font-w-700">{{homePanels?.configuredAlerts}}</div>
+                <div class="icon bg-blue">
+                    <i class="pi pi-bell c-blue"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="title font-16">Alertas deshabilitadas</div>
+            <div class="desc font-12 text-gray">(Alertas desactivadas que no se dispararán)</div>
+            <div class="bottom">
+                <div class="num font-24 font-w-700">{{homePanels?.disabledAlerts}} <span class="font-16">({{homePanels?.disabledAlertsPercent}}%)</span></div>
+                <div class="icon bg-blue">
+                    <i class="pi pi-bell c-blue"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="title font-16">Alertas sin destino</div>
+            <div class="desc font-12 text-gray">(Alertas sin canal de notificación configurado)</div>
+            <div class="bottom">
+                <div class="num font-24 font-w-700">{{homePanels?.withoutDestinationAlerts}} <span class="font-16">({{homePanels?.withoutDestinationAlertsPercent}}%)</span></div>
+                <div class="icon bg-blue">
+                    <i class="pi pi-bell c-blue"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-container">
+            <div class="title font-16">Alertas sin datos</div>
+            <div class="desc font-12 text-gray">(sin información)</div>
+            <div class="bottom">
+                <div class="num font-24 font-w-700">40</div>
+                <div class="icon bg-blue">
+                    <i class="pi pi-bell c-blue"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div></div>
+    <div></div>
+</app-page-wrapper>

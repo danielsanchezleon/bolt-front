@@ -520,7 +520,7 @@
                                 *ngFor="let permissionTypeOption of permissionTypeOptions; let j = index;">
                                 <p-radiobutton size="small" name="type" [value]="permissionTypeOption"
                                     [(ngModel)]="permission.type" [inputId]="permissionTypeOption.value + j"
-                                    [disabled]="i == 0" />
+                                    [disabled]="true" />
                                 <i class="pi {{permissionTypeOption.icon}} c-blue"></i>
                                 <label [for]="permissionTypeOption.value + j">{{permissionTypeOption.label}}</label>
                             </div>
@@ -547,12 +547,12 @@
 
 <app-modal [title]="'Crear alerta'" [visible]="modalVisible">
     <div class="modal-container">
-        <div *ngIf="!isSuccess && !isError" class="modal-icon-container">
+        <div *ngIf="!isSuccess && !isError && !isDetails" class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-bell" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Estás a punto de crear una alerta</div>
             <div class="font-12 text-gray">Ten en cuenta que los cambios no se pueden deshacer. Asegura que todos los
-                datos introducidos son correctos.</div>
+                datos introducidos son correctos <span class="font-w-600 text-black" style="cursor: pointer;" (click)="isDetails = true;">aquí</span>.</div>
         </div>
         <div *ngIf="isSuccess" class="modal-icon-container">
             <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
@@ -564,6 +564,153 @@
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Ha habido algún error al crear la alerta</div>
             <div class="font-12 text-gray"></div>
+        </div>
+    </div>
+    <i *ngIf="!isSuccess && !isError && isDetails" class="pi pi-chevron-left" style="cursor: pointer; margin-bottom: 16px;" (click)="isDetails = false;"></i>
+    <div *ngIf="!isSuccess && !isError && isDetails" class="modal-steps">
+        <div class="modal-step">
+            <div class="font-16 font-w-700 c-blue">Paso 1: Configuración de la consulta</div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Indicadores</div>
+                <div class="title-description-block-1" *ngFor="let indicator of indicatorArray.controls; let i = index;">
+                    <div class="title">Indicador {{indicator.get('name')?.value}}</div>
+                    <div class="description" *ngFor="let metric of indicator.controls.metrics.controls; let i = index;">{{i+1}}.- {{metric.get('metric')?.value?.metric}}</div>
+                    <div class="description">Métrica final: {{ resultMetric | sanitizeExpression}}</div>
+                </div>
+            </div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Agrupaciones</div>
+                <div class="title-description-block-1">
+                    <div class="title">Agrupar por</div>
+                    <div class="description">{{groupByForm.get('groupBy')?.value.length == 0 ? 'Sin agrupar' : groupByForm.get('groupBy')?.value}}</div>
+                </div>
+                <div class="title-description-block-1">
+                    <div class="title">Operación matemática</div>
+                    <div class="description">{{groupByForm.get('operation')?.value.label}}</div>
+                </div>
+            </div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Opciones avanzadas</div>
+                <div class="title-description-block-1">
+                    <div class="title">Ventana de tiempo</div>
+                    <div class="description">{{advancedOptionsForm.get('timeWindow')?.value.label}}</div>
+                </div>
+                <div class="title-description-block-1">
+                    <div class="title">Descartar últimos minutos</div>
+                    <div class="description">{{advancedOptionsForm.get('discardTime')?.value.label}}</div>
+                </div>
+                <div class="title-description-block-1">
+                    <div class="title">Periodicidad</div>
+                    <div class="description">{{advancedOptionsForm.get('periodicity')?.value.label}}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-step">
+            <div class="font-16 font-w-700 c-blue">Paso 2: Condiciones de salto y recuperación</div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Umbrales seleccionados</div>
+                <div class="title-description-block-1" *ngFor="let threshold of thresholdArray.controls; let i = index;">
+                    <div class="title">Umbral {{threshold.get('id')?.value}}</div>
+                    <div class="description">{{threshold.get('type')?.value.label}} | {{threshold.get('comparation')?.value.label}} | {{threshold.get('comparation')?.value.value == 0 || threshold.get('comparation')?.value.value == 1 ? threshold.get('value')?.value : (threshold.get('minIncluded')?.value ? '[' : '(') + threshold.get('min')?.value + ', ' + threshold.get('max')?.value + (threshold.get('maxIncluded')?.value ? ']' : ')')}}</div>
+                </div>
+            </div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Opciones de activación de recuperación</div>
+                <div class="title-description-block-1">
+                    <div class="title">¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
+                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de las últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones</div>
+                </div>
+                <div class="title-description-block-1">
+                    <div class="title">¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
+                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones</div>
+                </div>
+            </div>
+            <div *ngIf="allSilencePeriodFieldsCompleted()" class="modal-step-content">
+                <div class="font-16 font-w-600">Periodos de silencio</div>
+                <div class="title-description-block-1" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
+                    <div class="title">Periodo de silencio {{silencePeriod.get('id')?.value}}</div>
+                    <div class="description">
+                        <span *ngFor="let day of silencePeriod.get('days')?.value; let i = index; let last = last;">{{day?.label}}<span *ngIf="!last">, </span></span> | De {{silencePeriod.get('from')?.value | date: 'HH:mm'}} a {{silencePeriod.get('to')?.value | date: 'HH:mm'}}
+                    </div>
+                </div>
+            </div>
+            <div *ngIf="!allSilencePeriodFieldsCompleted()" class="modal-step-content">
+                <div class="font-16 font-w-600">Periodos de silencio</div>
+                <div class="title-description-block-1" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
+                    <div class="description">No se han añadido periodos de silencio</div>
+                </div>
+            </div>
+            <!-- <div class="modal-step-content">
+                <div class="font-16 font-w-600">Comportamiento ante errores</div>
+                <div class="title-description-block-1">
+                    <div class="title">¿Qué quieres hacer si la query no devuelve datos?</div>
+                    <div class="description">{{errorBehaviorForm.get('error1')?.value.label}}</div>
+                </div>
+                <div class="title-description-block-1">
+                    <div class="title">¿Qué quieres hacer si la query falla y hace timeout?</div>
+                    <div class="description">{{errorBehaviorForm.get('error2')?.value.label}}</div>
+                </div>
+            </div> -->
+        </div>
+
+        <div class="modal-step">
+            <div class="font-16 font-w-700 c-blue">Paso 3: Destinatarios</div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Endpoints seleccionados</div>
+                <div class="title-description-block-1" *ngFor="let endpoint of endpointList; let i = index;">
+                    <div class="description">{{endpoint.endpoint.name}}</div>
+                    <div class="description">{{endpoint.type.label}}</div>
+                    <div class="description">
+                        <span *ngFor="let severity of endpoint.severities; let last = last;">{{severity.label}}<span *ngIf="!last">, </span></span>
+                    </div>
+                </div>
+                <div *ngIf="endpointList.length == 0" class="title-description-block-1">
+                    <div class="description">No se ha añadido ningún endpoint</div>
+                </div>
+            </div>
+            <div *ngIf="tagList.length > 0" class="modal-step-content">
+                <div class="font-16 font-w-600">Etiquetas añadidas</div>
+                <div class="title-description-block-1" *ngFor="let tag of tagList; let i = index;">
+                    <div class="title">Etiqueta {{(i + 1)}}</div>
+                    <div class="description">{{tag.name}}</div>
+                    <div class="description">{{tag.value}}</div>
+                </div>
+            </div>
+            <div *ngIf="tagList.length == 0" class="modal-step-content">
+                <div class="font-16 font-w-600">Etiquetas añadidas</div>
+                <div class="title-description-block-1">
+                    <div class="description">No se han añadido etiquetas</div>
+                </div>
+            </div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Mensaje</div>
+                <div class="title-description-block-1" style="max-width: 1000px;">
+                    <div class="title">Mensaje</div>
+                    <div class="description">{{notificationMessageForm.get('message')?.value}}</div>
+                </div>
+                <div class="title-description-block-1" style="max-width: 1000px;">
+                    <div class="title">Detalles</div>
+                    <div *ngIf="notificationMessageForm.get('details')?.value.length > 0" class="description">{{notificationMessageForm.get('details')?.value}}</div>
+                    <div *ngIf="notificationMessageForm.get('details')?.value.length == 0" class="description">No se han especificado detalles</div>
+                </div>
+                <div class="title-description-block-1" style="max-width: 1000px;">
+                    <div class="title">Procedimiento</div>
+                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length > 0" class="description">{{notificationMessageForm.get('proccedure')?.value}}</div>
+                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length == 0" class="description">No se ha especificado procedimiento</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-step">
+            <div class="font-16 font-w-700 c-blue">Paso 4: Permisos</div>
+            <div class="modal-step-content">
+                <div class="font-16 font-w-600">Permisos añadidos</div>
+                <div class="title-description-block-1" *ngFor="let permission of permissionList; let i = index;">
+                    <div class="title">{{permission.team.name}}</div>
+                    <div class="description">{{permission.type.label}}</div>
+                </div>
+            </div>
         </div>
     </div>
     <div *ngIf="!isSuccess && !isError" class="modal-actions">
