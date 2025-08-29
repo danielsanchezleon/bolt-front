@@ -610,7 +610,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   createPermission() {
-    this.permissionList.push(new Permission());
+    let newPermission: Permission = new Permission();
+    newPermission.type = this.permissionTypeOptions[1];
+    this.permissionList.push(newPermission);
   }
 
   deletePermission(i: number) 
