@@ -46,4 +46,12 @@ export class AlertService {
   {
     return this.http.get<TeamViewDto[]>(this.apiUrl + '/getAllTeams');
   }
+
+  existsByInternalName(internalName: string): Observable<boolean>
+  {
+    let params = new HttpParams();
+    params = params.append('internalName', internalName);
+
+    return this.http.get<boolean>(this.apiUrl + '/existsByInternalName', {params: params});
+  }
 }

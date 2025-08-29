@@ -152,6 +152,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   //Step 1
 
+  internalName: string = "";
+  internalNameModalVisible: boolean = false;
+
   indicatorArray: IndicatorFormArray;
   matOperations: MetricOperation[] = [new MetricOperation(0, 'Sumar ( + )', '+', 'Sumar con la métrica anterior'), new MetricOperation(1, 'Restar ( - )', '-', 'Restar con la métrica anterior'), new MetricOperation(2, 'Multiplicar ( * )', '*', 'Multiplicar con la métrica anterior'), new MetricOperation(3, 'Dividir ( / )', '/', 'Dividir con la métrica anterior')];
   private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
@@ -339,6 +342,34 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.getAllTeams();
   }
 
+  generateInternalName()
+  {
+    this.internalName = "";
+
+    this.indicatorArray.controls.forEach(indicator => {
+      if (indicator.controls.metrics.controls.length > 0)
+      {
+        this.internalName += indicator.controls.metrics.controls[0].get('metric')?.value?.metric + '_';
+      }
+    });
+
+    if (this.groupByForm.get('groupBy')?.value.length > 0)
+    {
+      this.internalName += this.groupByForm.get('groupBy')?.value.join(',')
+    }
+
+    this.existsByInternalName();
+  }
+
+  existsByInternalName()
+  {
+    this.alertService.existsByInternalName(this.internalName).subscribe(
+      (response: boolean) => {
+        this.internalNameModalVisible = response;
+      }
+    )
+  }
+
   createIndicator()
   {
     let indicatorIndex: number = this.indicatorArray.length;
@@ -392,10 +423,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.getMetricTagsIntersection();
 
     this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
+
+    this.generateInternalName();
   }
 
   onChangeMetricSelect(indicatorIndex: number)
   {
+    this.generateInternalName();
+
     this.generateResultMetric(indicatorIndex);
 
     this.getMetricTagsIntersection();
@@ -1073,6 +1108,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onChangeGroupBy(event: MultiSelectChangeEvent)
   {
+    this.generateInternalName();
+
     this.thresholdArray.controls.forEach((group) => {
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
       dimensionValuesMap.set(event.itemValue.value, this.dimensionValuesMap.get(event.itemValue.value)!);
