@@ -36,7 +36,8 @@
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <div
                                                 style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-                                                <div class="font-w-600">{{metric.metric}} - {{metric.table_name}} - {{metric.bbdd}}</div>
+                                                <div class="font-w-600">{{metric.metric}}</div>
+                                                <div style="background-color: #2563eb; padding: 1px 5px; border-radius: 8px; color: white;">{{metric.table_name}}</div>
                                                 <div class="font-w-600 font-12"
                                                     *ngFor="let dimension of metric.dimension.slice(0, 0)"
                                                     style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">

@@ -6,4 +6,12 @@ export class AlertConditionViewDto {
   status: boolean = false;
   conditionFilters?: ConditionFilterViewDto[];
   alertClauses?: AlertClauseViewDto[];
+
+  constructor(severity: string, status: boolean)
+  {
+    this.severity = severity;
+    this.status = status;
+    this.conditionFilters = [];
+    this.alertClauses = [];
+  }
 }

@@ -119,27 +119,34 @@ th
     flex-direction: column;
     gap: 16px;
 
-    .threshold-container {
+    .severities-container
+    {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         gap: 8px;
-        align-items: center;
 
-        border: 1px solid lightgray;
-        border-radius: 8px;
-        padding: 16px;
-
-        .id-container {
+        .severity-container {
             display: flex;
             flex-direction: row;
-            justify-content: center;
+            gap: 8px;
             align-items: center;
 
-            background-color: #2563eb;
-            color: white;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            border: 1px solid lightgray;
+            border-radius: 8px;
+            padding: 16px;
+
+            .id-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+
+                background-color: #2563eb;
+                color: white;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+            }
         }
     }
 
@@ -247,10 +254,10 @@ th
 .notice {
     display: flex;
     flex-direction: row;
+    justify-content: center;
     align-items: center;
     gap: 16px;
 
-    border: 1px solid lightgray;
     border-radius: 8px;
     background-color: white;
     padding: 16px;

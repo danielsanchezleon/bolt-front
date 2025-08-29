@@ -22,6 +22,8 @@ import { AlertService } from '../../shared/services/alert.service';
 import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
+import { AlertConditionViewDto } from '../../shared/dto/alert/AlertConditionViewDto';
+import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
 
 @Component({
   selector: 'app-modify-alert',
@@ -48,6 +50,20 @@ import { SkeletonModule } from 'primeng/skeleton';
 })
 export class ModifyAlertComponent implements OnInit
 {
+  severityOptions: any[] = [
+    {value: 'DISASTER', label: 'Disaster'},
+    {value: 'CRITICAL', label: 'Critical'},
+    {value: 'MAJOR', label: 'Major'},
+    {value: 'WARNING', label: 'Warning'}
+  ];
+
+  comparationOptions: any[] = [
+    {value: 'MORE_THAN', label: 'Mayor que'},
+    {value: 'LESS_THAN', label: 'Menor que'},
+    {value: 'WITHIN_RANGE', label: 'Dentro del rango'},
+    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'}
+  ];
+
   filterTextControl: FormControl = new FormControl('');
 
   isLoading: boolean = false;
@@ -56,9 +72,6 @@ export class ModifyAlertComponent implements OnInit
   alertListFiltered: AlertViewDto[] = [];
 
   filterPanelOpen: boolean = false;
-
-  thresholdTypeOptions: any[] = [];
-  thresholdComparationOptions: any[] = [];
 
   modifyAlertTimeWindowOptions: any[] = [];
   periodicityOptions: any[] = [];
@@ -95,9 +108,6 @@ export class ModifyAlertComponent implements OnInit
         }
       }
     );
-
-    this.thresholdTypeOptions = thresholdTypeOptions;
-    this.thresholdComparationOptions = thresholdComparationOptions;
 
     this.modifyAlertTimeWindowOptions = modifyAlertTimeWindowOptions;
     this.periodicityOptions = periodicityOptions;
@@ -165,5 +175,33 @@ export class ModifyAlertComponent implements OnInit
 
       }
     )
+  }
+
+  onClickAddSeverity(alert: AlertViewDto)
+  {
+    let availableSeverity: string = "";
+
+    let found: boolean = false;
+
+    this.severityOptions.forEach((severityOption) => {
+      let notExisting: boolean = true;
+      alert.conditions?.forEach((severity) => {
+        if (severity.severity == severityOption.value)
+        {
+          notExisting = false;
+        }
+      });
+
+      if (notExisting && !found)
+      {
+        found = true;
+        availableSeverity = severityOption.value;
+      }
+    });
+
+    let newCondition: AlertConditionViewDto = new AlertConditionViewDto(availableSeverity, true);
+    newCondition.alertClauses?.push(new AlertClauseViewDto(null, 'MORE_THAN', null, null, 1, null));
+
+    alert.conditions?.push(newCondition);
   }
 }

@@ -65,7 +65,7 @@
                     <th class="th-blue">Nombre</th>
                     <th class="th-blue">Mensaje</th>
                     <th class="th-blue">Creación</th>
-                    <th class="th-blue">Umbrales</th>
+                    <th class="th-blue">Severidades</th>
                     <th class="th-blue">Metadatos</th>
                     <th class="th-blue">Endpoints</th>
                     <!-- <th class="th-blue">Última vez</th> -->
@@ -104,22 +104,24 @@
                     <td>
                         <div (click)="op1.toggle($event)" class="font-12 threshold-button-container font-w-600">
                             {{alert.conditions.length
-                            == 1 ? '1 umbral' : alert.conditions.length + ' umbrales'}}</div>
+                            == 1 ? '1 severidad' : alert.conditions.length + ' severidades'}}</div>
                         <p-popover #op1>
                             <div class="popover-container">
-                                <div class="font-w-600">Umbrales - {{alert.name}}</div>
-                                <div class="threshold-container"
-                                    *ngFor="let condition of alert.conditions; let i = index;">
-                                    <div class="id-container font-w-600">{{i}}</div>
-                                    <p-select size="small" [(ngModel)]="condition.severity"
-                                        [options]="thresholdTypeOptions" optionLabel="label" optionValue="value"
-                                        appendTo="body" />
-                                    <!-- <p-select size="small" [(ngModel)]="condition.type"
-                                        [options]="thresholdComparationOptions" optionLabel="label" optionValue="value"
-                                        appendTo="body" />
-                                    <p-inputnumber size="small" [(ngModel)]="condition.value1" mode="decimal"
-                                        [minFractionDigits]="0" [maxFractionDigits]="6" /> -->
+                                <div class="font-w-600">Severidades</div>
+                                <div class="severities-container" *ngIf="alert.alertType == 'SIMPLE'">
+                                    <div class="severity-container" *ngFor="let condition of alert.conditions; let i = index;">
+                                        <div class="id-container font-w-600">{{i+1}}</div>
+                                        <p-select size="small" [(ngModel)]="condition.severity"
+                                            [options]="severityOptions" optionLabel="label" optionValue="value"
+                                            appendTo="body" />
+                                        <p-select size="small" [(ngModel)]="condition.alertClauses[0].compOperation"
+                                            [options]="comparationOptions" optionLabel="label" optionValue="value"
+                                            appendTo="body" />
+                                        <p-inputnumber size="small" [(ngModel)]="condition.alertClauses[0].threshold" mode="decimal"
+                                            [minFractionDigits]="0" [maxFractionDigits]="6" />
+                                    </div>
                                 </div>
+                                <!-- <p-button label="Añadir severidad" icon="pi pi-plus" (onClick)="onClickAddSeverity(alert);" severity="secondary" [disabled]="alert.conditions.length == 4" /> -->
                             </div>
                         </p-popover>
                     </td>
@@ -179,6 +181,13 @@
                 </tr>
             </ng-template>
         </p-table>
+
+        <div *ngIf="alertList.length == 0" class="notice">
+            <i class="pi pi-info-circle c-blue"></i>
+            <div>
+                No hay alertas para mostrar
+            </div>
+        </div>
     </div>
 
     <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
