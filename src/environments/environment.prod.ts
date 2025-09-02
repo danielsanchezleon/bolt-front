@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://51.138.49.204:8081/api'
+  apiUrl: 'https://bolt-revolution-back.service-insights.com/api'
 };
