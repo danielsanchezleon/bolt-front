@@ -21,10 +21,14 @@ export class AlertService {
     return this.http.get<HomePanelsViewDto>(this.apiUrl + '/getHomePanels');
   }
 
-  getAllAlerts(filterText: string): Observable<AlertViewDto[]>
+  getAllAlerts(filterText: string | null): Observable<AlertViewDto[]>
   {
     let params: HttpParams = new HttpParams();
-    params = params.append('filterText', filterText);
+
+    if (filterText != null)
+    {
+      params = params.append('filterText', filterText);
+    }
 
     return this.http.get<AlertViewDto[]>(this.apiUrl + '/getAllAlerts', {params: params});
   }
@@ -53,5 +57,10 @@ export class AlertService {
     params = params.append('internalName', internalName);
 
     return this.http.get<boolean>(this.apiUrl + '/existsByInternalName', {params: params});
+  }
+
+  updateAlert(alertViewDto: AlertViewDto): Observable<AlertViewDto>
+  {
+    return this.http.put<AlertViewDto>(this.apiUrl + '/updateAlert', alertViewDto);
   }
 }

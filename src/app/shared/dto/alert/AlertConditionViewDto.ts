@@ -2,6 +2,7 @@ import { AlertClauseViewDto } from "./AlertClauseViewDto";
 import { ConditionFilterViewDto } from "./ConditionFilterViewDto";
 
 export class AlertConditionViewDto {
+  id?: number;
   severity?: string;
   status: boolean = false;
   conditionFilters?: ConditionFilterViewDto[];
