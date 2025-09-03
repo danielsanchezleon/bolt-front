@@ -365,7 +365,7 @@
                                 (onChange)="onChangeStep3EndpointType();" />
                             <p-select [options]="endpointFieldValues" class="select" optionLabel="name" appendTo="body"
                                 placeholder="Selecciona un endpoint" formControlName="endpoint" />
-                            <p-multiselect [options]="severityOptions" class="select" optionLabel="label"
+                            <p-multiselect [options]="this.severityOptions" class="select" optionLabel="label" optionDisabled="disabled"
                                 placeholder="Seleciona las severidades" formControlName="severities" />
                         </div>
                         <p-button label="Añadir" icon="pi pi-plus" severity="secondary" [disabled]="!endpointForm.valid"
@@ -382,13 +382,13 @@
                             </div>
 
                             <div class="alerts-container">
-                                <div *ngIf="endpoint.severities.includes(severityOptions[0])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[0])"
                                     class="type-button-container disaster">Disaster</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[1])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[1])"
                                     class="type-button-container critical">Critical</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[2])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[2])"
                                     class="type-button-container major">Major</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[3])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[3])"
                                     class="type-button-container warning">Warning</div>
                             </div>
                             <p-button [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000"

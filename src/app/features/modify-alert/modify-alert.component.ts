@@ -25,10 +25,11 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { AlertConditionViewDto } from '../../shared/dto/alert/AlertConditionViewDto';
 import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent],
+  imports: [FormsModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -100,7 +101,11 @@ export class ModifyAlertComponent implements OnInit
   saveChangesMapSuccess: Map<number, boolean> = new Map();
   saveChangesMapError: Map<number, boolean> = new Map();
 
+  failedUpdates: number = 0;
   completedUpdates: number = 0;
+
+  alertMessageEdited: AlertViewDto | null = null;
+  newAlertMessage: string = '';
 
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService) {
     this.tagForm = this._fb.group({
@@ -149,7 +154,7 @@ export class ModifyAlertComponent implements OnInit
     this.changedAlerts = [];
     for (let i = 0; i < this.currentAlertList.length; i++)
     {
-      if (JSON.stringify(this.alertList[i]) !== JSON.stringify(this.currentAlertList[i]))
+      if ( (JSON.stringify(this.alertList[i]) !== JSON.stringify(this.currentAlertList[i])) && (this.alertList[i].alertId == this.currentAlertList[i].alertId))
       {
         this.changedAlerts.push(this.currentAlertList[i]);
 
@@ -171,8 +176,8 @@ export class ModifyAlertComponent implements OnInit
     this.tagForm.updateValueAndValidity();
   }
 
-  onClickRemoveTag(testAlert: any, i: number) {
-    testAlert.definedTags.splice(i, 1);
+  onClickRemoveTag(alert: any, i: number) {
+    alert.alertTags.splice(i, 1);
   }
 
   clearIndividualFilters() {
@@ -249,6 +254,9 @@ export class ModifyAlertComponent implements OnInit
 
   onClickConfirmSaveChanges()
   {
+    this.completedUpdates = 0;
+    this.failedUpdates = 0;
+    
     this.changedAlerts.forEach((alert) => {
       this.updateAlert(alert);
     });
@@ -266,12 +274,19 @@ export class ModifyAlertComponent implements OnInit
         this.saveChangesMapSuccess.set(alert.alertId!, true);
         this.saveChangesMapError.set(alert.alertId!, false);
         this.completedUpdates++;
+
+        if ((this.completedUpdates == this.changedAlerts.length) && this.failedUpdates == 0)
+        {
+          this.getAllAlerts('');
+          this.saveChangesModalVisible = false;
+        }
       },
       (error) => {
         this.saveChangesMapLoading.set(alert.alertId!, false);
         this.saveChangesMapSuccess.set(alert.alertId!, false);
         this.saveChangesMapError.set(alert.alertId!, true);
         this.completedUpdates++;
+        this.failedUpdates++;
       }
     )
   }
