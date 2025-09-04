@@ -97,9 +97,11 @@
                     </td>
                     <td class="message-column">
                         <div class="content">
-                            <span *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText" style="cursor: help;">{{alert.alertText}}</span>
-                            <textarea *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
-                            <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil" style="font-size: 0.75rem; cursor: pointer;" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;"></i>
+                            <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
+                                <span *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText" style="cursor: pointer;">{{alert.alertText}}</span>
+                                <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil" style="font-size: 0.75rem; cursor: pointer;"></i>
+                            </div>
+                            <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
                             <div class="save-buttons">
                                 <i *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" class="pi pi-check" style="font-size: 0.75rem; cursor: pointer; color: green;" (click)="alert.alertText = newAlertMessage; alertMessageEdited = null;"></i>
                                 <i *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" class="pi pi-times" style="font-size: 0.75rem; cursor: pointer; color: red;" (click)="alertMessageEdited = null;"></i>

@@ -254,9 +254,6 @@ export class ModifyAlertComponent implements OnInit
 
   onClickConfirmSaveChanges()
   {
-    this.completedUpdates = 0;
-    this.failedUpdates = 0;
-    
     this.changedAlerts.forEach((alert) => {
       this.updateAlert(alert);
     });
@@ -279,6 +276,8 @@ export class ModifyAlertComponent implements OnInit
         {
           this.getAllAlerts('');
           this.saveChangesModalVisible = false;
+          this.completedUpdates = 0;
+          this.failedUpdates = 0;
         }
       },
       (error) => {
