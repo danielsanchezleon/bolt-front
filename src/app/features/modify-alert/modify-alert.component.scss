@@ -95,9 +95,6 @@ th {
 }
 
 .message-column {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     max-width: 256px;
 
     .content {
@@ -107,6 +104,8 @@ th {
         gap: 8px;
         height: 100%;
 
+        min-width: 0;
+
         .save-buttons {
             display: flex;
             flex-direction: column;
@@ -114,6 +113,32 @@ th {
             align-items: center;
             gap: 16px;
             height: 100%;
+
+            flex: 0 0 auto;
+        }
+
+        .cell-flex {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+
+            flex: 1 1 auto;
+            min-width: 0;
+
+            .cell-text {
+                flex: 0 1 auto;
+                min-width: 0;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+
+            .cell-icon {
+                flex: 0 0 auto;
+                font-size: 0.75rem;
+            }
         }
     }
 }

@@ -26,10 +26,11 @@ import { AlertConditionViewDto } from '../../shared/dto/alert/AlertConditionView
 import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { TextareaModule } from 'primeng/textarea';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [

@@ -97,9 +97,9 @@
                     </td>
                     <td class="message-column">
                         <div class="content">
-                            <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
-                                <span *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText" style="cursor: pointer;">{{alert.alertText}}</span>
-                                <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil" style="font-size: 0.75rem; cursor: pointer;"></i>
+                            <div class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
+                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
+                                <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil cell-icon"></i>
                             </div>
                             <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
                             <div class="save-buttons">
@@ -131,9 +131,10 @@
                                             [minFractionDigits]="0" [maxFractionDigits]="6" />
                                             <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
                                             severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
+                                        <p-toggleswitch [(ngModel)]="condition.status" />
                                     </div>
                                 </div>
-                                <p-button label="Añadir severidad" icon="pi pi-plus" (onClick)="onClickAddSeverity(alert);" severity="secondary" [disabled]="alert.conditions.length == 4" />
+                                <!-- <p-button label="Añadir severidad" icon="pi pi-plus" (onClick)="onClickAddSeverity(alert);" severity="secondary" [disabled]="alert.conditions.length == 4" /> -->
                             </div>
                         </p-popover>
                     </td>
