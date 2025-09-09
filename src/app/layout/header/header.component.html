@@ -1,24 +1,41 @@
-<div class="header-container" [ngClass]="{'center-content': router.url === '/login'}" [ngStyle]="{'position': router.url === '/login' ? 'fixed' : 'static'}">
-    <div *ngIf="router.url !== '/' && router.url !== '/login'" class="font-16 text-white font-w-700 title" (click)="onClickNavigateToHome();">
-        <i class="pi pi-home"></i>
-        <div>Motor de alertado</div>
-    </div>
+<div class="header-container" [ngClass]="{ 'center-content': router.url === '/login' }"
+  [ngStyle]="{ position: router.url === '/login' ? 'fixed' : 'static' }">
 
-    <div *ngIf="router.url === '/'" class="font-16 text-white font-w-700">
-        <div>Motor de alertado</div>
-    </div>
+  <div *ngIf="router.url !== '/' && router.url !== '/login'" class="font-16 text-white font-w-700 title"
+    (click)="onClickNavigateToHome()">
+    <i class="pi pi-home"></i>
+    <div>Motor de alertado</div>
+  </div>
 
-    <img src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60">
-    
-    <div *ngIf="router.url !== '/login'" class="actions-container">
-        <div class="action-container text-white" (click)="onClickNavigateToEndpoints();">
-            <i class="pi pi-cog"></i>
-            <div class="font-16 font-w-600">Configuración</div>
+  <div *ngIf="router.url === '/'" class="font-16 text-white font-w-700">
+    <div>Motor de alertado</div>
+  </div>
+
+  <img src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60" />
+
+  <div *ngIf="router.url !== '/login'" class="actions-container">
+    <div *ngIf="isAdmin" class="action-container config-wrapper" (click)="toggleConfigMenu($event)">
+      <i class="pi pi-cog"></i>
+      <div class="font-16 font-w-600">Configuración</div>
+      <i class="pi" [ngClass]="{ 'pi-chevron-up': showConfigMenu, 'pi-chevron-down': !showConfigMenu }"></i>
+
+      <div class="config-menu" *ngIf="showConfigMenu" (click)="$event.stopPropagation()" role="menu"
+        aria-label="Configuración">
+        <div class="config-item" role="menuitem" (click)="goToEndpoints()">
+          <i class="pi pi-paperclip"></i>
+          <span>Endpoints</span>
         </div>
-
-        <div class="action-container text-white" (click)="onClickLogout();">
-            <i class="pi pi-sign-out"></i>
-            <div class="font-16 font-w-600">Salir</div>
+        <div class="config-item" role="menuitem" (click)="goToUsers()">
+          <i class="pi pi-users"></i>
+          <span>Usuarios</span>
         </div>
+      </div>
     </div>
+
+    <!-- Logout -->
+    <div class="action-container text-white" (click)="onClickLogout()">
+      <i class="pi pi-sign-out"></i>
+      <div class="font-16 font-w-600">Salir</div>
+    </div>
+  </div>
 </div>

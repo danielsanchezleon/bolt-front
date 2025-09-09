@@ -1,0 +1,118 @@
+<app-page-wrapper>
+  <p-button
+    icon="pi pi-arrow-left"
+    label="Volver"
+    variant="text"
+    severity="secondary"
+    (onClick)="onClickNavigateToUsers()"
+  />
+
+  <div class="create-user-container">
+    <div class="page-title">
+      <div class="page-title-top">
+        <div class="font-32 font-w-700">Creación de usuarios</div>
+      </div>
+      <div>Crea un nuevo usuario en la plataforma</div>
+    </div>
+
+    <div class="create-user-form-container">
+      <div class="titled-container">
+        <div class="font-16 font-w-600">Información general *</div>
+
+        <div class="form-container" [formGroup]="userForm">
+          <p-floatlabel class="form-input" variant="on">
+            <input pInputText autocomplete="off" formControlName="username" />
+            <label>Nombre de usuario</label>
+          </p-floatlabel>
+
+          <p-floatlabel class="form-input" variant="on">
+            <input pInputText autocomplete="off" formControlName="email" />
+            <label>Email</label>
+          </p-floatlabel>
+
+          <p-select
+            class="form-input"
+            [options]="teamOptions"
+            formControlName="teamId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selecciona un equipo"
+            [disabled]="isLoadingTeams"
+          ></p-select>
+
+          <p-select
+            class="form-input"
+            [options]="roleOptions"
+            formControlName="roleId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selecciona un rol"
+            [disabled]="isLoadingRoles"
+          ></p-select>
+        </div>
+      </div>
+      <div class="titled-container">
+        <div class="font-16 font-w-600">Contraseña</div>
+
+        <div class="info-form-container">
+          <div class="notice c-blue">
+            <i class="pi pi-info-circle"></i>
+            <div>
+              Los usuarios se crean <strong>sin contraseña</strong>. El sistema enviará un
+              correo al email indicado para que el usuario establezca su contraseña de acceso.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p-button
+        label="Crear usuario"
+        severity="primary"
+        [disabled]="true"
+        (onClick)="openConfirmModal()"
+      />
+    </div>
+  </div>
+</app-page-wrapper>
+
+<app-modal [title]="'Crear usuario'" [visible]="modalVisible">
+  <div class="modal-container">
+    <div *ngIf="!isSuccess && !isError" class="modal-icon-container">
+      <i *ngIf="!isLoading" class="pi pi-user-plus" style="font-size: 128px"></i>
+      <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">
+        Estás a punto de crear el usuario <strong>{{ userForm.value.username }}</strong>
+      </div>
+      <div class="font-12 text-gray">
+        Se enviará un email al correo indicado para que establezca su contraseña.
+      </div>
+    </div>
+
+    <div *ngIf="isSuccess" class="modal-icon-container">
+      <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">Usuario creado correctamente</div>
+      <div class="font-12 text-gray">Puedes crear otro usuario o volver al listado.</div>
+    </div>
+
+    <div *ngIf="isError" class="modal-icon-container">
+      <i class="pi pi-times c-red" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">No se pudo crear el usuario</div>
+      <div class="font-12 text-gray">{{ errorMessage || 'Inténtalo de nuevo.' }}</div>
+    </div>
+  </div>
+
+  <div *ngIf="!isSuccess && !isError" class="modal-actions">
+    <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false" />
+    <p-button label="Confirmar" severity="primary" (onClick)="onConfirmCreateUser()" [loading]="isLoading" />
+  </div>
+
+  <div *ngIf="isSuccess" class="modal-actions">
+    <p-button label="Crear otro" severity="secondary" (onClick)="closeModalAndReset()" />
+    <p-button label="Ir al listado" severity="primary" (onClick)="onClickNavigateToUsers()" />
+  </div>
+
+  <div *ngIf="isError" class="modal-actions">
+    <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false" />
+    <p-button label="Reintentar" severity="primary" (onClick)="onConfirmCreateUser()" />
+  </div>
+</app-modal>
