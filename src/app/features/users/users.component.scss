@@ -1,0 +1,150 @@
+.users-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  margin-top: 32px;
+
+  .user-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .list-title {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+}
+
+.table-group-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .table-container {
+    background-color: white;
+    padding: 16px;
+    border: 1px solid lightgray;
+    border-radius: 8px;
+  }
+
+  .filter-container {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    align-items: center;
+
+    .outlined-button {
+      width: fit-content;
+      background-color: white !important;
+      border-radius: 8px;
+    }
+  }
+}
+
+.popover-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .key-value-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .addresses {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .address {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+
+      border: 1px solid lightgray;
+      border-radius: 32px;
+      padding: 2px 8px;
+    }
+  }
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table thead th:first-child {
+  border-top-left-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table thead th:last-child {
+  border-top-right-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+::ng-deep #dt .p-datatable .p-datatable-table-container .p-datatable-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
+}
+
+.th-blue {
+  background-color: #2563eb;
+  color: white;
+}
+
+.notice {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+
+  border: 1px solid lightgray;
+  border-radius: 8px;
+  background-color: white;
+  padding: 16px;
+}
+
+.modal-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .modal-icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    text-align: center;
+    width: 512px;
+    margin: 8px auto;
+  }
+
+  .spin {
+    animation: spin 0.5s linear infinite;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.pi-user-minus {
+  font-size: 128px;
+  line-height: 1;
+}

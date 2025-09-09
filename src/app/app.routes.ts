@@ -9,6 +9,8 @@ import { CreateEndpointComponent } from './features/create-endpoint/create-endpo
 import { LoginComponent } from './features/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
 import { TestComponent } from './features/test/test.component';
+import { UsersComponent } from './features/users/users.component';
+import { CreateUserComponent } from './features/create-user/create-user.component';
 
 export const routes: Routes = [
   {
@@ -54,5 +56,16 @@ export const routes: Routes = [
     path: 'test',
     component: TestComponent,
     canActivate: [AuthGuard]
+  },
+   {
+    path: 'usuarios',
+    component: UsersComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'crear-usuario',
+    component: CreateUserComponent,
+    canActivate: [AuthGuard]
   }
+
 ];
