@@ -21,6 +21,14 @@ export class AlertService {
     return this.http.get<HomePanelsViewDto>(this.apiUrl + '/getHomePanels');
   }
 
+  getAlert(alertId: number): Observable<AlertViewDto>
+  {
+    let params: HttpParams = new HttpParams();
+    params = params.append('alertId', alertId);
+
+    return this.http.get<AlertViewDto>(this.apiUrl + '/getAlert', {params: params});
+  }
+
   getAllAlerts(filterText: string | null): Observable<AlertViewDto[]>
   {
     let params: HttpParams = new HttpParams();

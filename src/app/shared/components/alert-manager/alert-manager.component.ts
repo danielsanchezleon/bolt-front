@@ -1,53 +1,64 @@
-import { Component, ElementRef, HostListener, Input, OnInit, ViewChild } from '@angular/core';
-import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
+import { Component, HostListener, OnInit } from '@angular/core';
+import { PageWrapperComponent } from '../../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
-import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
-import { Router } from '@angular/router';
-import { MetricOptions, metricOperationOptions, operationOptions, timeWindowOptions, discardTimeOptions, periodicityOptions } from '../../shared/constants/metric-options';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl, Form } from '@angular/forms';
+import { AccordionComponent } from '../../../shared/components/accordion/accordion.component';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl } from '@angular/forms';
 import { MultiSelectChangeEvent, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
-import { SanitizeExpressionPipe } from '../../shared/pipes/replace-empty.pipe';
+import { SanitizeExpressionPipe } from '../../../shared/pipes/replace-empty.pipe';
 import { FloatLabelModule } from 'primeng/floatlabel';
 
-import { thresholdTypeOptions, thresholdComparationOptions, activationRecoverEvaluationOptions, silencePeriodDayOptions, errorBehaviorOptions } from '../../shared/constants/threshold-options';
+import { errorBehaviorOptions } from '../../../shared/constants/threshold-options';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { InnerAccordionComponent } from '../../shared/components/inner-accordion/inner-accordion.component';
+import { InnerAccordionComponent } from '../../../shared/components/inner-accordion/inner-accordion.component';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { endpointTypeOptions, severityOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
+import { endpointTypeOptions, conditionalBlockOptions, templateVariableOptions } from '../../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
-import { FloatingGraphComponent } from '../../shared/components/floating-graph/floating-graph.component';
-import { ModalComponent } from '../../shared/components/modal/modal.component';
-import { debounceTime, distinctUntilChanged, map, Subject, Subscription, switchMap } from 'rxjs';
-import { permissionTeamOptions, permissionTypeOptions } from '../../shared/constants/permission-options';
+import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
+import { ModalComponent } from '../../../shared/components/modal/modal.component';
+import { concatMap, debounceTime, finalize, from, map, Subject, Subscription, switchMap, tap } from 'rxjs';
+import { permissionTypeOptions } from '../../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
-import { MetricService } from '../../shared/services/metric.service';
-import { TableMetricInfo } from '../../shared/models/TableMetricInfo';
+import { MetricService } from '../../../shared/services/metric.service';
+import { TableMetricInfo } from '../../../shared/models/TableMetricInfo';
 import { SkeletonModule } from 'primeng/skeleton';
-import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
-import { AlertConditionDto } from '../../shared/dto/AlertConditionDto';
-import { AlertConditionHistoryDto } from '../../shared/dto/AlertConditionHistoryDto';
-import { AlertDto } from '../../shared/dto/AlertDto';
-import { AlertIndicatorDto } from '../../shared/dto/AlertIndicatorDto';
-import { AlertMetricDto } from '../../shared/dto/AlertMetricDto';
-import { AlertPermissionDto } from '../../shared/dto/AlertPermissionDto';
-import { AlertSilenceDto } from '../../shared/dto/AlertSilenceDto';
-import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
-import { EndpointAlertDto } from '../../shared/dto/EndpointAlertDto';
-import { FilterLogDto } from '../../shared/dto/FilterLogDto';
-import { AlertService } from '../../shared/services/alert.service';
+import { AlertClauseDto } from '../../../shared/dto/AlertClauseDto';
+import { AlertConditionDto } from '../../../shared/dto/AlertConditionDto';
+import { AlertConditionHistoryDto } from '../../../shared/dto/AlertConditionHistoryDto';
+import { AlertDto } from '../../../shared/dto/AlertDto';
+import { AlertIndicatorDto } from '../../../shared/dto/AlertIndicatorDto';
+import { AlertMetricDto } from '../../../shared/dto/AlertMetricDto';
+import { AlertPermissionDto } from '../../../shared/dto/AlertPermissionDto';
+import { AlertSilenceDto } from '../../../shared/dto/AlertSilenceDto';
+import { ConditionFilterDto } from '../../../shared/dto/ConditionFilterDto';
+import { EndpointAlertDto } from '../../../shared/dto/EndpointAlertDto';
+import { FilterLogDto } from '../../../shared/dto/FilterLogDto';
+import { AlertService } from '../../../shared/services/alert.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { EndpointService } from '../../shared/services/endpoint.service';
-import { EndpointViewDto } from '../../shared/dto/endpoint/EndpointViewDto';
-import { TeamViewDto } from '../../shared/dto/TeamViewDto';
-import { AuthService } from '../../shared/services/auth.service';
+import { EndpointService } from '../../../shared/services/endpoint.service';
+import { EndpointViewDto } from '../../../shared/dto/endpoint/EndpointViewDto';
+import { TeamViewDto } from '../../../shared/dto/TeamViewDto';
+import { AuthService } from '../../../shared/services/auth.service';
+import { AlertViewDto } from '../../dto/alert/AlertViewDto';
+
+import { metricOperationOptions, 
+        groupByOperationOptions, 
+        timeWindowOptions, 
+        discardTimeOptions, 
+        periodicityOptions, 
+        severityOptions, 
+        clauseComparationOptions, 
+        activationRecoverEvaluationOptions, 
+        silencePeriodDayOptions 
+      } from '../../constants/alert-constants';
 
 export class Endpoint {
   type: any;
@@ -84,12 +95,14 @@ export class Permission {
 class MetricOperation
 {
   value: number;
+  labelStr: string;
   label: string;
   symbol: string;
   description: string;
 
-  constructor(value: number, label: string, symbol: string, description: string) {
+  constructor(value: number, labelStr: string, label: string, symbol: string, description: string) {
     this.value = value;
+    this.labelStr = labelStr;
     this.label = label;
     this.symbol = symbol;
     this.description = description;
@@ -141,22 +154,28 @@ type SilencePeriodFormGroup = FormGroup<{
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
 @Component({
-  selector: 'app-create-simple-condition-alert',
+  selector: 'app-alert-manager',
   imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
-  templateUrl: './create-simple-condition-alert.component.html',
-  styleUrl: './create-simple-condition-alert.component.scss'
+  templateUrl: './alert-manager.component.html',
+  styleUrl: './alert-manager.component.scss'
 })
-export class CreateSimpleConditionAlertComponent implements OnInit {
+export class AlertManagerComponent implements OnInit{
   //General
+  alertId: number = 0;
+  mode: string = 'create';
+  alertType: string = 'simple';
   subscriptions: Subscription[] = [];
 
+  isInitialMetricListLoading: boolean = false;
+
   //Step 1
+
+  metricOperationOptions: any[] = [];
 
   internalName: string = "";
   internalNameModalVisible: boolean = false;
 
   indicatorArray: IndicatorFormArray;
-  matOperations: MetricOperation[] = [new MetricOperation(0, 'Sumar ( + )', '+', 'Sumar con la métrica anterior'), new MetricOperation(1, 'Restar ( - )', '-', 'Restar con la métrica anterior'), new MetricOperation(2, 'Multiplicar ( * )', '*', 'Multiplicar con la métrica anterior'), new MetricOperation(3, 'Dividir ( / )', '/', 'Dividir con la métrica anterior')];
   private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
   loadingMetricList: boolean = false;
 
@@ -165,7 +184,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   resultMetric: string = '';
 
   tagIntersectionOptions: any[] = [];
-  operationOptions: any[] = []
+  groupByOperationOptions: any[] = []
 
   dimensionValuesMap: Map<string, string[]> = new Map();
   selectedDimensionValuesMap: Map<string, Map<string, string[]>> = new Map();
@@ -178,8 +197,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   advancedOptionsForm: FormGroup;
 
   //Step 2
-  thresholdTypeOptions: any[] = [];
-  thresholdComparationOptions: any[] = [];
+  severityOptions: any[] = [];
+  clauseComparationOptions: any[] = [];
   thresholdArray: ThresholdFormArray;
   lastThresholdArrayLength: number = 0;
 
@@ -200,12 +219,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   endpointList: Endpoint[] = [];
 
   endpointTypeOptions: any[] = [];
-  severityOptions: any[] = [
-    {value: 'DISASTER', label: 'Disaster', disabled: true},
-    {value: 'CRITICAL', label: 'Critical', disabled: true},
-    {value: 'MAJOR', label: 'Major', disabled: true},
-    {value: 'WARNING', label: 'Warning', disabled: true}
-  ];
 
   tagForm: FormGroup;
   tagList: Tag[] = [];
@@ -241,13 +254,23 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     private metricService: MetricService,
     private alertService: AlertService,
     private endpointService: EndpointService,
-    private authService: AuthService) {
+    private authService: AuthService,
+    private route: ActivatedRoute ) {
+
+    this.route.snapshot.paramMap.has('alert_id') ? this.mode = 'edit' : this.mode = 'create';
+
+    if (this.mode == 'edit')
+    {
+      this.alertId = this.route.snapshot.params['alert_id'];
+      this.alertType = this.route.snapshot.params['alert_type'];
+    }
+
     //Step 1
     this.indicatorArray = this._fb.array<IndicatorFormGroup>([]);
 
     this.groupByForm = this._fb.group({
       groupBy: [[], []],
-      operation: [operationOptions[0], []]
+      operation: [groupByOperationOptions[0], []]
     });
 
     this.advancedOptionsForm = this._fb.group({
@@ -294,9 +317,20 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    //Step 1
 
-    this.createIndicator();
+    if (this.route.snapshot.paramMap.has('alert_id'))
+    {
+      this.getAlert();
+    }
+    else
+    {
+      this.createIndicator();
+      this.createThreshold();
+      this.selectedDimensionValuesMap.set('1', new Map());
+      this.createSilencePeriod();
+    }
+
+    //Step 1
 
     this.filterSubject
       .pipe(
@@ -313,23 +347,20 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
         this.loadingMetricList = false;
       });
 
-
-    this.operationOptions = operationOptions;
+    this.metricOperationOptions = metricOperationOptions;
+    this.groupByOperationOptions = groupByOperationOptions;
 
     this.timeWindowOptions = timeWindowOptions;
     this.discardTimeOptions = discardTimeOptions;
     this.periodicityOptions = periodicityOptions;
 
     //Step 2
-    this.thresholdTypeOptions = thresholdTypeOptions;
-    this.thresholdComparationOptions = thresholdComparationOptions;
-    this.createThreshold();
-    this.selectedDimensionValuesMap.set('1', new Map());
+    this.severityOptions = severityOptions;
+    this.clauseComparationOptions = clauseComparationOptions;
 
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
 
     this.silencePeriodDayOptions = silencePeriodDayOptions;
-    this.createSilencePeriod();
 
     this.errorBehaviorOptions = errorBehaviorOptions;
 
@@ -344,6 +375,25 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //Step 4
     this.permissionTypeOptions = permissionTypeOptions;
     this.getAllTeams();
+  }
+
+  getAlert()
+  {
+    this.alertService.getAlert(this.alertId).subscribe(
+      (response) => {
+        this.fromDtoToForm(response);
+      },
+      (error) => {
+      }
+    )
+  }
+
+  onClickNavigateToCreateAlert() {
+    this.router.navigate(['alert/create']);
+  }
+
+  onClickNavigateToAlerts() {
+    this.router.navigate(['alerts']);
   }
 
   generateInternalName()
@@ -362,7 +412,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       this.internalName += this.groupByForm.get('groupBy')?.value.join(',')
     }
 
-    this.existsByInternalName();
+    if (this.mode == 'create')
+      this.existsByInternalName();
   }
 
   existsByInternalName()
@@ -374,6 +425,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     )
   }
 
+  //INDICATORS
   createIndicator()
   {
     let indicatorIndex: number = this.indicatorArray.length;
@@ -382,7 +434,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       name: this._fb.control(this.letters[indicatorIndex]),
       metrics: this._fb.array<MetricFormGroup>([]),
       hasFinalOperation: this._fb.control(false),
-      constantOp: this._fb.control(this.matOperations[2]),
+      constantOp: this._fb.control(this.metricOperationOptions[2]),
       constantValue: this._fb.control(100)
     }) as IndicatorFormGroup;
 
@@ -408,7 +460,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.indicatorArray.at(indicatorIndex).controls.metrics.push(this._fb.group({
       id: this._fb.control((this.indicatorArray.at(indicatorIndex).controls.metrics.length! + 1).toString()),
       metric: this._fb.control(null),
-      operation: this._fb.control(this.matOperations[0]),
+      operation: this._fb.control(this.metricOperationOptions[0]),
       options: this._fb.control([] as TableMetricInfo[])
     }) as MetricFormGroup);
 
@@ -536,8 +588,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
-      type: this._fb.control(this.thresholdTypeOptions[selectedSeverityIndex]),
-      comparation: this._fb.control(thresholdComparationOptions[0]),
+      type: this._fb.control(this.severityOptions[selectedSeverityIndex]),
+      comparation: this._fb.control(clauseComparationOptions[0]),
       order: this._fb.control(this.thresholdArray.length + 1),
       value: this._fb.control(null),
       minIncluded: this._fb.control(true),
@@ -679,10 +731,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     });
   }
 
-  onClickNavigateToCreateAlert() {
-    this.router.navigate(['alert/create']);
-  }
-
   onClickSetThresholdType(threshold: any, type: any) {
 
     this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == threshold.get('type').value.label)].disabled = true;
@@ -792,20 +840,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickAddTemplateVariableToDetails(i: number) {
     this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
-  }
-
-  getMetrics(filter: string) {
-    this.loadingMetricList = true;
-
-    this.metricService.getMetrics(filter).subscribe(
-      (response) => {
-        this.metricList = response;
-        this.loadingMetricList = false;
-      },
-      (error) => {
-        this.loadingMetricList = false;
-      }
-    )
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {
@@ -1025,32 +1059,51 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.router.navigate(['alerts']);
   }
 
+  toSeconds(timeStr: string): number 
+  {
+    const match = timeStr.match(/^(\d+)([smhd])$/i);
+    if (!match) {
+      throw new Error("Formato inválido: " + timeStr);
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+
+    switch (unit) {
+      case "s": return value;          // segundos
+      case "m": return value * 60;     // minutos
+      case "h": return value * 3600;   // horas
+      case "d": return value * 86400;  // días
+      default: throw new Error("Unidad no soportada: " + unit);
+    }
+  }
+
   getActivationTime1()
   {
-    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
-    return this.formatTime(timeWindow * this.activationRecoverForm.get('activation1')?.value.value);
+    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('activation1')?.value.value);
   }
 
   getActivationTime2()
   {
-    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
-    return this.formatTime(timeWindow * this.activationRecoverForm.get('activation2')?.value.value);
+    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('activation2')?.value.value);
   }
 
   getRecoverTime1()
   {
-    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
-    return this.formatTime(timeWindow * this.activationRecoverForm.get('recover1')?.value.value);
+    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('recover1')?.value.value);
   }
 
   getRecoverTime2()
   {
-    let timeWindow: number = this.advancedOptionsForm.get('timeWindow')?.value.value;
+    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
 
-    return this.formatTime(timeWindow * this.activationRecoverForm.get('recover2')?.value.value);
+    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('recover2')?.value.value);
   }
 
   formatTime(totalSeconds: number): string 
@@ -1203,11 +1256,11 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   getNextAvailableSeverity(): number
   {
-    if (this.isSeveritySelected(this.thresholdTypeOptions[0]))
+    if (this.isSeveritySelected(this.severityOptions[0]))
     {
-      if (this.isSeveritySelected(this.thresholdTypeOptions[1]))
+      if (this.isSeveritySelected(this.severityOptions[1]))
       {
-        if (this.isSeveritySelected(this.thresholdTypeOptions[2]))
+        if (this.isSeveritySelected(this.severityOptions[2]))
         {
           return 3;
         }
@@ -1225,5 +1278,151 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     {
       return 0;
     }
+  }
+
+  async fromDtoToForm(alertViewDto: AlertViewDto)
+  {
+    //INDICATORS
+    alertViewDto.indicators?.forEach((indicator, i) => 
+    {
+      const newIndicator: IndicatorFormGroup = this._fb.group({
+        name: this._fb.control(indicator.name),
+        metrics: this._fb.array<MetricFormGroup>([]),
+        hasFinalOperation: this._fb.control(indicator.constantOp == null ? false : true),
+        constantOp: this._fb.control(indicator.constantOp == null ? this.metricOperationOptions[2] : this.metricOperationOptions.find((opt) => opt.value == indicator.constantOp)),
+        constantValue: this._fb.control(indicator.constantOp == null ? 100 : indicator.constantValue)
+      }) as IndicatorFormGroup;
+
+      this.indicatorArray.push(newIndicator);
+
+      const metrics = alertViewDto.indicators?.at(i)?.alertMetrics ?? [];
+
+      this.isInitialMetricListLoading = true;
+
+      //METRICS
+      from(metrics).pipe(
+        // concatMap garantiza que cada inner observable se suscriba solo cuando
+        // el anterior se haya completado (secuencial).
+        concatMap((metric, j) =>
+          this.metricService.getMetrics(metric.metricName!).pipe(
+            tap((response) => {
+              this.indicatorArray.at(i).controls.metrics.push(this._fb.group({
+                id: this._fb.control((j + 1).toString()),
+                metric: this._fb.control(response[0]),
+                operation: this._fb.control(this.metricOperationOptions.find((opt) => opt.value == metric.operation)),
+                options: this._fb.control(response)
+              }) as MetricFormGroup);
+            })
+          )
+        ),
+        finalize(() => {
+          this.isInitialMetricListLoading = false;
+        })
+      ).subscribe(
+        {
+          complete: () => 
+          {
+            this.onChangeMetricSelect(i);
+            this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+            this.onChangeHasFinalOperation(i);
+          }
+      });
+    });
+
+    //GROUP BY
+    this.groupByForm.get('operation')?.setValue(this.groupByOperationOptions.find((opt) => opt.value == alertViewDto.matOperation));
+
+    //ADVANCED OPTIONS
+    this.advancedOptionsForm.get('timeWindow')?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationFrequency!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+    this.advancedOptionsForm.get('discardTime')?.setValue(discardTimeOptions.find((dto) => dto.value == alertViewDto.offset));
+    this.advancedOptionsForm.get('periodicity')?.setValue(periodicityOptions.find((po) => po.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+
+    //CONDITIONS
+    alertViewDto.conditions?.forEach((condition) => {
+
+      //CLAUSES
+      condition.alertClauses?.forEach((clause) => {
+        const group: ThresholdFormGroup = this._fb.group({
+          id: this._fb.control((this.thresholdArray.length + 1).toString()),
+          type: this._fb.control(this.severityOptions.find((opt) => opt.value == condition.severity)),
+          comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
+          order: this._fb.control(this.thresholdArray.length + 1),
+          value: this._fb.control(clause.threshold),
+          minIncluded: this._fb.control(clause.thresholdInclude),
+          min: this._fb.control(clause.threshold),
+          maxIncluded: this._fb.control(clause.thresholdIncludeUp),
+          max: this._fb.control(clause.thresholdUp),
+          status: this._fb.control(condition.status),
+          startBrackets: this._fb.control(null),
+          endBrackets: this._fb.control(null),
+          externalOperation: this._fb.control(null)
+        }) as ThresholdFormGroup;
+
+        this.thresholdArray.push(group);
+
+        this.selectedDimensionValuesMap.set(group.get('id')?.value!, new Map());
+
+        this.groupByForm.get('groupBy')?.value.forEach( (groupBy: any) => {
+          let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
+          dimensionValuesMap.set(groupBy, this.dimensionValuesMap.get(groupBy)!);
+          this.selectedDimensionValuesMap.set(group.get('id')?.value!, dimensionValuesMap);
+        })
+
+        this.severityOptions[this.thresholdArray.length].disabled = false;
+      });
+    });
+
+    //ACTIVATION AND RECOVERY
+    this.activationRecoverForm.get('activation1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmNumPeriods));
+    this.activationRecoverForm.get('activation2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmTotalPeriods));
+    this.activationRecoverForm.get('recover1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryNumPeriods));
+    this.activationRecoverForm.get('recover2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryTotalPeriods));
+
+    //SILENCE PERIODS
+    alertViewDto.silencePeriods?.forEach((silencePeriod) => {
+      let splittedStartTime: string[] = silencePeriod.startTime.split(':');
+      let splittedEndTime: string[] = silencePeriod.endTime.split(':');
+      const group: SilencePeriodFormGroup = this._fb.group({
+        id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
+        days: this._fb.control(silencePeriod.days),
+        from: this._fb.control(new Date(2025, 1, 1, Number(splittedStartTime[0]), Number(splittedStartTime[1]), Number(splittedStartTime[2]))),
+        to: this._fb.control(new Date(2025, 1, 1, Number(splittedEndTime[0]), Number(splittedEndTime[1]), Number(splittedEndTime[2])))
+      },
+      {
+        validators: this.timeValidator
+      }) as SilencePeriodFormGroup;
+
+      group.get('from')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+      group.get('to')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+
+      this.silencePeriodArray.push(group);
+    });
+
+    //ENDPOINTS
+    alertViewDto.endpoints?.forEach((endpoint) => {
+      
+      this.endpointsByTypeMap[endpoint.type].forEach((ept: any) => {
+        if (ept.id == endpoint.endpointId)
+        {
+          let severityList: any[] = [];
+
+          endpoint.severities!.forEach((svrt) => {
+            severityList.push(this.severityOptions.find((opt) => opt.value == svrt));
+          });
+
+          this.endpointList.push(new Endpoint(this.endpointTypeOptions.find((opt) => opt.value == endpoint.type), ept, severityList));
+        }
+      })
+    });
+
+    //ALERT TAGS
+    alertViewDto.alertTags?.forEach((tag) => {
+      this.tagList.push(new Tag(tag.name!, tag.value!));
+    });
+
+    //NOTIFICATIONS
+    this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText);
+    this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail);
+    this.notificationMessageForm.get('proccedure')?.setValue(alertViewDto.opiUrl);
   }
 }

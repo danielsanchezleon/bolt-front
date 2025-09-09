@@ -6,24 +6,28 @@ export class MetricOptions
 export const metricOperationOptions = [
     {
         value: 0,
+        valueStr: 'ADD',
         label: 'Sumar ( + )',
         symbol: '+',
         description: 'Sumar con la métrica anterior'
     },
     {
         value: 1,
+        valueStr: 'SUBTRACT',
         label: 'Restar ( - )',
         symbol: '-',
         description: 'Restar con la métrica anterior'
     },
     {
         value: 2,
+        valueStr: 'NULTIPLY',
         label: 'Multiplicar ( * )',
         symbol: '*',
         description: 'Multiplicar con la métrica anterior'
     },
     {
         value: 3,
+        valueStr: 'DIVIDE',
         label: 'Dividir ( / )',
         symbol: '/',
         description: 'Dividir con la métrica anterior'

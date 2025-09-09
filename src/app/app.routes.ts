@@ -9,6 +9,7 @@ import { CreateEndpointComponent } from './features/create-endpoint/create-endpo
 import { LoginComponent } from './features/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
 import { TestComponent } from './features/test/test.component';
+import { AlertManagerComponent } from './shared/components/alert-manager/alert-manager.component';
 
 export const routes: Routes = [
   {
@@ -21,7 +22,7 @@ export const routes: Routes = [
     component: LoginComponent
   },
   {
-    path: 'crear-alerta',
+    path: 'alert/create',
     component: CreateAlertComponent,
     canActivate: [AuthGuard]
   },
@@ -41,7 +42,7 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'modificar-alerta',
+    path: 'alerts',
     component: ModifyAlertComponent,
     canActivate: [AuthGuard]
   },
@@ -53,6 +54,11 @@ export const routes: Routes = [
   {
     path: 'test',
     component: TestComponent,
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'alert/:alert_type/edit/:alert_id',
+    component: AlertManagerComponent,
     canActivate: [AuthGuard]
   }
 ];

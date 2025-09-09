@@ -280,6 +280,16 @@ th {
             gap: 4px;
         }
     }
+
+    .title
+    {
+        cursor: pointer;
+    }
+
+    .title:hover
+    {
+        text-decoration: underline;
+    }
 }
 
 .endpoints-container {

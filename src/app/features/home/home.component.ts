@@ -49,11 +49,11 @@ export class HomeComponent {
 
   onClickNavigateToCreateAlert()
   {
-    this.router.navigate(['crear-alerta']);
+    this.router.navigate(['alert/create']);
   }
 
   onClickNavigateToModifyAlert()
   {
-    this.router.navigate(['modificar-alerta']);
+    this.router.navigate(['alerts']);
   }
 }

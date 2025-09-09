@@ -379,7 +379,7 @@ export class CreateLogsAlertComponent implements OnInit {
   }
 
   onClickNavigateToCreateAlert() {
-    this.router.navigate(['crear-alerta']);
+    this.router.navigate(['alert/create']);
   }
 
   onClickSelectLogOption() {

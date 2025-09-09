@@ -303,4 +303,9 @@ export class ModifyAlertComponent implements OnInit
 
     return false;
   }
+
+  onClickGoToEditAlert(alert: AlertViewDto)
+  {
+    this.router.navigate(['alert', alert.alertType, 'edit', alert.alertId]);
+  }
 }
