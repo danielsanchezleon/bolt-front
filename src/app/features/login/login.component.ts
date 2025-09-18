@@ -1,5 +1,5 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators,FormControl } from '@angular/forms';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
@@ -21,6 +21,12 @@ export class LoginComponent
 
   isLoading: boolean = false;
   isError: boolean = false;
+
+  showForgot = false;
+  resetEmail = new FormControl('', [Validators.required, Validators.email, Validators.maxLength(255)]);
+  isResetLoading = false;
+  resetSent = false;
+  resetError = ''; 
 
   constructor(private _fb: FormBuilder, private authService: AuthService, private router: Router) 
   {
@@ -58,5 +64,36 @@ export class LoginComponent
         }
       );
     }
+  }
+
+  toggleForgot() {
+    this.showForgot = !this.showForgot;
+    this.resetError = '';
+    if (!this.showForgot) {
+      this.resetEmail.enable();
+      this.resetEmail.reset();
+      this.resetSent = false;
+      this.isResetLoading = false;
+    }
+  }
+
+  sendReset() {
+    if (this.resetEmail.invalid || this.isResetLoading) return;
+
+    this.isResetLoading = true;
+    this.resetError = '';
+    this.resetSent = false;
+
+    this.authService.requestPasswordReset(this.resetEmail.value!).subscribe({
+      next: () => {
+        this.isResetLoading = false;
+        this.resetSent = true; // bloquea el botón por HTML
+        this.resetEmail.disable(); 
+      },
+      error: () => {
+        this.isResetLoading = false;
+        this.resetSent = true;
+      },
+    });
   }
 }

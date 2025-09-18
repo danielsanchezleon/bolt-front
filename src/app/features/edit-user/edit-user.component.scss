@@ -1,0 +1,101 @@
+.edit-user-container {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  margin-top: 32px;
+
+  .edit-user-form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    gap: 16px;
+
+    .titled-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+
+      .form-container {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        gap: 16px;
+
+        background-color: white;
+        border-radius: 8px;
+        padding: 16px;
+
+        .form-input {
+          flex: 1;
+
+          input {
+            width: 100%;
+          }
+
+          ::ng-deep .p-select {
+            width: 100%;
+          }
+        }
+      }
+
+      .info-form-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        background-color: white;
+        border-radius: 8px;
+        padding: 16px;
+      }
+    }
+  }
+}
+
+.notice {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+
+  border: 1px solid lightgray;
+  border-radius: 8px;
+  background-color: #dbeafe;
+  padding: 16px;
+}
+
+.modal-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .modal-icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    text-align: center;
+    width: 512px;
+  }
+
+  .spin {
+    animation: spin 0.5s linear infinite;
+  }
+
+  @keyframes spin {
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-top: 24px;
+}

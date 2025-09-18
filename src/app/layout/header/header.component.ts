@@ -15,11 +15,21 @@ export class HeaderComponent {
 
   constructor(public router: Router, private authService: AuthService) {}
 
+  private get roles(): string[] {
+    return this.authService.getRoles() ?? [];
+  }
   get isAdmin(): boolean {
-    return this.authService.getRoles()?.includes('ADMIN') ?? false;
+    return this.roles.includes('ADMIN');
+  }
+  get isManager(): boolean {
+    return this.roles.includes('MANAGER');
   }
 
-  @HostListener('document:click')
+  get canSeeConfig(): boolean {
+    return this.isAdmin || this.isManager;
+  }
+
+  @HostListener('document:click') 
   onDocClick() {
     this.showConfigMenu = false;
   }
@@ -33,7 +43,7 @@ export class HeaderComponent {
     this.showConfigMenu = false;
     this.router.navigate(['endpoints']);
   }
-
+  
   goToUsers() {
     this.showConfigMenu = false;
     this.router.navigate(['usuarios']);

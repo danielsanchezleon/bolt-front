@@ -12,7 +12,7 @@
     .login-panel-container {
         display: flex;
         flex-direction: column;
-        gap: 32px;
+        gap: 28px;
         align-items: center;
 
         width: 400px;
@@ -133,3 +133,53 @@
     background-color: #fee2e2;
     padding: 16px;
 }
+
+.forgot-toggle {
+  margin-top: -10px;
+  display: flex;
+  justify-content: flex-start;
+
+  .link-like {
+    background: transparent;
+    border: none;
+    color: #2563eb;
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+  }
+}
+
+.forgot-box {
+  margin-top: 0px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .notice.c-blue {
+    padding: 10px 12px; 
+    margin: 0; 
+  }
+
+  .forgot-form {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+
+    .form-input {
+      flex: 1;
+      input { width: 100%; }
+    }
+
+    ::ng-deep .p-button {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+}
+
+.c-blue  { background-color: #dbeafe; } 
+.c-green { background-color: #dcfce7; } 

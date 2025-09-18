@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -14,10 +14,11 @@ import { SelectModule } from 'primeng/select';
 
 import { UserService } from '../../shared/services/user.service';
 import { environment } from '../../../environments/environment';
+import { UserUpdateDto } from '../../shared/dto/user/UserUpdateDto';
 import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
-  selector: 'app-create-user',
+  selector: 'app-edit-user',
   standalone: true,
   imports: [
     CommonModule,
@@ -29,10 +30,12 @@ import { AuthService } from '../../shared/services/auth.service';
     InputTextModule,
     SelectModule,
   ],
-  templateUrl: './create-user.component.html',
-  styleUrl: './create-user.component.scss',
+  templateUrl: './edit-user.component.html',
+  styleUrl: './edit-user.component.scss',
 })
-export class CreateUserComponent {
+export class EditUserComponent {
+  userId!: number;
+
   userForm: FormGroup;
 
   teamOptions: { label: string; value: number }[] = [];
@@ -40,14 +43,21 @@ export class CreateUserComponent {
   isLoadingTeams = false;
   isLoadingRoles = false;
 
+  isLoadingData = true;
+
   modalVisible = false;
-  isLoading = false;
+  isSaving = false;
   isSuccess = false;
   isError = false;
   errorMessage = '';
 
+  get isAdmin(): boolean {
+    return this.auth.getRoles()?.includes('ADMIN') ?? false;
+  }
+
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private fb: FormBuilder,
     private userService: UserService,
     private http: HttpClient,
@@ -55,30 +65,23 @@ export class CreateUserComponent {
   ) {
     this.userForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(64)]],
-      lastName: ['', [Validators.required, Validators.maxLength(64)]],
-      email: [
-        '',
-        [Validators.required, Validators.email, Validators.maxLength(255)],
-      ],
-      teamId: [null, [Validators.required]],
-      roleId: [null, [Validators.required]],
+      lastName:  ['', [Validators.required, Validators.maxLength(64)]],
+      email:     ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
+      teamId:    [null, [Validators.required]],
+      roleId:    [null, [Validators.required]],
     });
   }
 
-  get isAdmin(): boolean {
-    return this.auth.getRoles()?.includes('ADMIN') ?? false;
-  }
-
-  get myTeamId(): number | null {
-    return this.auth.getTeam() ?? null;
-  }
-
   ngOnInit(): void {
+    this.userId = Number(this.route.snapshot.paramMap.get('id'));
+
     if (!this.isAdmin) {
       this.userForm.get('teamId')?.disable();
     }
+
     this.loadTeams();
     this.loadRoles();
+    this.loadUser();
   }
 
   onClickNavigateToUsers() {
@@ -89,27 +92,10 @@ export class CreateUserComponent {
     this.isLoadingTeams = true;
     this.http.get<any[]>(`${environment.apiUrl}/v1/team/getTeams`).subscribe({
       next: (teams) => {
-        let visibles = teams || [];
-
-        // Si es manager, sólo su equipo
-        if (!this.isAdmin && this.myTeamId != null) {
-          visibles = visibles.filter((t) => t.id === this.myTeamId);
-        }
-
-        this.teamOptions = visibles.map((t) => ({
-          label: t.name,
-          value: t.id,
-        }));
-
-        if (!this.isAdmin && this.teamOptions.length === 1) {
-          this.userForm.patchValue({ teamId: this.teamOptions[0].value });
-        }
-
+        this.teamOptions = (teams || []).map(t => ({ label: t.name, value: t.id }));
         this.isLoadingTeams = false;
       },
-      error: () => {
-        this.isLoadingTeams = false;
-      },
+      error: () => { this.isLoadingTeams = false; }
     });
   }
 
@@ -117,91 +103,76 @@ export class CreateUserComponent {
     this.isLoadingRoles = true;
     this.http.get<any[]>(`${environment.apiUrl}/v1/role/getRoles`).subscribe({
       next: (roles) => {
-        const myRoles = this.auth.getRoles() || [];
-        const isAdmin = myRoles.includes('ADMIN');
-        const filtered = (roles || []).filter(
-          (r) => isAdmin || r.name !== 'ADMIN'
-        );
-        this.roleOptions = filtered.map((r) => ({
-          label: r.name,
-          value: r.id,
-        }));
+        const filtered = this.isAdmin ? (roles || []) : (roles || []).filter(r => r.name !== 'ADMIN');
+        this.roleOptions = filtered.map(r => ({ label: r.name, value: r.id }));
         this.isLoadingRoles = false;
       },
+      error: () => { this.isLoadingRoles = false; }
+    });
+  }
+
+  private loadUser() {
+    this.isLoadingData = true;
+    this.userService.getUser(this.userId).subscribe({
+      next: (user) => {
+        // Espera: { id, firstName, lastName, email, teamId, roleId }
+        this.userForm.patchValue({
+          firstName: user.firstName,
+          lastName:  user.lastName,
+          email:     user.email,
+          teamId:    user.teamId ?? null,
+          roleId:    user.roleId ?? null,
+        });
+        this.isLoadingData = false;
+      },
       error: () => {
-        this.isLoadingRoles = false;
+        this.isLoadingData = false;
+        this.errorMessage = 'No se pudo cargar el usuario.';
       },
     });
   }
 
   openConfirmModal() {
+    if (this.userForm.invalid) return;
     this.modalVisible = true;
-    this.isLoading = false;
+    this.isSaving = false;
     this.isSuccess = false;
     this.isError = false;
     this.errorMessage = '';
   }
 
-  onConfirmCreateUser() {
-    if (this.userForm.invalid || this.isLoading) return;
+  onConfirmSave() {
+    if (this.userForm.invalid || this.isSaving) return;
 
-    this.isLoading = true;
+    this.isSaving = true;
     this.isSuccess = false;
     this.isError = false;
     this.errorMessage = '';
 
+    // recoger también valores disabled (teamId si no eres admin)
     const raw = this.userForm.getRawValue();
 
-    const payload = {
+    const payload: UserUpdateDto = {
+      id: this.userId,
       firstName: raw.firstName,
-      lastName: raw.lastName,
-      email: raw.email,
-      teamId: raw.teamId,
-      roleId: raw.roleId,
+      lastName:  raw.lastName,
+      email:     raw.email,
+      teamId:    raw.teamId,
+      roleId:    raw.roleId,
     };
 
-    this.userService.createUser(payload).subscribe({
+    this.userService.updateUser(payload).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isSaving = false;
         this.isSuccess = true;
         this.isError = false;
       },
       error: (err) => {
-        this.isLoading = false;
+        this.isSaving = false;
         this.isSuccess = false;
         this.isError = true;
         this.errorMessage = err?.error || 'Error inesperado';
       },
     });
-  }
-
-  closeModalAndReset() {
-    this.modalVisible = false;
-    this.isLoading = false;
-    this.isSuccess = false;
-    this.isError = false;
-    this.errorMessage = '';
-    this.userForm.reset();
-  }
-
-  usernamePreview(): string {
-    const first = (this.userForm.value.firstName || '').toString();
-    const last = (this.userForm.value.lastName || '').toString();
-
-    const norm = (s: string) =>
-      s
-        .normalize('NFD') 
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ') 
-        .trim()
-        .replace(/\s+/g, '.');
-
-    const left = norm(first);
-    const right = norm(last);
-    if (!left && !right) return '';
-    if (!left) return right;
-    if (!right) return left;
-    return `${left}.${right}`;
   }
 }
