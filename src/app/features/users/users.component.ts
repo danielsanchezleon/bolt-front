@@ -62,11 +62,13 @@ export class UsersComponent {
   tableActions: MenuItem[] = [
     {
       label: 'Editar',
-      icon: 'pi pi-pencil'
+      icon: 'pi pi-pencil',
+      command: () => this.onClickEditUser(this.selectedUser),
     },
     {
       label: 'Eliminar',
-      icon: 'pi pi-trash'
+      icon: 'pi pi-trash',
+      command: () => this.openDeleteModal(this.selectedUser),
     },
   ];
 
@@ -94,6 +96,11 @@ export class UsersComponent {
     this.router.navigate(['crear-usuario']);
   }
 
+  onClickEditUser(user: UserViewDto | null) {
+    if (!user?.id) return;
+    this.router.navigate(['usuarios', user.id, 'editar']);
+  }
+
   getUsers(page: number, size: number) {
     this.isLoading = true;
     this.isError = false;
@@ -113,6 +120,47 @@ export class UsersComponent {
       },
     });
   }
+
+  openDeleteModal(user: UserViewDto | null) {
+    if (!user?.id) return;
+    this.selectedUser = user;
+    this.isLoadingDelete = false;
+    this.isDeleteSuccess = false;
+    this.isDeleteError = false;
+    this.deleteErrorMessage = '';
+    this.deleteModalVisible = true;
+  }
+
+  closeDeleteModal() {
+    this.deleteModalVisible = false;
+    this.selectedUser = null;
+  }
+
+  onConfirmDeleteUser() {
+    if (!this.selectedUser?.id) return;
+
+    this.isLoadingDelete = true;
+    this.isDeleteSuccess = false;
+    this.isDeleteError = false;
+    this.deleteErrorMessage = '';
+
+    this.userService.deleteUser(this.selectedUser.id).subscribe({
+      next: () => {
+        this.isLoadingDelete = false;
+        this.isDeleteSuccess = true;
+        this.isDeleteError = false;
+
+        this.getUsers(this.page, this.size);
+      },
+      error: (err) => {
+        this.isLoadingDelete = false;
+        this.isDeleteSuccess = false;
+        this.isDeleteError = true;
+        this.deleteErrorMessage = err?.error || 'No se pudo eliminar el usuario.';
+      },
+    });
+  }
+
 
   onFilterUsersChange() {
     this.filterSubject.next(this.filterText);

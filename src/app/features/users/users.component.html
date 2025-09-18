@@ -12,7 +12,7 @@
       <div class="page-title-top">
         <div class="font-32 font-w-700">Gestión de usuarios</div>
         <p-button label="Nuevo usuario" icon="pi pi-plus" (onClick)="onClickNavigateToCreateUser()" />
-      </div>
+</div>
       <div>Administra las cuentas y permisos de acceso</div>
     </div>
 
@@ -92,7 +92,7 @@
             [showJumpToPageDropdown]="false"
             currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
             [rowsPerPageOptions]="[5, 10, 20, 50]"
-          />
+                      />
         </div>
       </div>
     </div>
@@ -128,17 +128,17 @@
   </div>
 
   <div *ngIf="!isDeleteSuccess && !isDeleteError" class="modal-actions">
-    <p-button label="Cancelar" severity="secondary" />
-    <p-button label="Eliminar" severity="danger" [loading]="isLoadingDelete" />
+    <p-button label="Cancelar" severity="secondary" (onClick)="closeDeleteModal()" />
+    <p-button label="Eliminar" severity="danger" (onClick)="onConfirmDeleteUser()" [loading]="isLoadingDelete" />
   </div>
 
   <div *ngIf="isDeleteSuccess" class="modal-actions">
     <div></div>
-    <p-button label="Cerrar" severity="primary" />
+    <p-button label="Cerrar" severity="primary" (onClick)="closeDeleteModal()" />
   </div>
 
   <div *ngIf="isDeleteError" class="modal-actions">
-    <p-button label="Cancelar" severity="secondary" />
-    <p-button label="Reintentar" severity="primary" />
+    <p-button label="Cancelar" severity="secondary" (onClick)="closeDeleteModal()" />
+    <p-button label="Reintentar" severity="primary" (onClick)="onConfirmDeleteUser()" />
   </div>
 </app-modal>
