@@ -152,6 +152,9 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   //Step 1
 
+  internalName: string = "";
+  internalNameModalVisible: boolean = false;
+
   indicatorArray: IndicatorFormArray;
   matOperations: MetricOperation[] = [new MetricOperation(0, 'Sumar ( + )', '+', 'Sumar con la métrica anterior'), new MetricOperation(1, 'Restar ( - )', '-', 'Restar con la métrica anterior'), new MetricOperation(2, 'Multiplicar ( * )', '*', 'Multiplicar con la métrica anterior'), new MetricOperation(3, 'Dividir ( / )', '/', 'Dividir con la métrica anterior')];
   private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
@@ -197,7 +200,12 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   endpointList: Endpoint[] = [];
 
   endpointTypeOptions: any[] = [];
-  severityOptions: any[] = [];
+  severityOptions: any[] = [
+    {value: 'DISASTER', label: 'Disaster', disabled: true},
+    {value: 'CRITICAL', label: 'Critical', disabled: true},
+    {value: 'MAJOR', label: 'Major', disabled: true},
+    {value: 'WARNING', label: 'Warning', disabled: true}
+  ];
 
   tagForm: FormGroup;
   tagList: Tag[] = [];
@@ -329,7 +337,6 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.getEndpointsByType();
 
     this.endpointTypeOptions = endpointTypeOptions;
-    this.severityOptions = severityOptions;
 
     this.conditionalBlockOptions = conditionalBlockOptions;
     this.templateVariableOptions = templateVariableOptions;
@@ -337,6 +344,34 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     //Step 4
     this.permissionTypeOptions = permissionTypeOptions;
     this.getAllTeams();
+  }
+
+  generateInternalName()
+  {
+    this.internalName = "";
+
+    this.indicatorArray.controls.forEach(indicator => {
+      if (indicator.controls.metrics.controls.length > 0)
+      {
+        this.internalName += indicator.controls.metrics.controls[0].get('metric')?.value?.metric + '_';
+      }
+    });
+
+    if (this.groupByForm.get('groupBy')?.value.length > 0)
+    {
+      this.internalName += this.groupByForm.get('groupBy')?.value.join(',')
+    }
+
+    this.existsByInternalName();
+  }
+
+  existsByInternalName()
+  {
+    this.alertService.existsByInternalName(this.internalName).subscribe(
+      (response: boolean) => {
+        this.internalNameModalVisible = response;
+      }
+    )
   }
 
   createIndicator()
@@ -392,10 +427,14 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     this.getMetricTagsIntersection();
 
     this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
+
+    this.generateInternalName();
   }
 
   onChangeMetricSelect(indicatorIndex: number)
   {
+    this.generateInternalName();
+
     this.generateResultMetric(indicatorIndex);
 
     this.getMetricTagsIntersection();
@@ -492,9 +531,12 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   createThreshold() {
+
+    let selectedSeverityIndex: number = this.getNextAvailableSeverity();
+
     const group: ThresholdFormGroup = this._fb.group({
       id: this._fb.control((this.thresholdArray.length + 1).toString()),
-      type: this._fb.control(this.getNextAvailableSeverity()),
+      type: this._fb.control(this.thresholdTypeOptions[selectedSeverityIndex]),
       comparation: this._fb.control(thresholdComparationOptions[0]),
       order: this._fb.control(this.thresholdArray.length + 1),
       value: this._fb.control(null),
@@ -559,6 +601,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     comparationControl?.updateValueAndValidity();
 
     this.lastThresholdArrayLength = this.thresholdArray.length;
+
+    this.severityOptions[selectedSeverityIndex].disabled = false;
   }
 
   allValuesCompleted(): boolean {
@@ -640,7 +684,12 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
   }
 
   onClickSetThresholdType(threshold: any, type: any) {
+
+    this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == threshold.get('type').value.label)].disabled = true;
+
     threshold.get('type').setValue(type);
+
+    this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == type.label)].disabled = false;
   }
 
   onClickSetEndpointAlert(endpoint: any, alert: any) {
@@ -893,6 +942,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onClickRemoveSelectedThreshold(index: number) {
 
+    this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == this.thresholdArray.controls.at(index)!.get('type')?.value.label)].disabled = true;
+
     this.selectedDimensionValuesMap.delete(this.thresholdArray.controls.at(index)?.get('id')?.value!);
 
     this.thresholdArray.controls.splice(index, 1);
@@ -1073,6 +1124,8 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
 
   onChangeGroupBy(event: MultiSelectChangeEvent)
   {
+    this.generateInternalName();
+
     this.thresholdArray.controls.forEach((group) => {
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
       dimensionValuesMap.set(event.itemValue.value, this.dimensionValuesMap.get(event.itemValue.value)!);
@@ -1148,7 +1201,7 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
     return isSelected;
   }
 
-  getNextAvailableSeverity()
+  getNextAvailableSeverity(): number
   {
     if (this.isSeveritySelected(this.thresholdTypeOptions[0]))
     {
@@ -1156,21 +1209,21 @@ export class CreateSimpleConditionAlertComponent implements OnInit {
       {
         if (this.isSeveritySelected(this.thresholdTypeOptions[2]))
         {
-          return this.thresholdTypeOptions[3];
+          return 3;
         }
         else
         {
-          return this.thresholdTypeOptions[2];
+          return 2;
         }
       }
       else
       {
-        return this.thresholdTypeOptions[1];
+        return 1;
       }
     }
     else
     {
-      return this.thresholdTypeOptions[0];
+      return 0;
     }
   }
 }

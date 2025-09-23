@@ -1,0 +1,128 @@
+<app-page-wrapper>
+  <p-button
+    icon="pi pi-arrow-left"
+    label="Volver"
+    variant="text"
+    severity="secondary"
+    (onClick)="onClickNavigateToUsers()"
+  />
+
+  <div class="edit-user-container">
+    <div class="page-title">
+      <div class="page-title-top">
+        <div class="font-32 font-w-700">Edición de usuario</div>
+      </div>
+      <div>Modifica los datos del usuario seleccionado</div>
+    </div>
+
+    <div class="edit-user-form-container">
+      <div class="titled-container">
+        <div class="font-16 font-w-600">Información general *</div>
+
+        <div class="form-container" [formGroup]="userForm">
+          <p-floatlabel class="form-input" variant="on">
+            <input pInputText autocomplete="off" formControlName="firstName" />
+            <label>Nombre</label>
+          </p-floatlabel>
+
+          <p-floatlabel class="form-input" variant="on">
+            <input pInputText autocomplete="off" formControlName="lastName" />
+            <label>Apellidos</label>
+          </p-floatlabel>
+
+          <p-floatlabel class="form-input" variant="on">
+            <input pInputText autocomplete="off" formControlName="email" />
+            <label>Email</label>
+          </p-floatlabel>
+
+          <p-select
+            class="form-input"
+            [options]="teamOptions"
+            formControlName="teamId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selecciona un equipo"
+            [disabled]="!isAdmin || isLoadingTeams"
+          ></p-select>
+
+          <p-select
+            class="form-input"
+            [options]="roleOptions"
+            formControlName="roleId"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Selecciona un rol"
+            [disabled]="isLoadingRoles"
+          ></p-select>
+        </div>
+      </div>
+
+      <div class="titled-container">
+        <div class="font-16 font-w-600">Restricciones</div>
+        <div class="info-form-container">
+          <div class="notice c-blue">
+            <i class="pi pi-info-circle"></i>
+            <div>
+              <ng-container *ngIf="!isAdmin; else adminMsg">
+                Solo los administradores pueden cambiar el equipo asignado de un usuario.
+              </ng-container>
+              <ng-template #adminMsg>
+                Puedes cambiar libremente el equipo y el rol del usuario.
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p-button
+        label="Guardar cambios"
+        severity="primary"
+        [disabled]="!userForm.valid || isLoadingData || isLoadingTeams || isLoadingRoles"
+        (onClick)="openConfirmModal()"
+      />
+    </div>
+  </div>
+</app-page-wrapper>
+
+<app-modal [title]="'Guardar cambios'" [visible]="modalVisible">
+  <div class="modal-container">
+    <div *ngIf="!isSuccess && !isError" class="modal-icon-container">
+      <i *ngIf="!isSaving" class="pi pi-user-edit" style="font-size: 128px"></i>
+      <i *ngIf="isSaving" class="pi pi-spinner spin" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">
+        Vas a actualizar a
+        <strong>{{ userForm.value.firstName }} {{ userForm.value.lastName }}</strong>
+      </div>
+      <div class="font-12 text-gray">
+        Revisa que los datos sean correctos antes de confirmar.
+      </div>
+    </div>
+
+    <div *ngIf="isSuccess" class="modal-icon-container">
+      <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">Usuario actualizado correctamente</div>
+      <div class="font-12 text-gray">Puedes volver al listado o seguir editando.</div>
+    </div>
+
+    <div *ngIf="isError" class="modal-icon-container">
+      <i class="pi pi-times c-red" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">No se pudo actualizar el usuario</div>
+      <div class="font-12 text-gray">{{ errorMessage || 'Inténtalo de nuevo.' }}</div>
+    </div>
+  </div>
+
+  <div *ngIf="!isSuccess && !isError" class="modal-actions">
+    <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false" />
+    <p-button label="Confirmar" severity="primary" (onClick)="onConfirmSave()" [loading]="isSaving" />
+  </div>
+
+  <div *ngIf="isSuccess" class="modal-actions">
+    <p-button label="Volver al listado" severity="secondary" (onClick)="onClickNavigateToUsers()" />
+    <p-button label="Seguir editando" severity="primary" (onClick)="modalVisible = false" />
+  </div>
+
+  <div *ngIf="isError" class="modal-actions">
+    <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false" />
+    <p-button label="Reintentar" severity="primary" (onClick)="onConfirmSave()" />
+  </div>
+</app-modal>

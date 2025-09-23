@@ -365,7 +365,7 @@
                                 (onChange)="onChangeStep3EndpointType();" />
                             <p-select [options]="endpointFieldValues" class="select" optionLabel="name" appendTo="body"
                                 placeholder="Selecciona un endpoint" formControlName="endpoint" />
-                            <p-multiselect [options]="severityOptions" class="select" optionLabel="label"
+                            <p-multiselect [options]="this.severityOptions" class="select" optionLabel="label" optionDisabled="disabled"
                                 placeholder="Seleciona las severidades" formControlName="severities" />
                         </div>
                         <p-button label="Añadir" icon="pi pi-plus" severity="secondary" [disabled]="!endpointForm.valid"
@@ -382,13 +382,13 @@
                             </div>
 
                             <div class="alerts-container">
-                                <div *ngIf="endpoint.severities.includes(severityOptions[0])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[0])"
                                     class="type-button-container disaster">Disaster</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[1])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[1])"
                                     class="type-button-container critical">Critical</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[2])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[2])"
                                     class="type-button-container major">Major</div>
-                                <div *ngIf="endpoint.severities.includes(severityOptions[3])"
+                                <div *ngIf="endpoint.severities.includes(this.severityOptions[3])"
                                     class="type-button-container warning">Warning</div>
                             </div>
                             <p-button [pTooltip]="'Eliminar endpoint'" tooltipPosition="top" showDelay="1000"
@@ -503,9 +503,8 @@
                 <div class="notice c-blue">
                     <i class="pi pi-info-circle"></i>
                     <div>
-                        <span class="font-w-700">Importante</span>: por defecto, tu equipo (admin) podrá editar la
-                        configuración de la alerta, y todos los demás equipos podrán verla. Configura los permisos para
-                        otros equipos a continuación si quieres cambiar estos valores por defecto.
+                        <span class="font-w-700">Importante</span>: por defecto, tu equipo podrá editar la
+                        configuración de la alerta (permiso de lectura y escritura), y todos los demás equipos solo podrán verla. Puedes añadir nuevos equipos, y estos adquirirán permisos de lectura y escritura.
                     </div>
                 </div>
 
@@ -789,3 +788,18 @@
         </div>
     </div>
 </p-dialog>
+
+<app-modal [title]="'Alerta duplicada'" [visible]="internalNameModalVisible">
+    <div class="modal-container">
+        <div class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-info-circle" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Alerta ya configurada</div>
+            <div class="font-12 text-gray">Ten en cuenta que la alerta que estás configurando ya existe</div>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <div></div>
+        <p-button label="Aceptar" severity="primary" (onClick)="internalNameModalVisible = false;" />
+    </div>
+</app-modal>
