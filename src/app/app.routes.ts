@@ -7,8 +7,13 @@ import { CreateLogsAlertComponent } from './features/create-logs-alert/create-lo
 import { CreateEndpointComponent } from './features/create-endpoint/create-endpoint.component';
 import { LoginComponent } from './features/login/login.component';
 import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
 import { TestComponent } from './features/test/test.component';
 import { AlertManagerComponent } from './shared/components/alert-manager/alert-manager.component';
+import { UsersComponent } from './features/users/users.component';
+import { CreateUserComponent } from './features/create-user/create-user.component';
+import { SetPasswordComponent } from './features/set-password/set-password.component';
+import { EditUserComponent } from './features/edit-user/edit-user.component';
 
 export const routes: Routes = [
   {
@@ -33,12 +38,14 @@ export const routes: Routes = [
   {
     path: 'crear-endpoint',
     component: CreateEndpointComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'endpoints',
     component: EndpointsComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard,RoleGuard],
+    data: { roles: ['ADMIN'] }
   },
   {
     path: 'alerts',
@@ -58,6 +65,30 @@ export const routes: Routes = [
   {
     path: 'alert/:alert_type/edit/:alert_id',
     component: AlertManagerComponent,
-    canActivate: [AuthGuard]
+    canActivate: [AuthGuard,RoleGuard],
+    data: { roles: ['ADMIN'] }
+  },
+   {
+    path: 'usuarios',
+    component: UsersComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN', 'MANAGER'] }
+  },
+  {
+    path: 'crear-usuario',
+    component: CreateUserComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN', 'MANAGER'] }
+  },
+   {
+    path: 'establecer-contrasena',
+    component: SetPasswordComponent
+  },
+  {
+    path: 'usuarios/:id/editar',
+    component: EditUserComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN', 'MANAGER'] }
   }
+
 ];

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient,HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -11,6 +11,7 @@ import { TokenResponse } from '../dto/auth/TokenResponse';
 export class AuthService {
 
   private apiUrl = environment.apiUrl + '/v1/auth';
+  private passwordApi = environment.apiUrl + '/v1/password';
   
   constructor(private http: HttpClient) {}
 
@@ -72,5 +73,19 @@ export class AuthService {
       return payload.team;
     else
       return null;
+  }
+
+  requestPasswordReset(email: string) {
+    const params = new HttpParams().set('email', email);
+    return this.http.post<void>(`${this.passwordApi}/request`, null, { params });
+  }
+
+  validateResetToken(token: string): Observable<void> {
+    const params = new HttpParams().set('token', token);
+    return this.http.get<void>(`${this.passwordApi}/validate`, { params });
+  }
+
+  setPassword(token: string, password: string): Observable<void> {
+    return this.http.post<void>(`${this.passwordApi}/set`, { token, password });
   }
 }

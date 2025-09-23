@@ -1,0 +1,144 @@
+<app-page-wrapper>
+  <p-button
+    icon="pi pi-arrow-left"
+    label="Volver"
+    variant="text"
+    severity="secondary"
+    (onClick)="onClickNavigateToHome()"
+  />
+
+  <div class="users-container">
+    <div class="page-title">
+      <div class="page-title-top">
+        <div class="font-32 font-w-700">Gestión de usuarios</div>
+        <p-button label="Nuevo usuario" icon="pi pi-plus" (onClick)="onClickNavigateToCreateUser()" />
+</div>
+      <div>Administra las cuentas y permisos de acceso</div>
+    </div>
+
+    <div class="user-list-container">
+      <div class="list-title">
+        <div class="font-24 font-w-600">Listado de usuarios</div>
+      </div>
+      <div *ngIf="!isLoading && isError" class="notice">
+        <i class="pi pi-info-circle c-blue"></i>
+        <div>Ha habido un error al obtener la información</div>
+      </div>
+
+      <div class="table-group-container">
+        <div class="filter-container">
+          <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
+            <p-inputicon class="pi pi-search" />
+            <input
+              style="width: 100%;"
+              type="text"
+              pInputText
+              placeholder="Busca por  usuario, email, equipo o rol..."
+              [(ngModel)]="filterText"
+              (input)="onFilterUsersChange()"
+            />
+            <p-inputicon
+              class="pi pi-times"
+              style="cursor: pointer;"
+              (click)="$event.stopPropagation(); userListFiltered = userList; filterText = ''"
+            />
+          </p-iconfield>
+
+          <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="39px" borderRadius="8px" />
+        </div>
+
+        <div *ngIf="!isLoading && !isError" class="table-container">
+          <p-table id="dt" #dt [value]="userListFiltered" [showGridlines]="false" [stripedRows]="true">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Nombre de usuario</th>
+                <th>Email</th>
+                <th style="text-align: center;">Equipo</th>
+                <th style="text-align: center;">Rol</th>
+                <th style="text-align: center;">Fecha de creación</th>
+                <th style="text-align: center;">Acciones</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-user>
+              <tr>
+                <td style="font-weight: 600;"><div>{{ user.username }}</div></td>
+                <td><div>{{ user.email }}</div></td>
+                <td style="text-align: center;"><div>{{ user.team }}</div></td>
+                <td style="text-align: center;"><div>{{ user.role }}</div></td>
+                <td style="text-align: center;"><div>{{ user.createdAt | date: 'dd/MM/y HH:mm' }}</div></td>
+
+                <td style="text-align: center;">
+                  <p-menu #menu [model]="tableActions" [popup]="true" appendTo="body" />
+                  <p-button
+                    [rounded]="true"
+                    [text]="true"
+                    (click)="selectedUser = user; menu.toggle($event)"
+                    icon="pi pi-ellipsis-h"
+                    severity="secondary"
+                  />
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+
+          <p-paginator
+            (onPageChange)="onPageChange($event)"
+            [first]="first"
+            [rows]="size"
+            [totalRecords]="userPage.totalElements"
+            [showCurrentPageReport]="true"
+            [showPageLinks]="false"
+            [showJumpToPageDropdown]="false"
+            currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
+            [rowsPerPageOptions]="[5, 10, 20, 50]"
+                      />
+        </div>
+      </div>
+    </div>
+
+    <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
+  </div>
+</app-page-wrapper>
+
+<app-modal [title]="'Eliminar usuario'" [visible]="deleteModalVisible">
+  <div class="modal-container">
+    <div *ngIf="!isDeleteSuccess && !isDeleteError" class="modal-icon-container">
+      <i *ngIf="!isLoadingDelete" class="pi pi-user-minus" style="font-size: 128px"></i>
+      <i *ngIf="isLoadingDelete" class="pi pi-spinner spin" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">
+        Vas a eliminar al usuario <strong>{{ selectedUser?.username }}</strong>
+      </div>
+      <div class="font-12 text-gray">
+        Esta acción no se puede deshacer.
+      </div>
+    </div>
+
+    <div *ngIf="isDeleteSuccess" class="modal-icon-container">
+      <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">Usuario eliminado correctamente</div>
+      <div class="font-12 text-gray">El listado se ha actualizado.</div>
+    </div>
+
+    <div *ngIf="isDeleteError" class="modal-icon-container">
+      <i class="pi pi-times c-red" style="font-size: 128px"></i>
+      <div class="font-16 font-w-600">No se pudo eliminar el usuario</div>
+      <div class="font-12 text-gray">{{ deleteErrorMessage || 'Inténtalo de nuevo.' }}</div>
+    </div>
+  </div>
+
+  <div *ngIf="!isDeleteSuccess && !isDeleteError" class="modal-actions">
+    <p-button label="Cancelar" severity="secondary" (onClick)="closeDeleteModal()" />
+    <p-button label="Eliminar" severity="danger" (onClick)="onConfirmDeleteUser()" [loading]="isLoadingDelete" />
+  </div>
+
+  <div *ngIf="isDeleteSuccess" class="modal-actions">
+    <div></div>
+    <p-button label="Cerrar" severity="primary" (onClick)="closeDeleteModal()" />
+  </div>
+
+  <div *ngIf="isDeleteError" class="modal-actions">
+    <p-button label="Cancelar" severity="secondary" (onClick)="closeDeleteModal()" />
+    <p-button label="Reintentar" severity="primary" (onClick)="onConfirmDeleteUser()" />
+  </div>
+</app-modal>
