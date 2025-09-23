@@ -19,7 +19,7 @@ export const metricOperationOptions = [
         description: 'Restar con la métrica anterior'
     },
     {
-        value: 'NULTIPLY',
+        value: 'MULTIPLY',
         label: 'Multiplicar ( * )',
         symbol: '*',
         description: 'Multiplicar con la métrica anterior'

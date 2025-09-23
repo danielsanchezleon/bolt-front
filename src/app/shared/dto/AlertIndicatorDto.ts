@@ -3,9 +3,10 @@ import { AlertMetricDto } from "./AlertMetricDto";
 export class AlertIndicatorDto 
 {
   constructor(
+    public id: number | null,
     public name: string,
     public alertMetrics: AlertMetricDto[] = [],
-    public constantOp: number,
+    public constantOp: string | null,
     public constantValue: number
   ) {}
 }

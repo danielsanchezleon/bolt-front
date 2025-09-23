@@ -20,7 +20,7 @@
         <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
             <p-inputicon class="pi pi-search" />
             <input style="width: 100%;" [formControl]="filterTextControl" type="text" pInputText placeholder="Buscar alertas por nombre, descripción o etiquetas" />
-            <p-inputicon *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(null); filterTextControl.reset();"/>
+            <p-inputicon *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(page, size, null); filterTextControl.reset();"/>
         </p-iconfield>
         <p-skeleton *ngIf="isLoading && !isError" width="1343px" height="39px" borderRadius="8px" />
 
@@ -202,7 +202,21 @@
             </div>
         </div>
 
-        <p-button *ngIf="alertList.length > 0" icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
+        <div *ngIf="alertList.length > 0" style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="size"
+                [totalRecords]="alertsPage.totalElements"
+                [showCurrentPageReport]="true"
+                [showPageLinks]="false"
+                [showJumpToPageDropdown]="false"
+                currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
+                [rowsPerPageOptions]="[5, 10, 20, 50]"
+                [showPageLinks]="true"/>
+
+            <p-button icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
+        </div>
     </div>
 
     <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
@@ -253,6 +267,6 @@
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Cerrar" severity="secondary" (onClick)="saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmSaveChanges();" [disabled]="saveChangesLoading()" />
         <div *ngIf="completedUpdates == changedAlerts.length"></div>
-        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(''); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
+        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, ''); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
     </div>
 </app-modal>

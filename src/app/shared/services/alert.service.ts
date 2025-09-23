@@ -29,16 +29,18 @@ export class AlertService {
     return this.http.get<AlertViewDto>(this.apiUrl + '/getAlert', {params: params});
   }
 
-  getAllAlerts(filterText: string | null): Observable<AlertViewDto[]>
+  getAllAlerts(page: number, size: number, filterText: string | null): Observable<any>
   {
     let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size);
 
     if (filterText != null)
     {
       params = params.append('filterText', filterText);
     }
 
-    return this.http.get<AlertViewDto[]>(this.apiUrl + '/getAllAlerts', {params: params});
+    return this.http.get<any>(this.apiUrl + '/getAllAlerts', {params: params});
   }
 
   createSimpleAlert(alertDto: AlertDto): Observable<any>
@@ -70,5 +72,15 @@ export class AlertService {
   updateAlert(alertViewDto: AlertViewDto): Observable<AlertViewDto>
   {
     return this.http.put<AlertViewDto>(this.apiUrl + '/updateAlert', alertViewDto);
+  }
+
+  crupdateAlert(alertId: number | null, alertDto: AlertDto): Observable<any>
+  {
+    let params = new HttpParams();
+
+    if (alertId != null)
+      params = params.append('alertId', alertId);
+
+    return this.http.put<any>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
   }
 }

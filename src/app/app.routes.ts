@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './features/home/home.component';
 import { CreateAlertComponent } from './features/create-alert/create-alert.component';
-import { CreateSimpleConditionAlertComponent } from './features/create-simple-condition-alert/create-simple-condition-alert.component';
 import { EndpointsComponent } from './features/endpoints/endpoints.component';
 import { ModifyAlertComponent } from './features/modify-alert/modify-alert.component';
 import { CreateLogsAlertComponent } from './features/create-logs-alert/create-logs-alert.component';
@@ -27,8 +26,8 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'condicion-simple',
-    component: CreateSimpleConditionAlertComponent,
+    path: 'alert/create/simple',
+    component: AlertManagerComponent,
     canActivate: [AuthGuard]
   },
   {

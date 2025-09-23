@@ -4,9 +4,9 @@ import { ConditionFilterDto } from "./ConditionFilterDto";
 export class AlertConditionDto 
 {
   constructor(
-    public severity: number,
+    public id: number | null,
+    public severity: string,
     public status: boolean,
-    public alertClauses: AlertClauseDto[] = [],
-    public conditionFilters: ConditionFilterDto[] = []
+    public alertClauses: AlertClauseDto[] = []
   ) {}
 }
