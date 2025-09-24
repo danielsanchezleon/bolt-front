@@ -161,6 +161,7 @@ type SilencePeriodFormGroup = FormGroup<{
   days: FormControl<any[] | null>;
   from: FormControl<Date | null>;
   to: FormControl<Date | null>;
+  stored: FormControl<boolean>;
 }>;
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
@@ -697,7 +698,8 @@ export class AlertManagerComponent implements OnInit{
       id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
       days: this._fb.control(null),
       from: this._fb.control(null),
-      to: this._fb.control(null)
+      to: this._fb.control(null),
+      stored: this._fb.control(false)
     },
     {
       validators: this.timeValidator
@@ -1303,7 +1305,8 @@ export class AlertManagerComponent implements OnInit{
         id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
         days: this._fb.control(silencePeriod.days),
         from: this._fb.control(new Date(2025, 1, 1, Number(splittedStartTime[0]), Number(splittedStartTime[1]), Number(splittedStartTime[2]))),
-        to: this._fb.control(new Date(2025, 1, 1, Number(splittedEndTime[0]), Number(splittedEndTime[1]), Number(splittedEndTime[2])))
+        to: this._fb.control(new Date(2025, 1, 1, Number(splittedEndTime[0]), Number(splittedEndTime[1]), Number(splittedEndTime[2]))),
+        stored: this._fb.control(true)
       },
       {
         validators: this.timeValidator
@@ -1346,6 +1349,7 @@ export class AlertManagerComponent implements OnInit{
     for (let i = 0; i < alertViewDto.permissions!.length; i++)
     {
       this.permissionList.push(new Permission(alertViewDto.permissions![i].id, this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId), this.permissionTypeOptions.find((permissionType) => alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r')))
+      this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)].disabled = true;
     }
   }
 

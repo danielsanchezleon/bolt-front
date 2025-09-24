@@ -320,12 +320,11 @@
                             <div class="times-container">
                                 <i class="pi pi-clock c-blue"></i>
                                 <div>De</div>
-                                <p-datepicker class="datepicker" size="small" [timeOnly]="true"
-                                    formControlName="from" />
+                                <p-datepicker class="datepicker" [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}" [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}" size="small" [timeOnly]="true" formControlName="from" />
                                 <div>a</div>
-                                <p-datepicker class="datepicker" size="small" [timeOnly]="true" formControlName="to" />
+                                <p-datepicker class="datepicker" [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}" [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}" size="small" [timeOnly]="true" formControlName="to" />
                             </div>
-                            <p-button *ngIf="silencePeriodArray.length > 1" [pTooltip]="'Eliminar periodo de silencio'"
+                            <p-button [pTooltip]="'Eliminar periodo de silencio'"
                                 tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true"
                                 severity="danger" (onClick)="deleteSilencePeriod(i);" />
                         </div>

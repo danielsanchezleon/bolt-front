@@ -890,3 +890,8 @@
     background-color: #dbeafe;
     padding: 16px;
 }
+
+:host ::ng-deep .disabled input
+{
+    background-color: lightgray !important;
+}
