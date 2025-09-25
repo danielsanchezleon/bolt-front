@@ -17,6 +17,8 @@ export class AlertDto
   public alertPermissions?: AlertPermissionDto[];
 
   constructor(
+    public internalName: string,
+    public name: string,
     public alertText: string,
     public alertDetail: string,
     public alertTags: any[],

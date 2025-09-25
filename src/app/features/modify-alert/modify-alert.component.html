@@ -80,18 +80,26 @@
                         <p-tableCheckbox [value]="alert" />
                     </td>
                     <td class="title-container">
-                        <div class="title font-w-600" (click)="onClickGoToEditAlert(alert);">
+                        <div *ngIf="alert.canEdit" class="title font-w-600" (click)="onClickGoToEditAlert(alert);">
+                            {{alert.name}}
+                        </div>
+                        <div *ngIf="!alert.canEdit" class="font-w-500">
                             {{alert.name}}
                         </div>
                         <div class="owner-container">
                             <div class="owner text-gray font-w-600">
                                 <i class="pi pi-user font-8"></i>
-                                <span class="font-12">Admin</span>
+                                <span class="font-12">{{alert.creatorUsername}}</span>
                             </div>
 
-                            <div class="owner c-yellow font-w-600">
+                            <div *ngIf="alert.isOwner" class="owner c-yellow font-w-600">
                                 <i class="pi pi-crown font-8"></i>
-                                <span class="font-12">Propietario</span>
+                                <span class="font-12">propietario</span>
+                            </div>
+
+                            <div *ngIf="alert.canEdit" class="owner c-purple font-w-600">
+                                <i class="pi pi-users font-8"></i>
+                                <span class="font-12">equipo</span>
                             </div>
                         </div>
                     </td>
@@ -186,10 +194,10 @@
                         {{alert.triggersLastDay == 1 ? '1 vez' : alert.triggersLastDay + ' veces'}}
                     </td> -->
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
                     </td>
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
                     </td>
                 </tr>
             </ng-template>
