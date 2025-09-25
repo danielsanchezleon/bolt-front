@@ -1,10 +1,10 @@
 export class AlertMetricDto 
 {
   constructor(
+    public id: number | null,
     public dbName: string,
     public tableName: string,
     public metricName: string,
-    public operation: number,
-    public order: number
+    public operation: string
   ) {}
 }

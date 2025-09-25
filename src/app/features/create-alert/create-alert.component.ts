@@ -30,7 +30,7 @@ export class CreateAlertComponent
 
   onClickNavigateToSimpleCondition()
   {
-    this.router.navigate(['condicion-simple']);
+    this.router.navigate(['alert/create/simple']);
   }
 
   onClickNavigateToLogs()

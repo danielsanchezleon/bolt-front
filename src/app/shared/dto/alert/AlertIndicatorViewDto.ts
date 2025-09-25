@@ -4,4 +4,6 @@ export class AlertIndicatorViewDto {
   id?: number;
   name?: string;
   alertMetrics?: AlertMetricViewDto[];
+  constantOp?: number;
+  constantValue?: number;
 }

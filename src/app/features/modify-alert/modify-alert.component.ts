@@ -27,10 +27,11 @@ import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { PaginatorModule } from 'primeng/paginator';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -81,6 +82,7 @@ export class ModifyAlertComponent implements OnInit
 
   isLoading: boolean = false;
   isError: boolean = false;
+  alertsPage: any = {};
   alertList: AlertViewDto[] = [];
   currentAlertList: AlertViewDto[] = [];
   changedAlerts: AlertViewDto[] = [];
@@ -108,6 +110,11 @@ export class ModifyAlertComponent implements OnInit
   alertMessageEdited: AlertViewDto | null = null;
   newAlertMessage: string = '';
 
+  //Pagination
+  first: number = 0;
+  page: number = 0;
+  size: number = 5;
+
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService) {
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
@@ -124,19 +131,19 @@ export class ModifyAlertComponent implements OnInit
 
   ngOnInit() 
   {
-    this.getAllAlerts(null);
+    this.getAllAlerts(this.page, this.size, null);
 
     this.filterTextControl.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()).subscribe(
       (filterText) => 
       {
         if (filterText.length == 0)
         {
-          this.getAllAlerts(null);
+          this.getAllAlerts(this.page, this.size, null);
         }
 
         if (filterText.length > 2)
         {
-          this.getAllAlerts(filterText);
+          this.getAllAlerts(this.page, this.size, filterText);
         }
       }
     );
@@ -186,26 +193,6 @@ export class ModifyAlertComponent implements OnInit
     this.filterForm.updateValueAndValidity();
   }
 
-  getAllAlerts(filterText: string | null)
-  {
-    this.isLoading = true;
-    this.isError = false;
-
-    this.alertService.getAllAlerts(filterText).subscribe(
-      (response) => {
-        this.isLoading = false;
-        this.isError = false;
-        this.alertList = JSON.parse(JSON.stringify(response));
-        this.currentAlertList = JSON.parse(JSON.stringify(response));
-      },
-      (error) => {
-        this.isLoading = false;
-        this.isError = true;
-
-      }
-    )
-  }
-
   onClickAddSeverity(alert: AlertViewDto)
   {
     let availableSeverity: string = "";
@@ -229,7 +216,7 @@ export class ModifyAlertComponent implements OnInit
     });
 
     let newCondition: AlertConditionViewDto = new AlertConditionViewDto(availableSeverity, true);
-    newCondition.alertClauses?.push(new AlertClauseViewDto(null, alert.indicators![0].id!, null, 'MORE_THAN', null, null, 1, null, null, null, null));
+    newCondition.alertClauses?.push(new AlertClauseViewDto(null, alert.indicators![0].name!, null, 'MORE_THAN', null, null, 1, null, null, null, null));
 
     alert.conditions?.push(newCondition);
   }
@@ -275,7 +262,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedUpdates == this.changedAlerts.length) && this.failedUpdates == 0)
         {
-          this.getAllAlerts('');
+          this.getAllAlerts(this.page, this.size, '');
           this.saveChangesModalVisible = false;
           this.completedUpdates = 0;
           this.failedUpdates = 0;
@@ -302,5 +289,41 @@ export class ModifyAlertComponent implements OnInit
     }
 
     return false;
+  }
+
+  onClickGoToEditAlert(alert: AlertViewDto)
+  {
+    this.router.navigate(['alert', alert.alertType, 'edit', alert.alertId]);
+  }
+
+  getAllAlerts(page: number, size: number, filterText: string | null)
+  {
+    this.isLoading = true;
+    this.isError = false;
+
+    this.alertService.getAllAlerts(page, size, filterText).subscribe(
+      (response) => {
+        this.isLoading = false;
+        this.isError = false;
+
+        this.alertsPage = response;
+        this.alertList = JSON.parse(JSON.stringify(response.content));
+        this.currentAlertList = JSON.parse(JSON.stringify(response.content));
+      },
+      (error) => {
+        this.isLoading = false;
+        this.isError = true;
+
+      }
+    )
+  }
+
+  onPageChange(event: any) 
+  {
+    this.first = event.first;
+    this.page = event.page;
+    this.size = event.rows;
+
+    this.getAllAlerts(this.page, this.size, null);
   }
 }

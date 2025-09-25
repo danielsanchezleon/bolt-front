@@ -1,8 +1,15 @@
-export interface TableMetricInfo 
+export class TableMetricInfo 
 {
-  bbdd: string;
-  table_name: string;
-  metric: string;
-  data_type: string;
-  dimension: string[];
+  bbdd?: string;
+  table_name?: string;
+  metric?: string;
+  dimension?: string[];
+
+  constructor (bbdd?: string, table_name?: string, metric?: string, dimension?: string[])
+  {
+    this.bbdd = bbdd;
+    this.table_name = table_name;
+    this.metric = metric;
+    this.dimension = dimension;
+  }
 }

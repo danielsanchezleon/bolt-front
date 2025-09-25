@@ -10,7 +10,7 @@ import { Component, Input } from '@angular/core';
 export class InnerAccordionComponent 
 {
   @Input() title: string = '';
-  isOpen = false;
+  @Input() isOpen = false;
 
   toggle() 
   {
