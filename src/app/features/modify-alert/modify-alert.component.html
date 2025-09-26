@@ -80,26 +80,37 @@
                         <p-tableCheckbox [value]="alert" />
                     </td>
                     <td class="title-container">
-                        <div class="title font-w-600" (click)="onClickGoToEditAlert(alert);">
+                        <div *ngIf="alert.canEdit" class="title font-w-600" (click)="onClickGoToEditAlert(alert);">
+                            {{alert.name}}
+                        </div>
+                        <div *ngIf="!alert.canEdit" class="font-w-500">
                             {{alert.name}}
                         </div>
                         <div class="owner-container">
                             <div class="owner text-gray font-w-600">
                                 <i class="pi pi-user font-8"></i>
-                                <span class="font-12">Admin</span>
+                                <span class="font-12">{{alert.creatorUsername}}</span>
                             </div>
 
-                            <div class="owner c-yellow font-w-600">
+                            <div *ngIf="alert.isOwner" class="owner c-yellow font-w-600">
                                 <i class="pi pi-crown font-8"></i>
-                                <span class="font-12">Propietario</span>
+                                <span class="font-12">propietario</span>
+                            </div>
+
+                            <div *ngIf="alert.canEdit" class="owner c-purple font-w-600">
+                                <i class="pi pi-users font-8"></i>
+                                <span class="font-12">equipo</span>
                             </div>
                         </div>
                     </td>
                     <td class="message-column">
                         <div class="content">
-                            <div class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
+                            <div *ngIf="alert.canEdit" class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
                                 <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
                                 <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil cell-icon"></i>
+                            </div>
+                            <div *ngIf="!alert.canEdit" class="cell-flex">
+                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
                             </div>
                             <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
                             <div class="save-buttons">
@@ -186,10 +197,10 @@
                         {{alert.triggersLastDay == 1 ? '1 vez' : alert.triggersLastDay + ' veces'}}
                     </td> -->
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
                     </td>
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
                     </td>
                 </tr>
             </ng-template>
@@ -215,7 +226,7 @@
                 [rowsPerPageOptions]="[5, 10, 20, 50]"
                 [showPageLinks]="true"/>
 
-            <p-button icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
+            <p-button *ngIf="false" icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
         </div>
     </div>
 

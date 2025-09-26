@@ -65,8 +65,7 @@ export const routes: Routes = [
   {
     path: 'alert/:alert_type/edit/:alert_id',
     component: AlertManagerComponent,
-    canActivate: [AuthGuard,RoleGuard],
-    data: { roles: ['ADMIN'] }
+    canActivate: [AuthGuard],
   },
    {
     path: 'usuarios',

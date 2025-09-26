@@ -185,7 +185,8 @@ export class AlertManagerComponent implements OnInit{
 
   metricOperationOptions: any[] = [];
 
-  internalName: string = "";
+  internalName: string = '';
+  name: string = '';
   internalNameModalVisible: boolean = false;
 
   indicatorArray: IndicatorFormArray;
@@ -408,16 +409,24 @@ export class AlertManagerComponent implements OnInit{
     this.router.navigate(['alerts']);
   }
 
-  generateInternalName()
+  generateInternalNameAndName()
   {
-    this.internalName = "";
+    this.internalName = '';
+    this.name = '';
+
+    let metricNameList: string[] = [];
 
     this.indicatorArray.controls.forEach(indicator => {
       if (indicator.controls.metrics.controls.length > 0)
       {
-        this.internalName += indicator.controls.metrics.controls[0].get('metric')?.value?.metric + '_';
+        indicator.controls.metrics.controls.forEach(metric => {
+          metricNameList.push(metric.get('metric')?.value?.metric!);
+        });
       }
     });
+
+    this.internalName = metricNameList.join('_');
+    this.name = metricNameList.join(' ');
 
     if (this.groupByForm.get('groupBy')?.value.length > 0)
     {
@@ -494,12 +503,12 @@ export class AlertManagerComponent implements OnInit{
 
     this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
 
-    this.generateInternalName();
+    this.generateInternalNameAndName();
   }
 
   onChangeMetricSelect(indicatorIndex: number)
   {
-    this.generateInternalName();
+    this.generateInternalNameAndName();
 
     this.generateResultMetric(indicatorIndex);
 
@@ -1080,7 +1089,7 @@ export class AlertManagerComponent implements OnInit{
 
   onChangeGroupBy(event: MultiSelectChangeEvent)
   {
-    this.generateInternalName();
+    this.generateInternalNameAndName();
 
     this.conditionArray.controls.forEach((group) => {
       let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(group.get('id')?.value!)!;
@@ -1241,9 +1250,9 @@ export class AlertManagerComponent implements OnInit{
     this.groupByForm.get('operation')?.setValue(this.groupByOperationOptions.find((opt) => opt.value == alertViewDto.matOperation));
 
     //ADVANCED OPTIONS
-    this.advancedOptionsForm.get('timeWindow')?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationFrequency!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+    this.advancedOptionsForm.get('timeWindow')?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
     this.advancedOptionsForm.get('discardTime')?.setValue(discardTimeOptions.find((dto) => dto.value == alertViewDto.offset));
-    this.advancedOptionsForm.get('periodicity')?.setValue(periodicityOptions.find((po) => po.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+    this.advancedOptionsForm.get('periodicity')?.setValue(periodicityOptions.find((po) => po.label.startsWith(alertViewDto.evaluationFrequency!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
 
     //CONDITIONS
     alertViewDto.conditions?.forEach((condition, i) => {
@@ -1407,8 +1416,12 @@ export class AlertManagerComponent implements OnInit{
     for (let indicator of this.indicatorArray.controls)
     {
       //METRICS
-      for (let metric of indicator.controls.metrics.controls) {
-        alertMetrics.push(new AlertMetricDto(metric.get('metricId')?.value!, metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!));
+      for (let metric of indicator.controls.metrics.controls) 
+      {
+        if (metric.get('metric')?.value != null)
+        {
+          alertMetrics.push(new AlertMetricDto(metric.get('metricId')?.value!, metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!));
+        }
       }
 
       alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('hasFinalOperation')?.value ? indicator.get('constantOp')?.value!.value! : null, indicator.get('constantValue')?.value!));
@@ -1444,11 +1457,13 @@ export class AlertManagerComponent implements OnInit{
 
     //ALERTA
     let alertDto: AlertDto = new AlertDto(
+      this.internalName,
+      this.name,
       this.notificationMessageForm.get('message')?.value,
       this.notificationMessageForm.get('details')?.value,
       this.tagList,
-      this.advancedOptionsForm.get('timeWindow')?.value.value,
       this.advancedOptionsForm.get('periodicity')?.value.value,
+      this.advancedOptionsForm.get('timeWindow')?.value.value,
       0,
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
