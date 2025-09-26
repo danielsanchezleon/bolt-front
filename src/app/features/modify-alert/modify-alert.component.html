@@ -105,9 +105,12 @@
                     </td>
                     <td class="message-column">
                         <div class="content">
-                            <div class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
+                            <div *ngIf="alert.canEdit" class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
                                 <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
                                 <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil cell-icon"></i>
+                            </div>
+                            <div *ngIf="!alert.canEdit" class="cell-flex">
+                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
                             </div>
                             <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
                             <div class="save-buttons">
@@ -223,7 +226,7 @@
                 [rowsPerPageOptions]="[5, 10, 20, 50]"
                 [showPageLinks]="true"/>
 
-            <p-button icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
+            <p-button *ngIf="false" icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
         </div>
     </div>
 
