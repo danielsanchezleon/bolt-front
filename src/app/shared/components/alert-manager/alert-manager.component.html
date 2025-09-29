@@ -69,13 +69,13 @@
                                     </div>
                                 </div>
                                 <div class="final-operation-container">
-                                    <div style="display: flex; flex-direction: row; gap: 4px;">
-                                        <label class="ml-2"> Constante </label>
+                                    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+                                        <label class="ml-2"> Aplicar porcentaje </label>
                                         <p-checkbox formControlName="hasFinalOperation" [binary]="true" (onChange)="onChangeHasFinalOperation(i);"/>
                                     </div>
-                                    <p-select [options]="metricOperationOptions" formControlName="constantOp"
+                                    <p-select *ngIf="false" [options]="metricOperationOptions" formControlName="constantOp"
                                     optionLabel="label" appendTo="body" (onChange)="onChangeHasFinalOperation(i);" />
-                                    <input type="text" [maxlength]="10" pInputText formControlName="constantValue" (input)="onChangeHasFinalOperation(i);"/>
+                                    <input *ngIf="false" type="text" [maxlength]="10" pInputText formControlName="constantValue" (input)="onChangeHasFinalOperation(i);"/>
                                 </div>
                             </div>
                         </div>
@@ -89,7 +89,7 @@
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
-                                (onChange)="onChangeGroupBy($event);" />
+                                (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar"/>
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                         <p-floatlabel class="full-width-selector" variant="on">
@@ -544,9 +544,9 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
 </app-page-wrapper>
@@ -799,17 +799,13 @@
     </div>
 </p-dialog>
 
-<app-modal [title]="'Alerta duplicada'" [visible]="internalNameModalVisible">
-    <div class="modal-container">
-        <div class="modal-icon-container">
-            <i *ngIf="!isLoading" class="pi pi-info-circle" style="font-size: 128px"></i>
-            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Alerta ya configurada</div>
-            <div class="font-12 text-gray">Ten en cuenta que la alerta que estás configurando ya existe</div>
-        </div>
+<div *ngIf="configuredAlertExists" class="toast bg-yellow">
+    <div class="c-yellow title">
+        <i class="pi pi-info-circle" style="font-size: 1.2rem;"></i>
+        <div class="font-16 font-w-600">Alerta duplicada</div>
     </div>
-    <div class="modal-actions">
-        <div></div>
-        <p-button label="Aceptar" severity="primary" (onClick)="internalNameModalVisible = false;" />
+    <div class="c-yellow description">
+        La alerta que estás configurando ya existe. Si quieres acceder a ella, pulsa <span class="font-w-700" style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
     </div>
-</app-modal>
+
+</div>

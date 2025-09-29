@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { UserViewDto } from '../dto/user/UserViewDto';
 import { UserUpdateDto } from '../dto/user/UserUpdateDto';
 import { UserCreateDto } from '../dto/user/UserCreateDto';
+import { ChangePasswordDto } from '../dto/user/ChangePasswordDto';
 
 export interface UserEditDto {
   id: number;
@@ -13,6 +14,18 @@ export interface UserEditDto {
   email: string;
   teamId: number | null;
   roleId: number | null;
+}
+
+export interface UserProfileDto {
+  id?: number;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+  team?: any;
+  roles?: any[];
+  createdAt?: Date;
+  createdBy?: string;
 }
 
 @Injectable({
@@ -55,5 +68,18 @@ export class UserService {
 
   updateUser(dto: UserUpdateDto): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/updateUser`, dto);
+  }
+
+  getUserProfileData(id: number): Observable<UserProfileDto> {
+    return this.http.get<UserProfileDto>(`${this.apiUrl}/getUserProfileData`, {
+      params: { id },
+    });
+  }
+
+  changePassword(changePasswordDto: ChangePasswordDto): Observable<void> {
+    return this.http.put<void>(
+      `${this.apiUrl}/changePassword`,
+      changePasswordDto
+    );
   }
 }

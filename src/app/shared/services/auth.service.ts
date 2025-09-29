@@ -75,6 +75,30 @@ export class AuthService {
       return null;
   }
 
+  getSub(): string | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const payload = this.decodePayload(token);
+
+    if (payload.sub)
+      return payload.sub;
+    else
+      return null;
+  }
+
+  getUid(): number | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const payload = this.decodePayload(token);
+
+    if (payload.uid)
+      return payload.uid;
+    else
+      return null;
+  }
+
   requestPasswordReset(email: string) {
     const params = new HttpParams().set('email', email);
     return this.http.post<void>(`${this.passwordApi}/request`, null, { params });

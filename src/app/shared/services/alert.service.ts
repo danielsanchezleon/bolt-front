@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AlertViewDto } from '../dto/alert/AlertViewDto';
 import { HomePanelsViewDto } from '../dto/home/HomePanelsViewDto';
 import { TeamViewDto } from '../dto/TeamViewDto';
+import { TableViewDto } from '../dto/table/TableViewDto';
 
 @Injectable({
   providedIn: 'root'
@@ -29,7 +30,7 @@ export class AlertService {
     return this.http.get<AlertViewDto>(this.apiUrl + '/getAlert', {params: params});
   }
 
-  getAllAlerts(page: number, size: number, filterText: string | null): Observable<any>
+  getAllAlerts(page: number, size: number, filterText: string | null, alertId: number | null): Observable<any>
   {
     let params: HttpParams = new HttpParams();
 
@@ -38,6 +39,11 @@ export class AlertService {
     if (filterText != null)
     {
       params = params.append('filterText', filterText);
+    }
+
+    if (alertId != null)
+    {
+      params = params.append('alertId', alertId);
     }
 
     return this.http.get<any>(this.apiUrl + '/getAllAlerts', {params: params});
@@ -82,5 +88,47 @@ export class AlertService {
       params = params.append('alertId', alertId);
 
     return this.http.put<any>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
+  }
+
+  getUserAlertsTable(page: number, size: number, filterText: string | null): Observable<TableViewDto>
+  {
+    let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size);
+
+    if (filterText != null)
+    {
+      params = params.append('filterText', filterText);
+    }
+
+    return this.http.get<TableViewDto>(this.apiUrl + '/getUserAlertsTable', {params: params});
+  }
+
+  getUserAlertList(page: number, size: number, filterText: string | null): Observable<any>
+  {
+    let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size);
+
+    if (filterText != null)
+    {
+      params = params.append('filterText', filterText);
+    }
+
+    return this.http.get<any>(this.apiUrl + '/getUserAlertList', {params: params});
+  }
+
+  getTeamAlertList(page: number, size: number, filterText: string | null): Observable<any>
+  {
+    let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size);
+
+    if (filterText != null)
+    {
+      params = params.append('filterText', filterText);
+    }
+
+    return this.http.get<any>(this.apiUrl + '/getTeamAlertList', {params: params});
   }
 }

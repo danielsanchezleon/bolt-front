@@ -187,7 +187,7 @@ export class AlertManagerComponent implements OnInit{
 
   internalName: string = '';
   name: string = '';
-  internalNameModalVisible: boolean = false;
+  configuredAlertExists: number | null = null;
 
   indicatorArray: IndicatorFormArray;
   private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
@@ -440,8 +440,8 @@ export class AlertManagerComponent implements OnInit{
   existsByInternalName()
   {
     this.alertService.existsByInternalName(this.internalName).subscribe(
-      (response: boolean) => {
-        this.internalNameModalVisible = response;
+      (response: any) => {
+        this.configuredAlertExists = response;
       }
     )
   }
@@ -1495,5 +1495,10 @@ export class AlertManagerComponent implements OnInit{
         this.isError = true;
       }
     )
+  }
+
+  onClickGoToAlert()
+  {
+    this.router.navigate(['alerts'], { state: { alertId: this.configuredAlertExists } });
   }
 }

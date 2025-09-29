@@ -29,6 +29,10 @@ body{
     font-size: 16px;
 }
 
+.font-14 {
+    font-size: 14px;
+}
+
 .font-12 {
     font-size: 12px;
 }
@@ -137,4 +141,20 @@ body{
         justify-content: space-between;
         align-items: center;
     }
+}
+
+p-tabs
+{
+    width: 100%;
+}
+
+p-tabs > p-tablist > .p-tablist-content > .p-tablist-tab-list
+{
+    background-color: transparent !important;
+}
+
+p-tabs > p-tabpanels
+{
+    background-color: transparent !important;
+    padding: 8px 0px;
 }
