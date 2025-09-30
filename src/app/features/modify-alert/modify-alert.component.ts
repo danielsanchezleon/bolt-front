@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { MenuModule } from 'primeng/menu';
@@ -15,12 +15,11 @@ import { FormBuilder, FormControl, FormGroup, FormsModule, Validators } from '@a
 import { ReactiveFormsModule } from '@angular/forms';
 import { PopoverModule } from 'primeng/popover';
 import { SelectChangeEvent, SelectModule } from 'primeng/select';
-import { thresholdTypeOptions, thresholdComparationOptions } from '../../shared/constants/threshold-options';
 import { modifyAlertTimeWindowOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AlertService } from '../../shared/services/alert.service';
 import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AlertConditionViewDto } from '../../shared/dto/alert/AlertConditionViewDto';
 import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
@@ -115,7 +114,19 @@ export class ModifyAlertComponent implements OnInit
   page: number = 0;
   size: number = 5;
 
-  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService) {
+  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute) 
+  {
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation?.extras.state as { alertId: any };
+    if (state?.alertId)
+    {
+      this.getAllAlerts(this.page, this.size, null, state?.alertId);
+    }
+    else
+    {
+      this.getAllAlerts(this.page, this.size, null, null);
+    }
+
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
       value: ['', [Validators.required]]
@@ -131,19 +142,17 @@ export class ModifyAlertComponent implements OnInit
 
   ngOnInit() 
   {
-    this.getAllAlerts(this.page, this.size, null);
-
     this.filterTextControl.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()).subscribe(
       (filterText) => 
       {
         if (filterText.length == 0)
         {
-          this.getAllAlerts(this.page, this.size, null);
+          this.getAllAlerts(this.page, this.size, null, null);
         }
 
         if (filterText.length > 2)
         {
-          this.getAllAlerts(this.page, this.size, filterText);
+          this.getAllAlerts(this.page, this.size, filterText, null);
         }
       }
     );
@@ -262,7 +271,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedUpdates == this.changedAlerts.length) && this.failedUpdates == 0)
         {
-          this.getAllAlerts(this.page, this.size, '');
+          this.getAllAlerts(this.page, this.size, '', null);
           this.saveChangesModalVisible = false;
           this.completedUpdates = 0;
           this.failedUpdates = 0;
@@ -293,15 +302,15 @@ export class ModifyAlertComponent implements OnInit
 
   onClickGoToEditAlert(alert: AlertViewDto)
   {
-    this.router.navigate(['alert', alert.alertType, 'edit', alert.alertId]);
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
   }
 
-  getAllAlerts(page: number, size: number, filterText: string | null)
+  getAllAlerts(page: number, size: number, filterText: string | null, alertId: number | null)
   {
     this.isLoading = true;
     this.isError = false;
 
-    this.alertService.getAllAlerts(page, size, filterText).subscribe(
+    this.alertService.getAllAlerts(page, size, filterText, alertId).subscribe(
       (response) => {
         this.isLoading = false;
         this.isError = false;
@@ -324,6 +333,6 @@ export class ModifyAlertComponent implements OnInit
     this.page = event.page;
     this.size = event.rows;
 
-    this.getAllAlerts(this.page, this.size, null);
+    this.getAllAlerts(this.page, this.size, null, null);
   }
 }

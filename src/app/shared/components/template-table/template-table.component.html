@@ -1,0 +1,23 @@
+<p-table [value]="data?.rows!" [columns]="data?.tableConfig?.columns">
+    <ng-template #header let-columns>
+        <tr>
+            <th *ngFor="let column of columns">{{column.columnNameLabel}}</th>
+            <!-- <th *ngIf="data?.tableConfig?.rowActions!.length > 0"></th> -->
+        </tr>
+    </ng-template>
+    <ng-template #body let-rowData let-columns="columns">
+        <tr *ngFor="let row of data?.rows">
+            <td [ngStyle]="column.styles" *ngFor="let column of columns">{{rowData[column.columnName]}}</td>
+            <!-- <td *ngIf="data?.tableConfig?.rowActions!.length > 0">
+                <p-menu #menu [model]="tableActions" [popup]="true" appendTo="body" />
+                  <p-button
+                    [rounded]="true"
+                    [text]="true"
+                    (click)="selectedUser = user; menu.toggle($event)"
+                    icon="pi pi-ellipsis-h"
+                    severity="secondary"
+                  />
+            </td> -->
+        </tr>
+    </ng-template>
+</p-table>

@@ -13,7 +13,7 @@ import { AuthService } from '../../shared/services/auth.service';
 export class HeaderComponent {
   showConfigMenu = false;
 
-  constructor(public router: Router, private authService: AuthService) {}
+  constructor(public router: Router, public authService: AuthService) {}
 
   private get roles(): string[] {
     return this.authService.getRoles() ?? [];
@@ -53,5 +53,10 @@ export class HeaderComponent {
   onClickLogout() {
     this.authService.logout();
     this.router.navigate(['login']);
+  }
+
+  onClickNavigateToUser()
+  {
+    this.router.navigate(['user', this.authService.getUid()]);
   }
 }

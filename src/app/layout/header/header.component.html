@@ -14,6 +14,11 @@
   <img src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60" />
 
   <div *ngIf="router.url !== '/login'" class="actions-container">
+    <!-- Logout -->
+    <div class="action-container text-white" (click)="onClickNavigateToUser();">
+      <i class="pi pi-user"></i>
+      <div class="font-16 font-w-600">{{authService.getSub()}}</div>
+    </div>
     <div *ngIf="canSeeConfig" class="action-container config-wrapper" (click)="toggleConfigMenu($event)">
       <i class="pi pi-cog"></i>
       <div class="font-16 font-w-600">Configuración</div>
@@ -29,13 +34,13 @@
           <i class="pi pi-users"></i>
           <span>Usuarios</span>
         </div>
+        <div class="separator"></div>
+        <!-- Logout -->
+        <div class="config-item" (click)="onClickLogout()">
+          <i class="pi pi-sign-out"></i>
+          <span>Salir</span>
+        </div>
       </div>
-    </div>
-
-    <!-- Logout -->
-    <div class="action-container text-white" (click)="onClickLogout()">
-      <i class="pi pi-sign-out"></i>
-      <div class="font-16 font-w-600">Salir</div>
     </div>
   </div>
 </div>

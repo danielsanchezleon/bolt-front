@@ -14,6 +14,7 @@ import { UsersComponent } from './features/users/users.component';
 import { CreateUserComponent } from './features/create-user/create-user.component';
 import { SetPasswordComponent } from './features/set-password/set-password.component';
 import { EditUserComponent } from './features/edit-user/edit-user.component';
+import { UserComponent } from './features/user/user.component';
 
 export const routes: Routes = [
   {
@@ -28,11 +29,6 @@ export const routes: Routes = [
   {
     path: 'alert/create',
     component: CreateAlertComponent,
-    canActivate: [AuthGuard]
-  },
-  {
-    path: 'alert/create/simple',
-    component: AlertManagerComponent,
     canActivate: [AuthGuard]
   },
   {
@@ -53,21 +49,21 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'logs',
-    component: CreateLogsAlertComponent,
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'test',
     component: TestComponent,
     canActivate: [AuthGuard]
   },
   {
-    path: 'alert/:alert_type/edit/:alert_id',
+    path: 'alert/create/:alert_type',
     component: AlertManagerComponent,
     canActivate: [AuthGuard],
   },
-   {
+  {
+    path: 'alert/edit/:alert_type/:alert_id',
+    component: AlertManagerComponent,
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'usuarios',
     component: UsersComponent,
     canActivate: [AuthGuard, RoleGuard],
@@ -88,6 +84,11 @@ export const routes: Routes = [
     component: EditUserComponent,
     canActivate: [AuthGuard, RoleGuard],
     data: { roles: ['ADMIN', 'MANAGER'] }
+  },
+  {
+    path: 'user/:user_id',
+    component: UserComponent,
+    canActivate: [AuthGuard, RoleGuard]
   }
 
 ];

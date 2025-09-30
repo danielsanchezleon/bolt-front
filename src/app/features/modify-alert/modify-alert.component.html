@@ -4,8 +4,8 @@
 
     <div class="modify-alert-container">
         <div class="page-title">
-            <div class="font-32 font-w-700">Modificación de alertas</div>
-            <div>Gestiona las alertas que has generado</div>
+            <div class="font-32 font-w-700">Gestión de alertas <i class="pi pi-refresh {{isLoading ? 'pi-spin' : ''}}" style="font-size: 1.5rem; cursor: pointer;" (click)="getAllAlerts(page, size, null, null)"></i></div>
+            <div>Gestiona las alertas que han sido generadas en el sistema. Ten en cuenta que solo podrás modificar las que has creado o las que pertenecen a algún miembro de tu equipo.</div>
         </div>
     </div>
 
@@ -20,7 +20,7 @@
         <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
             <p-inputicon class="pi pi-search" />
             <input style="width: 100%;" [formControl]="filterTextControl" type="text" pInputText placeholder="Buscar alertas por nombre, descripción o etiquetas" />
-            <p-inputicon *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(page, size, null); filterTextControl.reset();"/>
+            <p-inputicon *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(page, size, null, null); filterTextControl.reset();"/>
         </p-iconfield>
         <p-skeleton *ngIf="isLoading && !isError" width="1343px" height="39px" borderRadius="8px" />
 
@@ -278,6 +278,6 @@
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Cerrar" severity="secondary" (onClick)="saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmSaveChanges();" [disabled]="saveChangesLoading()" />
         <div *ngIf="completedUpdates == changedAlerts.length"></div>
-        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, ''); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
+        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, '', null); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
     </div>
 </app-modal>

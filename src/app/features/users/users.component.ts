@@ -61,6 +61,11 @@ export class UsersComponent {
   selectedUser: UserViewDto | null = null;
   tableActions: MenuItem[] = [
     {
+      label: 'Ver perfil',
+      icon: 'pi pi-eye',
+      command: () => this.onClickNavigateToUser(this.selectedUser),
+    },
+    {
       label: 'Editar',
       icon: 'pi pi-pencil',
       command: () => this.onClickEditUser(this.selectedUser),
@@ -171,5 +176,11 @@ export class UsersComponent {
     this.page = event.page;
     this.size = event.rows;
     this.getUsers(this.page, this.size);
+  }
+
+  onClickNavigateToUser(user: UserViewDto | null)
+  {
+    if (!user?.id) return;
+    this.router.navigate(['user', this.selectedUser?.id]);
   }
 }

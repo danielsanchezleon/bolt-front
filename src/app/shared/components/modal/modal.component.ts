@@ -10,6 +10,7 @@ import { ButtonModule } from 'primeng/button';
 })
 export class ModalComponent 
 {
+  @Input() width: string = '600px';
   @Input() title: string = '';
   @Input() visible: boolean = false;
 }
