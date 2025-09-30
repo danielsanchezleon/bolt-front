@@ -302,7 +302,7 @@ export class ModifyAlertComponent implements OnInit
 
   onClickGoToEditAlert(alert: AlertViewDto)
   {
-    this.router.navigate(['alert', alert.alertType, 'edit', alert.alertId]);
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
   }
 
   getAllAlerts(page: number, size: number, filterText: string | null, alertId: number | null)

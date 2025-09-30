@@ -32,11 +32,6 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'alert/create/simple',
-    component: AlertManagerComponent,
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'crear-endpoint',
     component: CreateEndpointComponent,
     canActivate: [AuthGuard, RoleGuard],
@@ -54,21 +49,21 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
-    path: 'logs',
-    component: CreateLogsAlertComponent,
-    canActivate: [AuthGuard]
-  },
-  {
     path: 'test',
     component: TestComponent,
     canActivate: [AuthGuard]
   },
   {
-    path: 'alert/:alert_type/edit/:alert_id',
+    path: 'alert/create/:alert_type',
     component: AlertManagerComponent,
     canActivate: [AuthGuard],
   },
-   {
+  {
+    path: 'alert/edit/:alert_type/:alert_id',
+    component: AlertManagerComponent,
+    canActivate: [AuthGuard],
+  },
+  {
     path: 'usuarios',
     component: UsersComponent,
     canActivate: [AuthGuard, RoleGuard],

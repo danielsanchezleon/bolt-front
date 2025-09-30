@@ -30,11 +30,16 @@ export class CreateAlertComponent
 
   onClickNavigateToSimpleCondition()
   {
-    this.router.navigate(['alert/create/simple']);
+    this.router.navigate(['alert/create', 'simple']);
+  }
+
+  onClickNavigateToCompositeCondition()
+  {
+    this.router.navigate(['alert/create', 'composite']);
   }
 
   onClickNavigateToLogs()
   {
-    this.router.navigate(['logs']);
+    this.router.navigate(['alert/create', 'logs']);
   }
 }

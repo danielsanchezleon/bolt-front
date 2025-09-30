@@ -238,6 +238,6 @@ export class UserComponent
 
   onClickGoToEditAlert(alert: AlertViewDto)
   {
-    this.router.navigate(['alert', alert.alertType, 'edit', alert.alertId]);
+    this.router.navigate(['alert', 'edit',  alert.alertType, alert.alertId]);
   }
 }

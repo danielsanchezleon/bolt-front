@@ -17,7 +17,7 @@
             <div class="font-16 text-gray text-a-center">Compara los valores de una métrica con un umbral estático definido</div>
           </div>
 
-          <div class="alert-type-container" (click)="onClickNavigateToLogs();">
+          <div class="alert-type-container">
             <div class="icon-wrapper bg-blue">
               <i class="pi pi-comment font-32 c-blue"></i>
             </div>
@@ -38,6 +38,7 @@
       <div *ngIf="alertTypeSelected" class="threshold-alert-options-container">
         <div class="font-20 font-w-600">Selecciona el tipo de alerta de umbral a definir</div>
         <div class="threshold-alert-options">
+
           <div class="threshold-alert-option" (click)="onClickNavigateToSimpleCondition();">
             <div class="icon-wrapper bg-green">
               <i class="pi pi-filter font-32 c-green"></i>
