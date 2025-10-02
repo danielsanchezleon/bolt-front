@@ -119,18 +119,22 @@
                         .metric-result-ids {
                             display: flex;
                             flex-direction: row;
+                            align-items: center;
+                            gap: 8px;
 
                             border: 1px solid lightgray;
                             border-radius: 8px;
 
                             padding: 4px 8px;
+
+                            cursor: pointer;
                         }
 
-                        .final-operation-container {
+                        .final-operation-actions {
                             display: flex;
                             flex-direction: row;
                             align-items: center;
-                            gap: 8px;
+                            gap: 16px;
 
                             width: fit-content;
                             white-space: nowrap;
@@ -308,6 +312,171 @@
             border-radius: 8px;
             padding: 16px;
 
+            .condition-content {
+                width: 100%;
+
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+
+                .condition-top {
+
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 16px;
+
+                    width: 100%;
+
+                    .id-wrapper {
+                        width: 24px;
+                        height: 24px;
+                        min-width: 24px;
+                        border-radius: 50%;
+                        background-color: #2563eb;
+
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: center;
+                        align-items: center;
+                    }
+
+                    .type-buttons-container {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 4px;
+
+                        .type-button-container {
+                            border: 1px solid lightgray;
+                            border-radius: 24px;
+                            padding: 3px 8px;
+                            font-weight: 600;
+
+                            cursor: pointer;
+                        }
+
+                        .disaster {
+                            background-color: #C62828;
+                            border: 2px solid #2563eb;
+                        }
+
+                        .critical {
+                            background-color: #EF6C00;
+                            border: 2px solid #2563eb;
+                        }
+
+                        .major {
+                            background-color: #F9A825;
+                            border: 2px solid #2563eb;
+                        }
+
+                        .warning {
+                            background-color: #FDD835;
+                            border: 2px solid #2563eb;
+                        }
+                    }
+
+                    .condition-status-container {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                }
+
+                .condition-clause {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    background-color: white;
+                    border-radius: 8px;
+                    border: 1px solid lightgray;
+
+                    padding: 16px;
+
+                    .fields {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 16px;
+                        align-items: center;
+
+                        .bracket-buttons {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 8px;
+
+                            .add-bracket-button {
+                                width: 24px;
+                                height: 24px;
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: center;
+                                align-items: center;
+
+                                border: 1px solid lightgray;
+                                border-radius: 8px;
+
+                                cursor: pointer;
+                            }
+
+                            .add-bracket-button:hover {
+                                background-color: #f0f0f0;
+                            }
+
+                            .remove-bracket-button {
+                                width: 20px;
+                                height: 20px;
+                                display: flex;
+                                flex-direction: row;
+                                justify-content: center;
+                                align-items: center;
+
+                                border: 1px solid lightgray;
+                                border-radius: 8px;
+
+                                cursor: pointer;
+                            }
+
+                            .remove-bracket-button:hover {
+                                background-color: #f0f0f0;
+                            }
+                        }
+
+                        .range-container {
+                            display: flex;
+                            flex-direction: row;
+                            align-items: center;
+                            gap: 4px;
+                        }
+                    }
+
+                    .buttons {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 8px;
+                    }
+                }
+
+                .separator
+                {
+                    width: 100%;
+                    height: 1px;
+                    background-color: lightgray;
+                }
+
+                .condition-dimensions
+                {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px 16px;
+                }
+            }
+
             .threshold-left {
 
                 display: flex;
@@ -366,10 +535,6 @@
 
                 .select {
                     width: 200px;
-                }
-
-                ::ng-deep .threshold-value input {
-                    width: 128px !important;
                 }
 
                 .range-container {
@@ -876,12 +1041,6 @@
     }
 }
 
-.dimensions-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-}
-
 .notice {
     display: flex;
     flex-direction: row;
@@ -894,19 +1053,17 @@
     padding: 16px;
 }
 
-:host ::ng-deep .disabled input
-{
+:host ::ng-deep .disabled input {
     background-color: lightgray !important;
 }
 
-.toast
-{
-    width: 500px; 
-    position: fixed; 
-    top: 24px; 
-    right: 24px; 
-    border-radius: 8px; 
-    opacity: 0.95; 
+.toast {
+    width: 500px;
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    border-radius: 8px;
+    opacity: 0.95;
     border: 2px solid yellow;
     padding: 16px;
 
@@ -914,16 +1071,24 @@
     flex-direction: column;
     gap: 8px;
 
-    .title
-    {
+    .title {
         display: flex;
         flex-direction: row;
         gap: 8px;
         align-items: center;
     }
 
-    .description
-    {
+    .description {}
+}
 
-    }
+.metric-result-ids i {
+    display: none;
+}
+
+.metric-result-ids:hover i {
+    display: flex;
+}
+
+::ng-deep .threshold-value input {
+    width: 64px !important;
 }

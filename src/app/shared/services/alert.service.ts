@@ -131,4 +131,13 @@ export class AlertService {
 
     return this.http.get<any>(this.apiUrl + '/getTeamAlertList', {params: params});
   }
+
+  deleteAlert(alertId: number): Observable<any>
+  {
+    let params: HttpParams = new HttpParams();
+
+    params = params.append('alertId', alertId);
+
+    return this.http.delete<any>(this.apiUrl + '/deleteAlert', {params: params});
+  }
 }

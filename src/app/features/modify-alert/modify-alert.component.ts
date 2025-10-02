@@ -99,12 +99,23 @@ export class ModifyAlertComponent implements OnInit
 
   saveChangesModalVisible: boolean = false;
 
+  //UPDATE ALERTS
   saveChangesMapLoading: Map<number, boolean> = new Map();
   saveChangesMapSuccess: Map<number, boolean> = new Map();
   saveChangesMapError: Map<number, boolean> = new Map();
 
   failedUpdates: number = 0;
   completedUpdates: number = 0;
+
+  //DELETE ALERTS
+  deleteAlertsModalVisible: boolean = false;
+
+  deleteAlertsMapLoading: Map<number, boolean> = new Map();
+  deleteAlertsMapSuccess: Map<number, boolean> = new Map();
+  deleteAlertsMapError: Map<number, boolean> = new Map();
+
+  failedDeletes: number = 0;
+  completedDeletes: number = 0;
 
   alertMessageEdited: AlertViewDto | null = null;
   newAlertMessage: string = '';
@@ -334,5 +345,56 @@ export class ModifyAlertComponent implements OnInit
     this.size = event.rows;
 
     this.getAllAlerts(this.page, this.size, null, null);
+  }
+
+  onClickConfirmDeleteAlerts()
+  {
+    this.selectedAlerts.forEach((alert) => {
+      this.deleteAlert(alert);
+    });
+  }
+
+  deleteAlert(alert: AlertViewDto)
+  {
+    this.deleteAlertsMapLoading.set(alert.alertId!, true);
+    this.deleteAlertsMapSuccess.set(alert.alertId!, false);
+    this.deleteAlertsMapError.set(alert.alertId!, false);
+
+    this.alertService.deleteAlert(alert.alertId!).subscribe(
+      (response) => {
+        this.deleteAlertsMapLoading.set(alert.alertId!, false);
+        this.deleteAlertsMapSuccess.set(alert.alertId!, true);
+        this.deleteAlertsMapError.set(alert.alertId!, false);
+        this.completedDeletes++;
+
+        if ((this.completedDeletes == this.selectedAlerts.length) && this.failedDeletes == 0)
+        {
+          this.getAllAlerts(this.page, this.size, '', null);
+          this.deleteAlertsModalVisible = false;
+          this.completedDeletes = 0;
+          this.failedDeletes = 0;
+        }
+      },
+      (error) => {
+        this.deleteAlertsMapLoading.set(alert.alertId!, false);
+        this.deleteAlertsMapSuccess.set(alert.alertId!, false);
+        this.deleteAlertsMapError.set(alert.alertId!, true);
+        this.completedDeletes++;
+        this.failedDeletes++;
+      }
+    )
+  }
+
+  deleteAlertsLoading(): boolean
+  {
+    for (const value of this.deleteAlertsMapLoading.values()) 
+    {
+      if (value) 
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

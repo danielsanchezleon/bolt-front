@@ -267,6 +267,16 @@ th {
 .title-container {
     white-space: nowrap;
 
+    .name
+    {
+        max-width: 256px;
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
     .owner-container {
         display: flex;
         flex-direction: row;

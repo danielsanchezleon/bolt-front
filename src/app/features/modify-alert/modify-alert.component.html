@@ -80,10 +80,10 @@
                         <p-tableCheckbox [value]="alert" />
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" class="title font-w-600" (click)="onClickGoToEditAlert(alert);">
+                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.name" (click)="onClickGoToEditAlert(alert);">
                             {{alert.name}}
                         </div>
-                        <div *ngIf="!alert.canEdit" class="font-w-500">
+                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.name">
                             {{alert.name}}
                         </div>
                         <div class="owner-container">
@@ -240,6 +240,7 @@
         <div><span class="font-20 font-w-600">{{selectedAlerts.length}}</span> &nbsp; {{selectedAlerts.length == 1 ? 'alerta seleccionada' : 'alertas seleccionadas'}}</div>
         <p-button icon="pi pi-times" label="Borrar selección" (onClick)="selectedAlerts = [];" severity="secondary" />
     </div>
+    <p-button icon="pi pi-trash" label="Eliminar alerta" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
     <div class="buttons">
         <p-floatlabel variant="on">
             <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalTimeWindow($event);"/>
@@ -279,5 +280,35 @@
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmSaveChanges();" [disabled]="saveChangesLoading()" />
         <div *ngIf="completedUpdates == changedAlerts.length"></div>
         <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, '', null); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
+    </div>
+</app-modal>
+
+<app-modal [title]="'Eliminar alertas'" [visible]="deleteAlertsModalVisible">
+    <div class="modal-container">
+        <div class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-trash" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se van a eliminar {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser eliminada' : 'A continuación se muestran las alertas que van a ser eliminadas'}}</div>
+        </div>
+        <div class="changed-alerts-container">
+            <div class="changed-alert-container" *ngFor="let selectedAlert of selectedAlerts; let i = index; let last = last;">
+                <div class="data">
+                    <div class="font-w-600">{{selectedAlert.name}}</div>
+                    <i *ngIf="!this.deleteAlertsMapLoading.get(selectedAlert.alertId!) && !this.deleteAlertsMapSuccess.get(selectedAlert.alertId!) && !this.deleteAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-circle"></i>
+                    <i *ngIf="this.deleteAlertsMapLoading.get(selectedAlert.alertId!)" class="pi pi-spinner spin"></i>
+                    <i *ngIf="this.deleteAlertsMapSuccess.get(selectedAlert.alertId!)" class="pi pi-check-circle" style="color: green;"></i>
+                    <i *ngIf="this.deleteAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-times-circle" style="color: red;"></i>
+                </div>
+
+                <div *ngIf="!last" class="separator"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
+        <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmDeleteAlerts();" [disabled]="deleteAlertsLoading()" />
+        <div *ngIf="completedDeletes == selectedAlerts.length"></div>
+        <p-button *ngIf="completedDeletes == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, '', null); saveChangesModalVisible = false;" [disabled]="deleteAlertsLoading()" />
     </div>
 </app-modal>
