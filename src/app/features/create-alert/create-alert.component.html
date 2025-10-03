@@ -17,12 +17,20 @@
             <div class="font-16 text-gray text-a-center">Compara los valores de una métrica con un umbral estático definido</div>
           </div>
 
-          <div class="alert-type-container">
+          <!-- <div class="alert-type-container">
             <div class="icon-wrapper bg-blue">
               <i class="pi pi-comment font-32 c-blue"></i>
             </div>
             <div class="font-20 text-a-center">Ocurrencias de patrones de logs</div>
             <div class="font-16 text-gray text-a-center">Analiza cuantas veces aparece un patrón específico en los logs</div>
+          </div> -->
+
+          <div class="alert-type-container-disabled">
+            <div class="icon-wrapper bg-gray">
+              <i class="pi pi-comment font-32 text-white"></i>
+            </div>
+            <div class="font-20 text-a-center text-white">Ocurrencias de patrones de logs</div>
+            <div class="font-16 text-white text-a-center">Analiza cuantas veces aparece un patrón específico en los logs</div>
           </div>
 
           <div class="alert-type-container-disabled">
@@ -51,7 +59,7 @@
             </div>
           </div>
 
-          <div class="threshold-alert-option">
+          <div class="threshold-alert-option" (click)="onClickNavigateToCompositeCondition();">
             <div class="icon-wrapper bg-green">
               <i class="pi pi-calculator font-32 c-green"></i>
             </div>

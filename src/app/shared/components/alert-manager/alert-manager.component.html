@@ -6,16 +6,19 @@
         (onClick)="onClickNavigateToAlerts()" />
 
     <div class="steps-container">
-        <div class="font-32 font-w-600">Condición simple</div>
-        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 1: Configura la consulta'" [highlightTitle]="true" [isOpen]="true">
+        <div class="font-32 font-w-600">{{this.alertType == 'simple' ? 'Condición simple' : this.alertType ==
+            'composite' ? 'Condición compuesta' : this.alertType == 'logs' ? 'Patrones de logs' : 'Baseline'}}</div>
+        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 1: Configura la consulta'"
+            [highlightTitle]="true" [isOpen]="true">
 
             <div class="consult-configuration-container">
                 <div class="indicators-container">
-                    <div class="indicator-container" *ngFor="let indicator of indicatorArray.controls; let i = index;" [formGroup]="indicator">
+                    <div class="indicator-container" *ngFor="let indicator of indicatorArray.controls; let i = index;"
+                        [formGroup]="indicator">
                         <div class="header">
                             <div class="name"><span
                                     class="text-white font-w-700">{{indicator.get('name')?.value}}</span></div>
-                            <div *ngIf="false" class="buttons">
+                            <div *ngIf="this.alertType == 'composite'" class="buttons">
                                 <p-button icon="pi pi-plus" severity="primary" (onClick)="createIndicator();" />
                                 <p-button *ngIf="indicatorArray.length > 1" icon="pi pi-minus" severity="secondary"
                                     (onClick)="removeIndicator(i);" />
@@ -40,7 +43,9 @@
                                             <div
                                                 style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                                 <div class="font-w-600">{{metric.metric}}</div>
-                                                <div style="background-color: #2563eb; padding: 1px 5px; border-radius: 8px; color: white;">{{metric.table_name}}</div>
+                                                <div
+                                                    style="background-color: #2563eb; padding: 1px 5px; border-radius: 8px; color: white;">
+                                                    {{metric.table_name}}</div>
                                                 <div class="font-w-600 font-12"
                                                     *ngFor="let dimension of metric.dimension.slice(0, 0)"
                                                     style="background-color: #ebebeb; padding: 2px 10px; border-radius: 24px;">
@@ -55,8 +60,9 @@
                                 <div class="buttons">
                                     <p-button icon="pi pi-plus" severity="primary"
                                         (onClick)="createMetric(i); this.generateResultMetric(i);" />
-                                    <p-button *ngIf="(indicator.controls.metrics.controls.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)" icon="pi pi-minus"
-                                        severity="secondary"
+                                    <p-button
+                                        *ngIf="(indicator.controls.metrics.controls.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)"
+                                        icon="pi pi-minus" severity="secondary"
                                         (onClick)="removeMetric(i, j); this.generateResultMetric(i);" />
                                 </div>
                             </div>
@@ -64,18 +70,28 @@
                                 class="metric-result-container">
                                 <div class="metric-result">
                                     <div class="font-16 font-w-600">Métrica final:</div>
-                                    <div class="metric-result-ids font-16 font-w-600 c-blue">
-                                        {{ resultMetric | sanitizeExpression}}
+                                    <div *ngIf="!resultMetricEditionMap.get(i)"
+                                        class="metric-result-ids font-16 font-w-600 c-blue">
+                                        <span>{{ resultMetricMap.get(i)! | sanitizeExpression}}</span>
+                                        <i class="pi pi-pencil" style="color: lightgray;"></i>
                                     </div>
+                                    <!-- <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" />
+                                    <div *ngIf="resultMetricEditionMap.get(i)" style="display: flex; gap: 16px; margin-left: 16px;">
+                                        <i class="pi pi-check c-green" style="cursor: pointer;"></i>
+                                        <i class="pi pi-times c-red" style="cursor: pointer;"></i>
+                                    </div> -->
                                 </div>
-                                <div class="final-operation-container">
+                                <div class="final-operation-actions">
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <label class="ml-2"> Aplicar porcentaje </label>
-                                        <p-checkbox formControlName="hasFinalOperation" [binary]="true" (onChange)="onChangeHasFinalOperation(i);"/>
+                                        <p-checkbox formControlName="hasFinalOperation" [binary]="true"
+                                            (onChange)="onChangeHasFinalOperation(i);" />
                                     </div>
-                                    <p-select *ngIf="false" [options]="metricOperationOptions" formControlName="constantOp"
-                                    optionLabel="label" appendTo="body" (onChange)="onChangeHasFinalOperation(i);" />
-                                    <input *ngIf="false" type="text" [maxlength]="10" pInputText formControlName="constantValue" (input)="onChangeHasFinalOperation(i);"/>
+                                    <p-select *ngIf="false" [options]="metricOperationOptions"
+                                        formControlName="constantOp" optionLabel="label" appendTo="body"
+                                        (onChange)="onChangeHasFinalOperation(i);" />
+                                    <input *ngIf="false" type="text" [maxlength]="10" pInputText
+                                        formControlName="constantValue" (input)="onChangeHasFinalOperation(i);" />
                                 </div>
                             </div>
                         </div>
@@ -89,12 +105,12 @@
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
-                                (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar"/>
+                                (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                         <p-floatlabel class="full-width-selector" variant="on">
-                            <p-select [options]="groupByOperationOptions" class="full-width-selector" inputId="over_label2"
-                                optionLabel="label" appendTo="body" formControlName="operation" />
+                            <p-select [options]="groupByOperationOptions" class="full-width-selector"
+                                inputId="over_label2" optionLabel="label" appendTo="body" formControlName="operation" />
                             <label for="over_label2">Operación matemática</label>
                         </p-floatlabel>
                     </form>
@@ -102,8 +118,7 @@
 
                 <app-inner-accordion
                     *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null"
-                    [title]="'Opciones avanzadas'"
-                    [isOpen]="mode == 'edit' ? true : false">
+                    [title]="'Opciones avanzadas'" [isOpen]="mode == 'edit' ? true : false">
                     <form class="group-by-options" [formGroup]="advancedOptionsForm">
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-select
@@ -142,8 +157,10 @@
 
         <p-skeleton *ngIf="isInitialMetricListLoading" width="1460px" height="600px" borderRadius="8px" />
 
-        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0" [isOpen]="mode == 'edit' ? true : false">
+        <app-accordion *ngIf="!isInitialMetricListLoading"
+            [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true"
+            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [isOpen]="mode == 'edit' ? true : false">
             <div class="step-2-container">
                 <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
                 <div class="notice c-blue">
@@ -156,83 +173,131 @@
                     </div>
                 </div>
 
-                <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;" [ngStyle]="{'border': ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN') && condition.controls.clauses.at(0).get('value')?.value == undefined) || ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE') && (condition.controls.clauses.at(0).get('min')?.value == undefined || condition.controls.clauses.at(0).get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
-                    <div class="threshold-left">
-                        <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
-                        <div class="type-buttons-container">
-                            <div *ngIf="condition.get('severity')?.value == severityOptions[0] || !isSeveritySelected(severityOptions[0])" class="type-button-container"
-                                [ngClass]="{'disaster': condition.get('severity')?.value == severityOptions[0], 'text-white': condition.get('severity')?.value == severityOptions[0]}"
-                                (click)="onClickSetConditionType(condition, severityOptions[0]);">Disaster</div>
-                            <div *ngIf="condition.get('severity')?.value == severityOptions[1] || !isSeveritySelected(severityOptions[1])" class="type-button-container"
-                                [ngClass]="{'critical': condition.get('severity')?.value == severityOptions[1], 'text-white': condition.get('severity')?.value == severityOptions[1]}"
-                                (click)="onClickSetConditionType(condition, severityOptions[1]);">Critical</div>
-                            <div *ngIf="condition.get('severity')?.value == severityOptions[2] || !isSeveritySelected(severityOptions[2])" class="type-button-container"
-                                [ngClass]="{'major': condition.get('severity')?.value == severityOptions[2]}"
-                                (click)="onClickSetConditionType(condition, severityOptions[2]);">Major</div>
-                            <div *ngIf="condition.get('severity')?.value == severityOptions[3] || !isSeveritySelected(severityOptions[3])" class="type-button-container"
-                                [ngClass]="{'warning': condition.get('severity')?.value == severityOptions[3]}"
-                                (click)="onClickSetConditionType(condition, severityOptions[3]);">Warning</div>
+                <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;"
+                    [ngStyle]="{'border': ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN') && condition.controls.clauses.at(0).get('value')?.value == undefined) || ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE') && (condition.controls.clauses.at(0).get('min')?.value == undefined || condition.controls.clauses.at(0).get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
+                    <div class="condition-content">
+                        <div class="condition-top">
+                            <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
+                            <div class="type-buttons-container">
+                                <div *ngIf="condition.get('severity')?.value == severityOptions[0] || !isSeveritySelected(severityOptions[0])"
+                                    class="type-button-container"
+                                    [ngClass]="{'disaster': condition.get('severity')?.value == severityOptions[0], 'text-white': condition.get('severity')?.value == severityOptions[0]}"
+                                    (click)="onClickSetConditionType(condition, severityOptions[0]);">Disaster</div>
+                                <div *ngIf="condition.get('severity')?.value == severityOptions[1] || !isSeveritySelected(severityOptions[1])"
+                                    class="type-button-container"
+                                    [ngClass]="{'critical': condition.get('severity')?.value == severityOptions[1], 'text-white': condition.get('severity')?.value == severityOptions[1]}"
+                                    (click)="onClickSetConditionType(condition, severityOptions[1]);">Critical</div>
+                                <div *ngIf="condition.get('severity')?.value == severityOptions[2] || !isSeveritySelected(severityOptions[2])"
+                                    class="type-button-container"
+                                    [ngClass]="{'major': condition.get('severity')?.value == severityOptions[2]}"
+                                    (click)="onClickSetConditionType(condition, severityOptions[2]);">Major</div>
+                                <div *ngIf="condition.get('severity')?.value == severityOptions[3] || !isSeveritySelected(severityOptions[3])"
+                                    class="type-button-container"
+                                    [ngClass]="{'warning': condition.get('severity')?.value == severityOptions[3]}"
+                                    (click)="onClickSetConditionType(condition, severityOptions[3]);">Warning</div>
+                            </div>
+                            <input type="text" pInputText [pSize]="'small'" [ngModel]="conditionTextMap.get(i)"
+                                style="width: 100%;" [readOnly]="true" />
+                            <div class="condition-status-container" [formGroup]="condition">
+                                <p-toggleswitch formControlName="status" />
+                                <span class="font-14">Habilitada</span>
+                            </div>
+                            <div *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
+                                style="width: 2px; height: 32px; background-color: lightgray;"></div>
+                            <p-button
+                                *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
+                                [pTooltip]="'Eliminar condición'" tooltipPosition="top" showDelay="1000"
+                                icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                (onClick)="onClickRemoveSelectedThreshold(i);" />
                         </div>
-                        <div style="display: flex; flex-direction: row; gap: 8px;" [formGroup]="condition.controls.clauses.at(0)">
-                            <p-select formControlName="comparation" class="select"
-                                [options]="clauseComparationOptions" optionLabel="label" appendTo="body"
-                                size="small" />
-                            <p-inputnumber class="threshold-value"
-                                *ngIf="condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN'"
-                                formControlName="value" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="6"
-                                size="small" placeholder="Valor" />
-                            <div *ngIf="condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE'"
-                                class="range-container">
-                                <div>
-                                    <p-checkbox formControlName="minIncluded" [binary]="true" size="small" />
-                                    &nbsp;
-                                    <label>Incl.</label>
+                        <div class="condition-clause"
+                            *ngFor="let clause of condition.controls.clauses.controls; let j = index; let first = first;"
+                            [formGroup]="clause">
+                            <div class="fields">
+                                <div *ngIf="clause.get('startBrackets')?.value">
+                                    <span
+                                        *ngFor="let startBracket of [].constructor(clause.get('startBrackets')?.value)">(
+                                    </span>
                                 </div>
-                                <p-inputnumber class="threshold-value" formControlName="min" mode="decimal"
-                                    [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Min" />
-                                -
-                                <p-inputnumber class="threshold-value" formControlName="max" mode="decimal"
-                                    [minFractionDigits]="0" [maxFractionDigits]="6" size="small" placeholder="Max" />
-                                <div>
-                                    <p-checkbox formControlName="maxIncluded" [binary]="true" size="small" />
-                                    &nbsp;
-                                    <label>Incl.</label>
+                                <div *ngIf="this.alertType == 'composite'" class="bracket-buttons">
+                                    <div class="add-bracket-button" (click)="addStartBracket(j, i);">
+                                        <div class="font-w-600" style="height: 24px;">(</div>
+                                    </div>
+                                    <div class="remove-bracket-button"
+                                        *ngIf="clause.get('startBrackets')?.value && clause.get('startBrackets')?.value! > 0"
+                                        (click)="removeStartBracket(j, i);">
+                                        <div class="font-w-600" style="height: 24px; color: red;">x</div>
+                                    </div>
+                                </div>
+                                <p-select *ngIf="!first" [options]="externalOperationOptions"
+                                    formControlName="externalOperation" [size]="'small'" />
+                                <p-select [options]="indicatorNames" formControlName="indicatorName" [size]="'small'" />
+                                <p-select formControlName="comparation" class="select"
+                                    [options]="clauseComparationOptions" optionLabel="label" appendTo="body"
+                                    size="small" />
+                                <p-inputnumber class="threshold-value"
+                                    *ngIf="clause.get('comparation')?.value.value == 'MORE_THAN' || clause.get('comparation')?.value.value == 'LESS_THAN'"
+                                    formControlName="value" mode="decimal" [minFractionDigits]="0"
+                                    [maxFractionDigits]="6" size="small" placeholder="Valor" />
+                                <div *ngIf="clause.get('comparation')?.value.value == 'WITHIN_RANGE' || clause.get('comparation')?.value.value == 'OUT_OF_RANGE'"
+                                    class="range-container">
+                                    <div>
+                                        <p-checkbox formControlName="minIncluded" [binary]="true" size="small" />
+                                        &nbsp;
+                                        <label>Incl.</label>
+                                    </div>
+                                    <p-inputnumber class="threshold-value" formControlName="min" mode="decimal"
+                                        [minFractionDigits]="0" [maxFractionDigits]="6" size="small"
+                                        placeholder="Min" />
+                                    -
+                                    <p-inputnumber class="threshold-value" formControlName="max" mode="decimal"
+                                        [minFractionDigits]="0" [maxFractionDigits]="6" size="small"
+                                        placeholder="Max" />
+                                    <div>
+                                        <p-checkbox formControlName="maxIncluded" [binary]="true" size="small" />
+                                        &nbsp;
+                                        <label>Incl.</label>
+                                    </div>
+                                </div>
+                                <div *ngIf="this.alertType == 'composite'" class="bracket-buttons">
+                                    <div class="add-bracket-button" (click)="addEndBracket(j, i);">
+                                        <div class="font-w-600" style="height: 24px;">)</div>
+                                    </div>
+                                    <div class="remove-bracket-button"
+                                        *ngIf="clause.get('endBrackets')?.value && clause.get('endBrackets')?.value! > 0"
+                                        (click)="removeEndBracket(j, i);">
+                                        <div class="font-w-600" style="height: 24px; color: red;">x</div>
+                                    </div>
+                                </div>
+                                <div *ngIf="clause.get('endBrackets')?.value">
+                                    <span
+                                        *ngFor="let startBracket of [].constructor(clause.get('endBrackets')?.value)">)
+                                    </span>
                                 </div>
                             </div>
+                            <div *ngIf="this.alertType == 'composite'" class="buttons">
+                                <p-button icon="pi pi-plus" severity="primary" (onClick)="createClause(i);" />
+                                <p-button *ngIf="condition.controls.clauses.length > 1" icon="pi pi-minus"
+                                    severity="secondary" (onClick)="removeClause(i, j);" />
+                            </div>
                         </div>
-                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0"
-                            style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="dimensions-container">
-                            <p-multiselect *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;"
-                            class="multiselect" [options]="dimensionValuesMap.get(dimension)"
-                            [ngModel]="dimensionValuesMap.get(dimension)"
-                            (onChange)="onChangeDimensionValuesSelection(condition, dimension, $event);" appendTo="body"
-                            size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1" />
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="separator"></div>
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="condition-dimensions">
+                            <p-multiselect
+                                *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;"
+                                class="multiselect" [options]="dimensionValuesMap.get(dimension)"
+                                [ngModel]="dimensionValuesMap.get(dimension)"
+                                (onChange)="onChangeDimensionValuesSelection(condition, dimension, $event);"
+                                appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1" />
                         </div>
-                    </div>
-                    <div class="threshold-options" [formGroup]="condition">
-                        <p-toggleswitch formControlName="status" />
-                        <div *ngIf="conditionArray.controls.length > 1">
-                            <p-button [pTooltip]="'Bajar'" tooltipPosition="top" showDelay="1000"
-                                *ngIf="i < (conditionArray.controls.length - 1)" icon="pi pi-arrow-down"
-                                [rounded]="true" [text]="true" severity="secondary"
-                                (onClick)="onClickThresholdArrowDown(i);" />
-                            <p-button [pTooltip]="'Subir'" tooltipPosition="top" showDelay="1000" *ngIf="i > 0"
-                                icon="pi pi-arrow-up" [rounded]="true" [text]="true" severity="secondary"
-                                (onClick)="onClickThresholdArrowUp(i);" />
-                        </div>
-                        <div *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
-                            style="width: 2px; height: 32px; background-color: lightgray;"></div>
-                        <p-button *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)" [pTooltip]="'Eliminar condición'"
-                            tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true"
-                            severity="danger" (onClick)="onClickRemoveSelectedThreshold(i);" />
                     </div>
                 </div>
 
-                <p-button *ngIf="conditionArray.length < 4" label="Añadir otra condición" icon="pi pi-plus" (onClick)="createCondition();"
-                    severity="secondary" />
+                <p-button *ngIf="conditionArray.length < 4" label="Añadir otra condición" icon="pi pi-plus"
+                    (onClick)="createCondition();" severity="secondary" />
 
-                <app-inner-accordion [title]="'Opciones de activación y recuperación'" [isOpen]="mode == 'edit' ? true : false">
+                <app-inner-accordion [title]="'Opciones de activación y recuperación'"
+                    [isOpen]="mode == 'edit' ? true : false">
                     <form class="activation-recover-block-container" [formGroup]="activationRecoverForm">
                         <div class="activation-recover-container">
                             <div class="activation-recover-container-title">
@@ -320,13 +385,19 @@
                             <div class="times-container">
                                 <i class="pi pi-clock c-blue"></i>
                                 <div>De</div>
-                                <p-datepicker class="datepicker" [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}" [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}" size="small" [timeOnly]="true" formControlName="from" />
+                                <p-datepicker class="datepicker"
+                                    [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}"
+                                    [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}"
+                                    size="small" [timeOnly]="true" formControlName="from" />
                                 <div>a</div>
-                                <p-datepicker class="datepicker" [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}" [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}" size="small" [timeOnly]="true" formControlName="to" />
+                                <p-datepicker class="datepicker"
+                                    [ngClass]="{'disabled': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value!}"
+                                    [ngStyle]="{'pointer-events': mode == 'edit' && silencePeriodArray.at(i).get('stored')?.value! ? 'none' : 'default'}"
+                                    size="small" [timeOnly]="true" formControlName="to" />
                             </div>
-                            <p-button [pTooltip]="'Eliminar periodo de silencio'"
-                                tooltipPosition="top" showDelay="1000" icon="pi pi-minus" [rounded]="true" [text]="true"
-                                severity="danger" (onClick)="deleteSilencePeriod(i);" />
+                            <p-button [pTooltip]="'Eliminar periodo de silencio'" tooltipPosition="top" showDelay="1000"
+                                icon="pi pi-minus" [rounded]="true" [text]="true" severity="danger"
+                                (onClick)="deleteSilencePeriod(i);" />
                         </div>
 
                         <p-button label="Añadir otro periodo de silencio" icon="pi pi-plus"
@@ -358,8 +429,10 @@
 
         <p-skeleton *ngIf="isInitialMetricListLoading" width="1460px" height="450px" borderRadius="8px" />
 
-        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 3: Configura los destinatarios de la alerta'" [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"  [isOpen]="mode == 'edit' ? true : false">
+        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 3: Configura los destinatarios de la alerta'"
+            [highlightTitle]="true"
+            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [isOpen]="mode == 'edit' ? true : false">
             <div class="step-3-container">
                 <div class="endpoint-list-container">
                     <div class="font-20 font-w-600">Lista de endpoints</div>
@@ -372,8 +445,9 @@
                                 (onChange)="onChangeStep3EndpointType();" />
                             <p-select [options]="endpointFieldValues" class="select" optionLabel="name" appendTo="body"
                                 placeholder="Selecciona un endpoint" formControlName="endpoint" />
-                            <p-multiselect [options]="this.severityOptions" class="select" optionLabel="label" optionDisabled="disabled"
-                                placeholder="Seleciona las severidades" formControlName="severities" />
+                            <p-multiselect [options]="this.severityOptions" class="select" optionLabel="label"
+                                optionDisabled="disabled" placeholder="Selecciona las severidades"
+                                formControlName="severities" />
                         </div>
                         <p-button label="Añadir" icon="pi pi-plus" severity="secondary" [disabled]="!endpointForm.valid"
                             (onClick)="onClickAddEndpoint();" />
@@ -504,14 +578,17 @@
             </div>
         </app-accordion>
 
-        <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"  [isOpen]="mode == 'edit' ? true : false">
+        <app-accordion *ngIf="!isInitialMetricListLoading"
+            [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true"
+            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [isOpen]="mode == 'edit' ? true : false">
             <div class="step-4-container">
                 <div class="notice c-blue">
                     <i class="pi pi-info-circle"></i>
                     <div>
                         <span class="font-w-700">Importante</span>: por defecto, tu equipo podrá editar la
-                        configuración de la alerta (permiso de lectura y escritura), y todos los demás equipos solo podrán verla. Puedes añadir nuevos equipos, y estos adquirirán permisos de lectura y escritura.
+                        configuración de la alerta (permiso de lectura y escritura), y todos los demás equipos solo
+                        podrán verla. Puedes añadir nuevos equipos, y estos adquirirán permisos de lectura y escritura.
                     </div>
                 </div>
 
@@ -545,7 +622,8 @@
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
                 [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
-            <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();" severity="primary"
+            <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
+                severity="primary"
                 [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
@@ -559,39 +637,48 @@
             <i *ngIf="!isLoading && mode == 'create'" class="pi pi-bell" style="font-size: 128px"></i>
             <i *ngIf="!isLoading && mode == 'edit'" class="pi pi-pencil" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Estás a punto de {{mode == 'create' ? 'crear una' : 'actualizar esta'}} alerta</div>
+            <div class="font-16 font-w-600">Estás a punto de {{mode == 'create' ? 'crear una' : 'actualizar esta'}}
+                alerta</div>
             <div class="font-12 text-gray">Ten en cuenta que los cambios no se pueden deshacer. Asegura que todos los
-                datos introducidos son correctos <span class="font-w-600 text-black" style="cursor: pointer;" (click)="isDetails = true;">aquí</span>.</div>
+                datos introducidos son correctos <span class="font-w-600 text-black" style="cursor: pointer;"
+                    (click)="isDetails = true;">aquí</span>.</div>
         </div>
         <div *ngIf="isSuccess" class="modal-icon-container">
             <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Se ha {{mode == 'create' ? 'creado' : 'actualizado'}} la alerta con éxito</div>
-            <div *ngIf="mode == 'create'" class="font-12 text-gray">Puedes volver a crear otra alerta, ver las alertas creadas o volver al
+            <div class="font-16 font-w-600">Se ha {{mode == 'create' ? 'creado' : 'actualizado'}} la alerta con éxito
+            </div>
+            <div *ngIf="mode == 'create'" class="font-12 text-gray">Puedes volver a crear otra alerta, ver las alertas
+                creadas o volver al
                 inicio.</div>
         </div>
         <div *ngIf="isError" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' : 'actualizar'}} la alerta</div>
+            <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' : 'actualizar'}} la
+                alerta</div>
             <div class="font-12 text-gray"></div>
         </div>
     </div>
-    <i *ngIf="!isSuccess && !isError && isDetails" class="pi pi-chevron-left" style="cursor: pointer; margin-bottom: 16px;" (click)="isDetails = false;"></i>
+    <i *ngIf="!isSuccess && !isError && isDetails" class="pi pi-chevron-left"
+        style="cursor: pointer; margin-bottom: 16px;" (click)="isDetails = false;"></i>
     <div *ngIf="!isSuccess && !isError && isDetails" class="modal-steps">
         <div class="modal-step">
             <div class="font-16 font-w-700 c-blue">Paso 1: Configuración de la consulta</div>
             <div class="modal-step-content">
                 <div class="font-16 font-w-600">Indicadores</div>
-                <div class="title-description-block-1" *ngFor="let indicator of indicatorArray.controls; let i = index;">
+                <div class="title-description-block-1"
+                    *ngFor="let indicator of indicatorArray.controls; let i = index;">
                     <div class="title">Indicador {{indicator.get('name')?.value}}</div>
-                    <div class="description" *ngFor="let metric of indicator.controls.metrics.controls; let i = index;">{{i+1}}.- {{metric.get('metric')?.value?.metric}}</div>
-                    <div class="description">Métrica final: {{ resultMetric | sanitizeExpression}}</div>
+                    <div class="description" *ngFor="let metric of indicator.controls.metrics.controls; let i = index;">
+                        {{i+1}}.- {{metric.get('metric')?.value?.metric}}</div>
+                    <div class="description">Métrica final: {{ resultMetricMap.get(i)! | sanitizeExpression}}</div>
                 </div>
             </div>
             <div class="modal-step-content">
                 <div class="font-16 font-w-600">Agrupaciones</div>
                 <div class="title-description-block-1">
                     <div class="title">Agrupar por</div>
-                    <div class="description">{{groupByForm.get('groupBy')?.value.length == 0 ? 'Sin agrupar' : groupByForm.get('groupBy')?.value}}</div>
+                    <div class="description">{{groupByForm.get('groupBy')?.value.length == 0 ? 'Sin agrupar' :
+                        groupByForm.get('groupBy')?.value}}</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">Operación matemática</div>
@@ -619,34 +706,48 @@
             <div class="font-16 font-w-700 c-blue">Paso 2: Condiciones de salto y recuperación</div>
             <div class="modal-step-content">
                 <div class="font-16 font-w-600">Condiciones seleccionadas</div>
-                <div class="title-description-block-1" *ngFor="let condition of conditionArray.controls; let i = index;">
-                    <div class="title">Condición {{condition.get('id')?.value}} | {{condition.get('severity')?.value.label}}</div>
-                    <div class="description" *ngFor="let clause of condition.controls.clauses.controls; let i = index;">{{clause.get('comparation')?.value.label}} | {{clause.get('comparation')?.value.value == 'MORE_THAN' || clause.get('comparation')?.value.value == 'LESS_THAN' ? clause.get('value')?.value : (clause.get('minIncluded')?.value ? '[' : '(') + clause.get('min')?.value + ', ' + clause.get('max')?.value + (clause.get('maxIncluded')?.value ? ']' : ')')}}</div>
+                <div class="title-description-block-1"
+                    *ngFor="let condition of conditionArray.controls; let i = index;">
+                    <div class="title">Condición {{condition.get('id')?.value}} |
+                        {{condition.get('severity')?.value.label}}</div>
+                    <div class="description" *ngFor="let clause of condition.controls.clauses.controls; let i = index;">
+                        {{clause.get('comparation')?.value.label}} | {{clause.get('comparation')?.value.value ==
+                        'MORE_THAN' || clause.get('comparation')?.value.value == 'LESS_THAN' ?
+                        clause.get('value')?.value : (clause.get('minIncluded')?.value ? '[' : '(') +
+                        clause.get('min')?.value + ', ' + clause.get('max')?.value + (clause.get('maxIncluded')?.value ?
+                        ']' : ')')}}</div>
                 </div>
             </div>
             <div class="modal-step-content">
                 <div class="font-16 font-w-600">Opciones de activación de recuperación</div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de las últimas {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones</div>
+                    <div class="description">{{activationRecoverForm.get('activation1')?.value.label}} de las últimas
+                        {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones</div>
                 </div>
                 <div class="title-description-block-1">
                     <div class="title">¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
-                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de las últimas {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones</div>
+                    <div class="description">{{activationRecoverForm.get('recover1')?.value.label}} de las últimas
+                        {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones</div>
                 </div>
             </div>
             <div *ngIf="allSilencePeriodFieldsCompleted()" class="modal-step-content">
                 <div class="font-16 font-w-600">Periodos de silencio</div>
-                <div class="title-description-block-1" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
+                <div class="title-description-block-1"
+                    *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
                     <div class="title">Periodo de silencio {{silencePeriod.get('id')?.value}}</div>
                     <div class="description">
-                        <span *ngFor="let day of silencePeriod.get('days')?.value; let i = index; let last = last;">{{day?.label}}<span *ngIf="!last">, </span></span> | De {{silencePeriod.get('from')?.value | date: 'HH:mm'}} a {{silencePeriod.get('to')?.value | date: 'HH:mm'}}
+                        <span
+                            *ngFor="let day of silencePeriod.get('days')?.value; let i = index; let last = last;">{{day?.label}}<span
+                                *ngIf="!last">, </span></span> | De {{silencePeriod.get('from')?.value | date: 'HH:mm'}}
+                        a {{silencePeriod.get('to')?.value | date: 'HH:mm'}}
                     </div>
                 </div>
             </div>
             <div *ngIf="!allSilencePeriodFieldsCompleted()" class="modal-step-content">
                 <div class="font-16 font-w-600">Periodos de silencio</div>
-                <div class="title-description-block-1" *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
+                <div class="title-description-block-1"
+                    *ngFor="let silencePeriod of silencePeriodArray.controls; let i = index;">
                     <div class="description">No se han añadido periodos de silencio</div>
                 </div>
             </div>
@@ -671,7 +772,8 @@
                     <div class="description">{{endpoint.endpoint.name}}</div>
                     <div class="description">{{endpoint.type.label}}</div>
                     <div class="description">
-                        <span *ngFor="let severity of endpoint.severities; let last = last;">{{severity.label}}<span *ngIf="!last">, </span></span>
+                        <span *ngFor="let severity of endpoint.severities; let last = last;">{{severity.label}}<span
+                                *ngIf="!last">, </span></span>
                     </div>
                 </div>
                 <div *ngIf="endpointList.length == 0" class="title-description-block-1">
@@ -700,13 +802,17 @@
                 </div>
                 <div class="title-description-block-1" style="max-width: 1000px;">
                     <div class="title">Detalles</div>
-                    <div *ngIf="notificationMessageForm.get('details')?.value.length > 0" class="description">{{notificationMessageForm.get('details')?.value}}</div>
-                    <div *ngIf="notificationMessageForm.get('details')?.value.length == 0" class="description">No se han especificado detalles</div>
+                    <div *ngIf="notificationMessageForm.get('details')?.value.length > 0" class="description">
+                        {{notificationMessageForm.get('details')?.value}}</div>
+                    <div *ngIf="notificationMessageForm.get('details')?.value.length == 0" class="description">No se han
+                        especificado detalles</div>
                 </div>
                 <div class="title-description-block-1" style="max-width: 1000px;">
                     <div class="title">Procedimiento</div>
-                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length > 0" class="description">{{notificationMessageForm.get('proccedure')?.value}}</div>
-                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length == 0" class="description">No se ha especificado procedimiento</div>
+                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length > 0" class="description">
+                        {{notificationMessageForm.get('proccedure')?.value}}</div>
+                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length == 0" class="description">No se
+                        ha especificado procedimiento</div>
                 </div>
             </div>
         </div>
@@ -805,7 +911,8 @@
         <div class="font-16 font-w-600">Alerta duplicada</div>
     </div>
     <div class="c-yellow description">
-        La alerta que estás configurando ya existe. Si quieres acceder a ella, pulsa <span class="font-w-700" style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
+        La alerta que estás configurando ya existe. Si quieres acceder a ella, pulsa <span class="font-w-700"
+            style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
     </div>
 
 </div>

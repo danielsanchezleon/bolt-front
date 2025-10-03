@@ -115,7 +115,7 @@ type MetricFormGroup = FormGroup<{
   metricId: FormControl<number | null>;
   id: FormControl<string>;
   metric: FormControl<TableMetricInfo | null>;
-  operation: FormControl<MetricOperation>;
+  operation: FormControl<any>;
   options: FormControl<TableMetricInfo[]>;
 }>;
 
@@ -124,7 +124,7 @@ type IndicatorFormGroup = FormGroup<{
   name: FormControl<string>;
   metrics: FormArray<MetricFormGroup>;
   hasFinalOperation: FormControl<boolean>;
-  constantOp: FormControl<MetricOperation | null>;
+  constantOp: FormControl<any | null>;
   constantValue: FormControl<number | null>;
 }>;
 
@@ -190,12 +190,15 @@ export class AlertManagerComponent implements OnInit{
   configuredAlertExists: number | null = null;
 
   indicatorArray: IndicatorFormArray;
+  indicatorNames: string[] = [];
   private filterSubject = new Subject<{ term: string, metric: MetricFormGroup & { options?: TableMetricInfo[] } }>();
   loadingMetricList: boolean = false;
 
   metricList: TableMetricInfo[] = [];
   letters: string[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  resultMetric: string = '';
+
+  resultMetricMap: Map<number, string> = new Map();
+  resultMetricEditionMap: Map<number, boolean> = new Map();
 
   tagIntersectionOptions: any[] = [];
   groupByOperationOptions: any[] = []
@@ -215,6 +218,10 @@ export class AlertManagerComponent implements OnInit{
   clauseComparationOptions: any[] = [];
   conditionArray: ConditionFormArray;
   lastThresholdArrayLength: number = 0;
+
+  conditionTextMap: Map<number, string> = new Map();
+
+  externalOperationOptions: string[] = ['AND', 'OR'];
 
   activationRecoverEvaluationOptions: any[] = [];
   activationRecoverForm: FormGroup;
@@ -273,10 +280,14 @@ export class AlertManagerComponent implements OnInit{
 
     this.route.snapshot.paramMap.has('alert_id') ? this.mode = 'edit' : this.mode = 'create';
 
+    if (this.route.snapshot.paramMap.has('alert_type'))
+    {
+      this.alertType = this.route.snapshot.params['alert_type'];
+    }
+
     if (this.mode == 'edit')
     {
       this.alertId = this.route.snapshot.params['alert_id'];
-      this.alertType = this.route.snapshot.params['alert_type'];
     }
 
     //Step 1
@@ -463,18 +474,32 @@ export class AlertManagerComponent implements OnInit{
     this.indicatorArray.push(group);
 
     this.createMetric(indicatorIndex);
+
+    this.resultMetricMap.set(indicatorIndex, '');
+
+    this.indicatorNames.push(this.letters[indicatorIndex]);
   }
 
   removeIndicator(indicatorIndex: number)
   {
     this.indicatorArray.removeAt(indicatorIndex);
+    this.indicatorNames = [];
 
     for (let indicator of this.indicatorArray.controls)
     {
       indicator.get('name')?.setValue(this.letters[this.indicatorArray.controls.indexOf(indicator)]);
+      this.indicatorNames.push(this.letters[this.indicatorArray.controls.indexOf(indicator)]);
     }
 
     this.getMetricTagsIntersection();
+
+    this.resultMetricMap.delete(indicatorIndex);
+
+    this.conditionArray.controls.forEach(condition => {
+      condition.controls.clauses.controls.forEach(clause => {
+        clause.get('indicatorName')?.setValue(this.letters[0]);
+      });
+    });
   }
 
   createMetric(indicatorIndex: number)
@@ -535,13 +560,13 @@ export class AlertManagerComponent implements OnInit{
   }
 
   generateResultMetric(indicatorIndex: number) {
-    this.resultMetric = '';
+    this.resultMetricMap.set(indicatorIndex, '');
 
     this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach((metric, i) => {
-      this.resultMetric += this.indicatorArray.at(indicatorIndex).get('name')?.value + '.' + (i+1);
+      this.resultMetricMap.set(indicatorIndex, this.resultMetricMap.get(indicatorIndex)! + this.indicatorArray.at(indicatorIndex).get('name')?.value + '.' + (i+1));
 
       if (i < (this.indicatorArray.at(indicatorIndex).controls.metrics.controls.length - 1)) {
-        this.resultMetric += this.indicatorArray.at(indicatorIndex).controls.metrics.controls[i + 1].get('operation')?.value!.symbol;
+        this.resultMetricMap.set(indicatorIndex, this.resultMetricMap.get(indicatorIndex)! + this.indicatorArray.at(indicatorIndex).controls.metrics.controls[i + 1].get('operation')?.value!.symbol);
       }
     });
   }
@@ -587,7 +612,7 @@ export class AlertManagerComponent implements OnInit{
 
     if (this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.value)
     {
-      this.resultMetric = '(' + this.resultMetric + ')' + this.indicatorArray.at(indicatorIndex).get('constantOp')?.value!.symbol + ' ' + this.indicatorArray.at(indicatorIndex).get('constantValue')?.value;
+      this.resultMetricMap.set(indicatorIndex, '(' + this.resultMetricMap.get(indicatorIndex)! + ')' + this.indicatorArray.at(indicatorIndex).get('constantOp')?.value!.symbol + ' ' + this.indicatorArray.at(indicatorIndex).get('constantValue')?.value);
     }
   }
 
@@ -618,12 +643,16 @@ export class AlertManagerComponent implements OnInit{
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
       max: this._fb.control(null),
-      startBrackets: this._fb.control(null),
-      endBrackets: this._fb.control(null),
-      externalOperation: this._fb.control(null)
+      startBrackets: this._fb.control(this.alertType == 'composite' ? 0 : null),
+      endBrackets: this._fb.control(this.alertType == 'composite' ? 0 : null),
+      externalOperation: this._fb.control(this.alertType == 'composite' ? 'AND' : null)
     }) as ClauseFormGroup);
 
     let group: ClauseFormGroup = this.conditionArray.at(conditionIndex).controls.clauses.at(this.conditionArray.at(conditionIndex).controls.clauses.length!-1);
+
+    group.valueChanges.subscribe(() => {
+      this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex));
+    });
 
     // Suscripción para ajustar validadores dinámicamente
     const comparationControl = group.get('comparation');
@@ -671,6 +700,54 @@ export class AlertManagerComponent implements OnInit{
       dimensionValuesMap.set(groupBy, this.dimensionValuesMap.get(groupBy)!);
       this.selectedDimensionValuesMap.set(group.get('id')?.value!, dimensionValuesMap);
     })
+  }
+
+  generateConditionText(conditionIndex: number): string
+  {
+    let text: string = '';
+    this.conditionArray.at(conditionIndex).controls.clauses.controls.forEach( (clause, clauseIndex) => {
+      if (clauseIndex > 0)
+        text += ' ' + (clause.get('externalOperation')?.value ?? '') + ' ';
+      text += (clause.get('startBrackets')?.value ?? 0) > 0 ? '( '.repeat(clause.get('startBrackets')?.value!) : '';
+      text += clause.get('indicatorName')?.value ?? '';
+      switch (clause.get('comparation')?.value.value) {
+        case 'MORE_THAN':
+          text += ' > ';
+          text += clause.get('value')?.value ?? '?';
+          break;
+        case 'LESS_THAN':
+          text += ' < ';
+          text += clause.get('value')?.value ?? '?';
+          break;
+        case 'WITHIN_RANGE':
+          text += ' entre ';
+          text += clause.get('minIncluded')?.value ? ' [ ' : ' ( ';
+          text += clause.get('min')?.value ?? '?';
+          text += ' , ';
+          text += clause.get('max')?.value ?? '?';
+          text += clause.get('maxIncluded')?.value ? ' ] ' : ' ) ';
+          break;
+        case 'OUT_OF_RANGE':
+          text += ' fuera de ';
+          text += clause.get('minIncluded')?.value ? ' [ ' : ' ( ';
+          text += clause.get('min')?.value ?? '?';
+          text += ' , ';
+          text += clause.get('max')?.value ?? '?';
+          text += clause.get('maxIncluded')?.value ? ' ] ' : ' ) ';
+          break;
+        default:
+          break;
+      }
+      text += (clause.get('endBrackets')?.value ?? 0) > 0 ? ' )'.repeat(clause.get('endBrackets')?.value!) : '';
+    });
+    return text;
+  }
+
+  removeClause(conditionIndex: number, clauseIndex: number)
+  {
+    this.selectedDimensionValuesMap.delete(this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('id')?.value!);
+    this.conditionArray.at(conditionIndex).controls.clauses.removeAt(clauseIndex);
+    this.conditionArray.at(conditionIndex).controls.clauses.at(0).get('externalOperation')?.setValue(null);
   }
 
   createCondition() {
@@ -1215,6 +1292,8 @@ export class AlertManagerComponent implements OnInit{
 
       this.isInitialMetricListLoading = true;
 
+      this.indicatorNames.push(this.letters[i]);
+
       //METRICS
       from(metrics).pipe(
         // concatMap garantiza que cada inner observable se suscriba solo cuando
@@ -1283,9 +1362,9 @@ export class AlertManagerComponent implements OnInit{
           min: this._fb.control(clause.threshold),
           maxIncluded: this._fb.control(clause.thresholdIncludeUp),
           max: this._fb.control(clause.thresholdUp),
-          startBrackets: this._fb.control(null),
-          endBrackets: this._fb.control(null),
-          externalOperation: this._fb.control(null)
+          startBrackets: this._fb.control(clause.startBrackets),
+          endBrackets: this._fb.control(clause.endBrackets),
+          externalOperation: this._fb.control(clause.externalOperation)
         }) as ClauseFormGroup);
 
         this.selectedDimensionValuesMap.set(id, new Map());
@@ -1295,9 +1374,11 @@ export class AlertManagerComponent implements OnInit{
           dimensionValuesMap.set(groupBy, this.dimensionValuesMap.get(groupBy)!);
           this.selectedDimensionValuesMap.set(id, dimensionValuesMap);
         })
-
-        this.severityOptions[this.conditionArray.length].disabled = false;
       });
+
+      this.severityOptions.find((opt) => opt.value == condition.severity).disabled = false;
+      
+      this.conditionTextMap.set(i, this.generateConditionText(i));
     });
 
     //ACTIVATION AND RECOVERY
@@ -1411,11 +1492,12 @@ export class AlertManagerComponent implements OnInit{
 
     //INDICATORS
     let alertIndicators: AlertIndicatorDto[] = [];
-    let alertMetrics: AlertMetricDto[] = [];
 
     for (let indicator of this.indicatorArray.controls)
     {
       //METRICS
+      let alertMetrics: AlertMetricDto[] = [];
+
       for (let metric of indicator.controls.metrics.controls) 
       {
         if (metric.get('metric')?.value != null)
@@ -1464,7 +1546,7 @@ export class AlertManagerComponent implements OnInit{
       this.tagList,
       this.advancedOptionsForm.get('periodicity')?.value.value,
       this.advancedOptionsForm.get('timeWindow')?.value.value,
-      0,
+      this.alertType == 'simple' ? 0 : this.alertType == 'composite' ? 1 : this.alertType == 'logs' ? 2 : 3,
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
       this.groupByForm.get('operation')?.value.value,
@@ -1500,5 +1582,28 @@ export class AlertManagerComponent implements OnInit{
   onClickGoToAlert()
   {
     this.router.navigate(['alerts'], { state: { alertId: this.configuredAlertExists } });
+  }
+
+  addStartBracket(clauseIndex: number, conditionIndex: number) 
+  {
+    this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('startBrackets')?.setValue((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('startBrackets')?.value || 0) + 1);
+  }
+
+  removeStartBracket(clauseIndex: number, conditionIndex: number) {
+    if ((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('startBrackets')?.value || 0) > 0)
+    {
+      this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('startBrackets')?.setValue((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('startBrackets')?.value || 0) - 1);
+    }
+  }
+
+  addEndBracket(clauseIndex: number, conditionIndex: number) {
+    this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.setValue((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.value || 0) + 1);
+  }
+
+  removeEndBracket(clauseIndex: number, conditionIndex: number) {
+    if ((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.value || 0) > 0)
+    {
+      this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.setValue((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.value || 0) - 1);
+    }
   }
 }
