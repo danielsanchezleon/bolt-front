@@ -444,7 +444,7 @@ export class AlertManagerComponent implements OnInit{
       this.internalName += this.groupByForm.get('groupBy')?.value.join(',')
     }
 
-    if (this.mode == 'create')
+    if (this.mode == 'create' && !this.authService.isAdmin())
       this.existsByInternalName();
   }
 
