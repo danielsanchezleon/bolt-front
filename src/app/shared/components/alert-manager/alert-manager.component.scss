@@ -96,10 +96,8 @@
 
                     .metric-result-container {
                         display: flex;
-                        flex-direction: row;
-                        justify-content: space-between;
-                        align-items: center;
-                        gap: 24px;
+                        flex-direction: column;
+                        gap: 16px;
 
                         background-color: #f9fafb;
                         border: 1px solid lightgray;

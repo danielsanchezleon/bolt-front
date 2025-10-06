@@ -71,17 +71,17 @@
                                 <div class="metric-result">
                                     <div class="font-16 font-w-600">Métrica final:</div>
                                     <div *ngIf="!resultMetricEditionMap.get(i)"
-                                        class="metric-result-ids font-16 font-w-600 c-blue">
+                                        class="metric-result-ids font-16 font-w-600 c-blue" (click)="resultMetricEditionMap.set(i, true);">
                                         <span>{{ resultMetricMap.get(i)! | sanitizeExpression}}</span>
                                         <i class="pi pi-pencil" style="color: lightgray;"></i>
                                     </div>
-                                    <!-- <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" />
+                                    <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" formControlName="finalOperation" pattern="^(?:\(([A-Z])\.\d+(?:[-+*/]\1\.\d+)*\)(?:[*/]\d+)?|([A-Z])\.\d+(?:[*/]\d+)?|([A-Z])\.\d+(?:[-+*/]\3\.\d+)+)$" />
                                     <div *ngIf="resultMetricEditionMap.get(i)" style="display: flex; gap: 16px; margin-left: 16px;">
-                                        <i class="pi pi-check c-green" style="cursor: pointer;"></i>
-                                        <i class="pi pi-times c-red" style="cursor: pointer;"></i>
-                                    </div> -->
+                                        <i *ngIf="!indicator.get('finalOperation')?.errors" class="pi pi-check c-green" style="cursor: pointer;" title="Guardar cambios" (click)="resultMetricMap.set(i, indicator.get('finalOperation')?.value!); resultMetricEditionMap.set(i, false);"></i>
+                                        <i class="pi pi-times c-red" style="cursor: pointer;" title="Cancelar cambios" (click)="indicator.get('finalOperation')?.setValue(resultMetricMap.get(i)!); resultMetricEditionMap.set(i, false);"></i>
+                                    </div>
                                 </div>
-                                <div class="final-operation-actions">
+                                <!-- <div class="final-operation-actions">
                                     <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
                                         <label class="ml-2"> Aplicar porcentaje </label>
                                         <p-checkbox formControlName="hasFinalOperation" [binary]="true"
@@ -92,6 +92,9 @@
                                         (onChange)="onChangeHasFinalOperation(i);" />
                                     <input *ngIf="false" type="text" [maxlength]="10" pInputText
                                         formControlName="constantValue" (input)="onChangeHasFinalOperation(i);" />
+                                </div> -->
+                                <div *ngIf="indicator.get('finalOperation')?.errors" class="c-red">
+                                    La métrica personalizada introducida no es correcta.
                                 </div>
                             </div>
                         </div>

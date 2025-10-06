@@ -6,4 +6,5 @@ export class AlertIndicatorViewDto {
   alertMetrics?: AlertMetricViewDto[];
   constantOp?: number;
   constantValue?: number;
+  finalOperation?: string;
 }

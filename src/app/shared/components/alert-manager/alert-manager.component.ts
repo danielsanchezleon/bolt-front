@@ -123,9 +123,7 @@ type IndicatorFormGroup = FormGroup<{
   id: FormControl<number | null>;
   name: FormControl<string>;
   metrics: FormArray<MetricFormGroup>;
-  hasFinalOperation: FormControl<boolean>;
-  constantOp: FormControl<any | null>;
-  constantValue: FormControl<number | null>;
+  finalOperation: FormControl<string>;
 }>;
 
 type IndicatorFormArray = FormArray<IndicatorFormGroup>;
@@ -466,9 +464,7 @@ export class AlertManagerComponent implements OnInit{
       id: this._fb.control(null),
       name: this._fb.control(this.letters[indicatorIndex]),
       metrics: this._fb.array<MetricFormGroup>([]),
-      hasFinalOperation: this._fb.control(false),
-      constantOp: this._fb.control(metricOperationOptions[2]),
-      constantValue: this._fb.control(100)
+      finalOperation: this._fb.control(''),
     }) as IndicatorFormGroup;
 
     this.indicatorArray.push(group);
@@ -476,6 +472,7 @@ export class AlertManagerComponent implements OnInit{
     this.createMetric(indicatorIndex);
 
     this.resultMetricMap.set(indicatorIndex, '');
+    this.indicatorArray.at(indicatorIndex).get('finalOperation')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
 
     this.indicatorNames.push(this.letters[indicatorIndex]);
   }
@@ -511,8 +508,6 @@ export class AlertManagerComponent implements OnInit{
       operation: this._fb.control(metricOperationOptions[0]),
       options: this._fb.control([] as TableMetricInfo[])
     }) as MetricFormGroup);
-
-    this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
   }
 
   removeMetric(indicatorIndex: number, metricIndex: number)
@@ -525,8 +520,6 @@ export class AlertManagerComponent implements OnInit{
     }
 
     this.getMetricTagsIntersection();
-
-    this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.setValue(false);
 
     this.generateInternalNameAndName();
   }
@@ -569,6 +562,8 @@ export class AlertManagerComponent implements OnInit{
         this.resultMetricMap.set(indicatorIndex, this.resultMetricMap.get(indicatorIndex)! + this.indicatorArray.at(indicatorIndex).controls.metrics.controls[i + 1].get('operation')?.value!.symbol);
       }
     });
+
+    this.indicatorArray.at(indicatorIndex).get('finalOperation')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
   }
 
   onChangeSelectOperation(indicatorIndex: number) {
@@ -604,16 +599,6 @@ export class AlertManagerComponent implements OnInit{
 
     if (intersection && intersection != null && intersection != undefined)
       this.tagIntersectionOptions = Array.from(intersection).map(tag => ({ label: tag, value: tag }));
-  }
-
-  onChangeHasFinalOperation(indicatorIndex: number)
-  {
-    this.generateResultMetric(indicatorIndex);
-
-    if (this.indicatorArray.at(indicatorIndex).get('hasFinalOperation')?.value)
-    {
-      this.resultMetricMap.set(indicatorIndex, '(' + this.resultMetricMap.get(indicatorIndex)! + ')' + this.indicatorArray.at(indicatorIndex).get('constantOp')?.value!.symbol + ' ' + this.indicatorArray.at(indicatorIndex).get('constantValue')?.value);
-    }
   }
 
   watchGroupValidity(group: ConditionFormGroup) {
@@ -1281,9 +1266,7 @@ export class AlertManagerComponent implements OnInit{
         id: this._fb.control(indicator.id),
         name: this._fb.control(indicator.name),
         metrics: this._fb.array<MetricFormGroup>([]),
-        hasFinalOperation: this._fb.control(indicator.constantOp == null ? false : true),
-        constantOp: this._fb.control(indicator.constantOp == null ? this.metricOperationOptions[2] : this.metricOperationOptions.find((opt) => opt.value == indicator.constantOp)),
-        constantValue: this._fb.control(indicator.constantOp == null ? 100 : indicator.constantValue)
+        finalOperation: this._fb.control(indicator.finalOperation)
       }) as IndicatorFormGroup;
 
       this.indicatorArray.push(newIndicator);
@@ -1320,7 +1303,6 @@ export class AlertManagerComponent implements OnInit{
           {
             this.onChangeMetricSelect(i);
             this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
-            this.onChangeHasFinalOperation(i);
           }
       });
     });
@@ -1506,7 +1488,7 @@ export class AlertManagerComponent implements OnInit{
         }
       }
 
-      alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('hasFinalOperation')?.value ? indicator.get('constantOp')?.value!.value! : null, indicator.get('constantValue')?.value!));
+      alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('finalOperation')?.value!));
     }
 
     //CONDITIONS
