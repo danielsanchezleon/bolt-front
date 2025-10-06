@@ -72,6 +72,7 @@
                     <!-- <th class="th-blue">Saltos últimas 24h</th> -->
                     <th class="th-blue">Ventana de tiempo</th>
                     <th class="th-blue">Periodicidad</th>
+                    <th class="th-blue text" style="text-align: center;" >Estado</th>
                 </tr>
             </ng-template>
             <ng-template #body let-alert>
@@ -201,6 +202,10 @@
                     </td>
                     <td>
                         <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
+                    </td>
+                    <td style="text-align: center;">
+                        <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta activa'"></i>
+                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
                     </td>
                 </tr>
             </ng-template>

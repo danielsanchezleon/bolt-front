@@ -1,4 +1,4 @@
-import { HttpClient,HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -12,16 +12,14 @@ export class AuthService {
 
   private apiUrl = environment.apiUrl + '/v1/auth';
   private passwordApi = environment.apiUrl + '/v1/password';
-  
-  constructor(private http: HttpClient) {}
 
-  login(loginRequest: LoginRequest): Observable<TokenResponse> 
-  {
+  constructor(private http: HttpClient) { }
+
+  login(loginRequest: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>(this.apiUrl + '/login', loginRequest);
   }
 
-  logout()
-  {
+  logout() {
     sessionStorage.removeItem('token');
   }
 
@@ -29,21 +27,17 @@ export class AuthService {
     return sessionStorage.getItem('token');
   }
 
-  private decodePayload(token: string): any 
-  {
-    try 
-    {
+  private decodePayload(token: string): any {
+    try {
       const base64 = token.split('.')[1];
       return JSON.parse(atob(base64));
-    } 
-    catch (e) 
-    {
+    }
+    catch (e) {
       return null;
     }
   }
 
-  isAuthenticated(): boolean 
-  {
+  isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) return false;
 
@@ -111,5 +105,17 @@ export class AuthService {
 
   setPassword(token: string, password: string): Observable<void> {
     return this.http.post<void>(`${this.passwordApi}/set`, { token, password });
+  }
+
+  isAdmin(): boolean | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const payload = this.decodePayload(token);
+
+    if (payload.roles)
+      return payload.roles.split(',').map((role: string) => role.trim()).filter((role: string) => role.length > 0).includes('ADMIN');
+    else
+      return null;
   }
 }
