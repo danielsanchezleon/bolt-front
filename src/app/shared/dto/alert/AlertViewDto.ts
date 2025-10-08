@@ -20,6 +20,7 @@ export class AlertViewDto {
   alarmTotalPeriods!: number;
   recoveryNumPeriods!: number;
   recoveryTotalPeriods!: number;
+  status?: string;
   groupBy?: string[];
   alertTags?: TagViewDto[];
   conditions?: AlertConditionViewDto[];

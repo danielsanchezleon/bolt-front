@@ -637,10 +637,16 @@
                 creadas o volver al
                 inicio.</div>
         </div>
-        <div *ngIf="isError" class="modal-icon-container">
+        <div *ngIf="isError && !dolphinError" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' : 'actualizar'}} la
+            <div class="font-16 font-w-600">Ha habido algún error desconocido al {{mode == 'create' ? 'crear' : 'actualizar'}} la
                 alerta</div>
+            <div class="font-12 text-gray"></div>
+        </div>
+        <div *ngIf="isError && dolphinError" class="modal-icon-container">
+            <i class="pi pi-times c-red" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Ha habido un error al {{mode == 'create' ? 'crear' : 'actualizar'}} la
+                alerta en Dolphin</div>
             <div class="font-12 text-gray"></div>
         </div>
     </div>
@@ -823,9 +829,13 @@
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
         <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
-    <div *ngIf="isError" class="modal-actions">
-        <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;" />
-        <p-button label="Confirmar" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+    <div *ngIf="isError && !dolphinError" class="modal-actions">
+        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
+        <p-button label="Reintentar" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+    </div>
+    <div *ngIf="isError && dolphinError" class="modal-actions">
+        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
 </app-modal>
 

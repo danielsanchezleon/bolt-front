@@ -80,14 +80,14 @@ export class AlertService {
     return this.http.put<AlertViewDto>(this.apiUrl + '/updateAlert', alertViewDto);
   }
 
-  crupdateAlert(alertId: number | null, alertDto: AlertDto): Observable<any>
+  crupdateAlert(alertId: number | null, alertDto: AlertDto): Observable<AlertViewDto>
   {
     let params = new HttpParams();
 
     if (alertId != null)
       params = params.append('alertId', alertId);
 
-    return this.http.put<any>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
+    return this.http.put<AlertViewDto>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
   }
 
   getUserAlertsTable(page: number, size: number, filterText: string | null): Observable<TableViewDto>

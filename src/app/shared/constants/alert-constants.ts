@@ -7,7 +7,7 @@ export class MetricOptions
 
 export const matOperationOptions = [
     {value: 'MEAN', label: 'Media'},
-    {value: 'ADD', label: 'Suma'},
+    {value: 'SUM', label: 'Suma'},
     {value: 'MIN', label: 'Mínimo'},
     {value: 'MAX', label: 'Máximo'},
     {value: 'COUNT', label: 'Count'},

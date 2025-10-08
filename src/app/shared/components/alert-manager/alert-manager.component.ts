@@ -361,6 +361,7 @@ export class AlertManagerComponent implements OnInit{
   isLoading: boolean = false;
   isSuccess: boolean = false;
   isError: boolean = false;
+  dolphinError: boolean = false;
 
   constructor(
     private router: Router,
@@ -1347,6 +1348,8 @@ export class AlertManagerComponent implements OnInit{
         finalExpression: this._fb.control(indicator.finalExpression)
       }) as IndicatorFormGroup;
 
+      this.resultMetricMap.set(i, indicator.finalExpression!);
+
       this.indicatorArray.push(newIndicator);
 
       const metrics = alertViewDto.indicators?.at(i)?.alertMetrics ?? [];
@@ -1624,6 +1627,9 @@ export class AlertManagerComponent implements OnInit{
     this.alertService.crupdateAlert(this.mode == 'create' ? null : this.alertId, alertDto).subscribe(
       (response) => 
       {
+        if (response.status == 'DISABLED')
+          this.dolphinError = true;
+
         this.isLoading = false;
         this.isSuccess = true;
       },
