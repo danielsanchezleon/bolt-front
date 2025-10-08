@@ -4,7 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
 import { AccordionComponent } from '../../../shared/components/accordion/accordion.component';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, FormsModule, Validators, FormArray, FormControl, AbstractControl, ValidatorFn } from '@angular/forms';
 import { MultiSelectChangeEvent, MultiSelectFilterEvent, MultiSelectModule } from 'primeng/multiselect';
 import { FluidModule } from 'primeng/fluid';
 import { SelectModule } from 'primeng/select';
@@ -49,8 +49,7 @@ import { TeamViewDto } from '../../../shared/dto/TeamViewDto';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AlertViewDto } from '../../dto/alert/AlertViewDto';
 
-import { metricOperationOptions, 
-        groupByOperationOptions, 
+import {matOperationOptions, 
         timeWindowOptions, 
         discardTimeOptions, 
         periodicityOptions, 
@@ -59,6 +58,118 @@ import { metricOperationOptions,
         activationRecoverEvaluationOptions, 
         silencePeriodDayOptions 
       } from '../../constants/alert-constants';
+
+type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
+interface Tok { type: TokType; value: string }
+
+/** Alternativas de índices 1..n ordenadas por longitud descendente (evita que "10" coincida como "1") */
+function makeIdxAlternatives(n: number): string {
+  return Array.from({ length: n }, (_, i) => String(n - i)).join('|'); // n,n-1,...,1
+}
+
+/** Regex de tokens válidos: variables [A-Z].(1..n), números (enteros/decimales), + - * / %, paréntesis y espacios */
+export function makeTokenRegex(n: number): RegExp {
+  if (n < 1) throw new Error('n debe ser >= 1');
+  const idx = makeIdxAlternatives(n);
+  const num = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`; // 100 | 3.5 | .5
+
+  // Anclada y sólo con tokens permitidos (espacios opcionales entre tokens)
+  const pattern = String.raw`^(?:\s*(?:\(|\)|[+\-*/%]|[A-Z]\.(?:${idx})|${num})\s*)+$`;
+  return new RegExp(pattern);
+}
+
+/** Tokenizador (usa 'y' sticky para consumir secuencialmente) */
+function tokenize(expr: string): Tok[] {
+  const re = /\s*(?:([A-Z]\.\d+)|(\d+(?:\.\d+)?|\.\d+)|([+\-*/%])|([()]))\s*/gy;
+  const tokens: Tok[] = [];
+  let i = 0;
+
+  while (i < expr.length) {
+    re.lastIndex = i;
+    const m = re.exec(expr);
+    if (!m) break;
+    if (m[1]) tokens.push({ type: 'VAR', value: m[1] });
+    else if (m[2]) tokens.push({ type: 'NUM', value: m[2] });
+    else if (m[3]) tokens.push({ type: 'OP', value: m[3] });
+    else if (m[4] === '(') tokens.push({ type: 'LPAREN', value: '(' });
+    else if (m[4] === ')') tokens.push({ type: 'RPAREN', value: ')' });
+    i = re.lastIndex;
+  }
+  return tokens;
+}
+
+/** Gramática: paréntesis balanceados, sin terminar en operador, sin dobles operadores, admite + / - unarios */
+function isGrammarValid(expr: string): boolean {
+  const toks = tokenize(expr);
+
+  // Verifica que se haya tokenizado todo (si hay "basura", falla)
+  const joined = toks.map(t => t.value).join('');
+  const stripped = expr.replace(/\s+/g, '');
+  if (joined.length !== stripped.length) return false;
+
+  let expectOperand = true; // al inicio esperamos operando
+  const stack: string[] = [];
+
+  for (const t of toks) {
+    if (expectOperand) {
+      if (t.type === 'VAR' || t.type === 'NUM') {
+        expectOperand = false;
+      } else if (t.type === 'LPAREN') {
+        stack.push('('); // seguimos esperando operando
+      } else if (t.type === 'OP' && (t.value === '+' || t.value === '-')) {
+        // unario permitido; seguimos esperando operando
+      } else {
+        return false; // operador binario o ')' donde debía ir un operando
+      }
+    } else {
+      if (t.type === 'OP') {
+        expectOperand = true; // tras operador, esperamos operando
+      } else if (t.type === 'RPAREN') {
+        if (stack.length === 0) return false;
+        stack.pop();
+        // seguimos sin esperar operando (puede venir operador o ')')
+      } else {
+        return false; // dos operandos seguidos o '(' después de operando
+      }
+    }
+  }
+
+  // Debe terminar en operando o ')', y no quedar paréntesis sin cerrar
+  return !expectOperand && stack.length === 0;
+}
+
+/** Validador completo: tokens válidos, misma letra, índices 1..n, gramática correcta */
+export function algebraExprValidator(n: number): ValidatorFn {
+  const tokenRe = makeTokenRegex(n);
+  const varRe = /\b([A-Z])\.(\d+)\b/g;
+
+  return (control: AbstractControl) => {
+    const raw = (control.value ?? '') as string;
+    const value = raw.trim();
+    if (!value) return null; // deja 'required' a otro validador
+
+    // 1) Sólo tokens permitidos
+    if (!tokenRe.test(value)) return { algebraTokens: true };
+
+    // 2) Variables: misma letra e índices en rango
+    const matches = [...value.matchAll(varRe)];
+    if (matches.length === 0) return { noVariables: true };
+
+    const letters = new Set(matches.map(m => m[1]));
+    if (letters.size !== 1) return { mixedLetters: true };
+
+    const idxOk = matches.every(m => {
+      const k = Number(m[2]);
+      return Number.isInteger(k) && k >= 1 && k <= n;
+    });
+    if (!idxOk) return { indexOutOfRange: true };
+
+    // 3) Gramática (incluye paréntesis balanceados, sin terminar en operador, etc.)
+    if (!isGrammarValid(value)) return { invalidOrder: true };
+
+    return null;
+  };
+}
 
 export class Endpoint {
   id: number | null;
@@ -96,21 +207,6 @@ export class Permission {
   }
 }
 
-class MetricOperation
-{
-  value: string;
-  label: string;
-  symbol: string;
-  description: string;
-
-  constructor(value: string, label: string, symbol: string, description: string) {
-    this.value = value;
-    this.label = label;
-    this.symbol = symbol;
-    this.description = description;
-  }
-}
-
 type MetricFormGroup = FormGroup<{
   metricId: FormControl<number | null>;
   id: FormControl<string>;
@@ -123,7 +219,7 @@ type IndicatorFormGroup = FormGroup<{
   id: FormControl<number | null>;
   name: FormControl<string>;
   metrics: FormArray<MetricFormGroup>;
-  finalOperation: FormControl<string>;
+  finalExpression: FormControl<string>;
 }>;
 
 type IndicatorFormArray = FormArray<IndicatorFormGroup>;
@@ -180,8 +276,7 @@ export class AlertManagerComponent implements OnInit{
   isInitialMetricListLoading: boolean = false;
 
   //Step 1
-
-  metricOperationOptions: any[] = [];
+  matOperationOptions: any[] = [];
 
   internalName: string = '';
   name: string = '';
@@ -292,8 +387,7 @@ export class AlertManagerComponent implements OnInit{
     this.indicatorArray = this._fb.array<IndicatorFormGroup>([]);
 
     this.groupByForm = this._fb.group({
-      groupBy: [[], []],
-      operation: [groupByOperationOptions[0], []]
+      groupBy: [[], []]
     });
 
     this.advancedOptionsForm = this._fb.group({
@@ -354,6 +448,8 @@ export class AlertManagerComponent implements OnInit{
 
     //Step 1
 
+    this.matOperationOptions = matOperationOptions;
+
     this.filterSubject
       .pipe(
         debounceTime(1000), // Espera 1 segundo desde la última tecla
@@ -368,9 +464,6 @@ export class AlertManagerComponent implements OnInit{
         metric.get('options')?.setValue(response);
         this.loadingMetricList = false;
       });
-
-    this.metricOperationOptions = metricOperationOptions;
-    this.groupByOperationOptions = groupByOperationOptions;
 
     this.timeWindowOptions = timeWindowOptions;
     this.discardTimeOptions = discardTimeOptions;
@@ -464,7 +557,7 @@ export class AlertManagerComponent implements OnInit{
       id: this._fb.control(null),
       name: this._fb.control(this.letters[indicatorIndex]),
       metrics: this._fb.array<MetricFormGroup>([]),
-      finalOperation: this._fb.control(''),
+      finalExpression: this._fb.control(''),
     }) as IndicatorFormGroup;
 
     this.indicatorArray.push(group);
@@ -472,7 +565,8 @@ export class AlertManagerComponent implements OnInit{
     this.createMetric(indicatorIndex);
 
     this.resultMetricMap.set(indicatorIndex, '');
-    this.indicatorArray.at(indicatorIndex).get('finalOperation')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
+    this.resultMetricEditionMap.set(indicatorIndex, true);
+    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
 
     this.indicatorNames.push(this.letters[indicatorIndex]);
   }
@@ -505,9 +599,11 @@ export class AlertManagerComponent implements OnInit{
       metricId: this._fb.control(null),
       id: this._fb.control((this.indicatorArray.at(indicatorIndex).controls.metrics.length! + 1).toString()),
       metric: this._fb.control(null),
-      operation: this._fb.control(metricOperationOptions[0]),
+      operation: this._fb.control(matOperationOptions[1]),
       options: this._fb.control([] as TableMetricInfo[])
     }) as MetricFormGroup);
+  
+    this.rebindExprValidator(indicatorIndex);
   }
 
   removeMetric(indicatorIndex: number, metricIndex: number)
@@ -522,13 +618,13 @@ export class AlertManagerComponent implements OnInit{
     this.getMetricTagsIntersection();
 
     this.generateInternalNameAndName();
+
+    this.rebindExprValidator(indicatorIndex);
   }
 
   onChangeMetricSelect(indicatorIndex: number)
   {
     this.generateInternalNameAndName();
-
-    this.generateResultMetric(indicatorIndex);
 
     this.getMetricTagsIntersection();
 
@@ -550,24 +646,6 @@ export class AlertManagerComponent implements OnInit{
         }
       }
     }
-  }
-
-  generateResultMetric(indicatorIndex: number) {
-    this.resultMetricMap.set(indicatorIndex, '');
-
-    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach((metric, i) => {
-      this.resultMetricMap.set(indicatorIndex, this.resultMetricMap.get(indicatorIndex)! + this.indicatorArray.at(indicatorIndex).get('name')?.value + '.' + (i+1));
-
-      if (i < (this.indicatorArray.at(indicatorIndex).controls.metrics.controls.length - 1)) {
-        this.resultMetricMap.set(indicatorIndex, this.resultMetricMap.get(indicatorIndex)! + this.indicatorArray.at(indicatorIndex).controls.metrics.controls[i + 1].get('operation')?.value!.symbol);
-      }
-    });
-
-    this.indicatorArray.at(indicatorIndex).get('finalOperation')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
-  }
-
-  onChangeSelectOperation(indicatorIndex: number) {
-    this.generateResultMetric(indicatorIndex);
   }
 
   getMetricTagsIntersection() {
@@ -1266,7 +1344,7 @@ export class AlertManagerComponent implements OnInit{
         id: this._fb.control(indicator.id),
         name: this._fb.control(indicator.name),
         metrics: this._fb.array<MetricFormGroup>([]),
-        finalOperation: this._fb.control(indicator.finalOperation)
+        finalExpression: this._fb.control(indicator.finalExpression)
       }) as IndicatorFormGroup;
 
       this.indicatorArray.push(newIndicator);
@@ -1288,7 +1366,7 @@ export class AlertManagerComponent implements OnInit{
                 metricId: this._fb.control(metric.metricId),
                 id: this._fb.control((j + 1).toString()),
                 metric: this._fb.control(response[0]),
-                operation: this._fb.control(this.metricOperationOptions.find((opt) => opt.value == metric.operation)),
+                operation: this._fb.control(matOperationOptions.find((opt) => opt.value == metric.operation)),
                 options: this._fb.control(response)
               }) as MetricFormGroup);
             })
@@ -1306,9 +1384,6 @@ export class AlertManagerComponent implements OnInit{
           }
       });
     });
-
-    //GROUP BY
-    this.groupByForm.get('operation')?.setValue(this.groupByOperationOptions.find((opt) => opt.value == alertViewDto.matOperation));
 
     //ADVANCED OPTIONS
     this.advancedOptionsForm.get('timeWindow')?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
@@ -1488,7 +1563,7 @@ export class AlertManagerComponent implements OnInit{
         }
       }
 
-      alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('finalOperation')?.value!));
+      alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('finalExpression')?.value!));
     }
 
     //CONDITIONS
@@ -1531,7 +1606,6 @@ export class AlertManagerComponent implements OnInit{
       this.alertType == 'simple' ? 0 : this.alertType == 'composite' ? 1 : this.alertType == 'logs' ? 2 : 3,
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
-      this.groupByForm.get('operation')?.value.value,
       null,
       this.activationRecoverForm.get('activation1')?.value.value,
       this.activationRecoverForm.get('activation2')?.value.value,
@@ -1587,5 +1661,47 @@ export class AlertManagerComponent implements OnInit{
     {
       this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.setValue((this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('endBrackets')?.value || 0) - 1);
     }
+  }
+
+  rebindExprValidator(indicatorIndex: number) {
+    const grp = this.indicatorArray.at(indicatorIndex) as FormGroup;
+    const metrics = grp.get('metrics') as FormArray;
+    const finalCtrl = grp.get('finalExpression') as FormControl;
+    const n = metrics.length; // índices válidos: 1..n
+
+    finalCtrl.setValidators([Validators.required, algebraExprValidator(n)]);
+    finalCtrl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  checkAllFinalExpressions(): boolean 
+  {
+    let allValid = true;
+
+    this.indicatorArray.controls.forEach((ctrl, index) => {
+      const grp = ctrl as FormGroup;
+      const metrics = grp.get('metrics') as FormArray | null;
+      const finalCtrl = grp.get('finalExpression') as FormControl | null;
+
+      if (!finalCtrl) {
+        allValid = false;
+        return;
+      }
+
+      const n = metrics?.length ?? 0;
+
+      // Rebind validador (required + algebra)
+      finalCtrl.setValidators([Validators.required, algebraExprValidator(n)]);
+      finalCtrl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+
+      // Marca para que se muestren errores en UI
+      finalCtrl.markAsTouched({ onlySelf: true });
+      finalCtrl.markAsDirty({ onlySelf: true });
+
+      if (finalCtrl.invalid) {
+        allValid = false;
+      }
+    });
+
+    return allValid;
   }
 }

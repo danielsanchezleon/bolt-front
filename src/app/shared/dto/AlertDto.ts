@@ -27,7 +27,6 @@ export class AlertDto
     public alertType: number,
     public offset: number,
     public groupBy: string[],
-    public matOperation: string,
     public opiUrl: string | null,
     public alarmNumPeriods: number,
     public alarmTotalPeriods: number,

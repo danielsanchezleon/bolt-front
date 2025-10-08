@@ -6,6 +6,6 @@ export class AlertIndicatorDto
     public id: number | null,
     public name: string,
     public alertMetrics: AlertMetricDto[] = [],
-    public finalOperation: string
+    public finalExpression: string
   ) {}
 }

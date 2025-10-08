@@ -30,8 +30,8 @@
                                 [formGroup]="metric">
                                 <div class="id"><span
                                         class="font-12 text-white font-w-700">{{metric.get('id')?.value}}</span></div>
-                                <p-select *ngIf="j > 0" [options]="metricOperationOptions" formControlName="operation"
-                                    optionLabel="label" appendTo="body" (onChange)="onChangeSelectOperation(i);" />
+                                <p-select [options]="matOperationOptions" formControlName="operation"
+                                    optionLabel="label" appendTo="body" />
                                 <p-select class="full-width-selector" [loading]="loadingMetricList"
                                     [options]="metric.get('options')?.value" formControlName="metric" [filter]="true"
                                     (onFilter)="onFilterMetricsChange($event, metric);" optionLabel="metric"
@@ -59,11 +59,11 @@
                                 </p-select>
                                 <div class="buttons">
                                     <p-button icon="pi pi-plus" severity="primary"
-                                        (onClick)="createMetric(i); this.generateResultMetric(i);" />
+                                        (onClick)="createMetric(i);" />
                                     <p-button
                                         *ngIf="(indicator.controls.metrics.controls.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)"
                                         icon="pi pi-minus" severity="secondary"
-                                        (onClick)="removeMetric(i, j); this.generateResultMetric(i);" />
+                                        (onClick)="removeMetric(i, j);" />
                                 </div>
                             </div>
                             <div *ngIf="indicator.controls.metrics.controls.at(0)?.get('metric')?.value != undefined"
@@ -75,26 +75,14 @@
                                         <span>{{ resultMetricMap.get(i)! | sanitizeExpression}}</span>
                                         <i class="pi pi-pencil" style="color: lightgray;"></i>
                                     </div>
-                                    <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" formControlName="finalOperation" pattern="^(?:\(([A-Z])\.\d+(?:[-+*/]\1\.\d+)*\)(?:[*/]\d+)?|([A-Z])\.\d+(?:[*/]\d+)?|([A-Z])\.\d+(?:[-+*/]\3\.\d+)+)$" />
+                                    <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" formControlName="finalExpression" />
                                     <div *ngIf="resultMetricEditionMap.get(i)" style="display: flex; gap: 16px; margin-left: 16px;">
-                                        <i *ngIf="!indicator.get('finalOperation')?.errors" class="pi pi-check c-green" style="cursor: pointer;" title="Guardar cambios" (click)="resultMetricMap.set(i, indicator.get('finalOperation')?.value!); resultMetricEditionMap.set(i, false);"></i>
-                                        <i class="pi pi-times c-red" style="cursor: pointer;" title="Cancelar cambios" (click)="indicator.get('finalOperation')?.setValue(resultMetricMap.get(i)!); resultMetricEditionMap.set(i, false);"></i>
+                                        <p-button *ngIf="!indicator.get('finalExpression')?.errors" icon="pi pi-check" [rounded]="true" severity="success" [outlined]="true" title="Guardar cambios" (click)="resultMetricMap.set(i, indicator.get('finalExpression')?.value!); resultMetricEditionMap.set(i, false);" size="small" [disabled]="indicator.get('finalExpression')?.errors" />
+                                        <p-button *ngIf="!indicator.get('finalExpression')?.errors" icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" title="Cancelar cambios" (click)="indicator.get('finalExpression')?.setValue(resultMetricMap.get(i)!); resultMetricEditionMap.set(i, false);" size="small" />
                                     </div>
                                 </div>
-                                <!-- <div class="final-operation-actions">
-                                    <div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-                                        <label class="ml-2"> Aplicar porcentaje </label>
-                                        <p-checkbox formControlName="hasFinalOperation" [binary]="true"
-                                            (onChange)="onChangeHasFinalOperation(i);" />
-                                    </div>
-                                    <p-select *ngIf="false" [options]="metricOperationOptions"
-                                        formControlName="constantOp" optionLabel="label" appendTo="body"
-                                        (onChange)="onChangeHasFinalOperation(i);" />
-                                    <input *ngIf="false" type="text" [maxlength]="10" pInputText
-                                        formControlName="constantValue" (input)="onChangeHasFinalOperation(i);" />
-                                </div> -->
-                                <div *ngIf="indicator.get('finalOperation')?.errors" class="c-red">
-                                    La métrica personalizada introducida no es correcta.
+                                <div *ngIf="indicator.get('finalExpression')?.errors" class="c-red">
+                                    Debes introducir una expresión correcta.
                                 </div>
                             </div>
                         </div>
@@ -110,11 +98,6 @@
                                 [filter]="true" appendTo="body" formControlName="groupBy"
                                 (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
-                        </p-floatlabel>
-                        <p-floatlabel class="full-width-selector" variant="on">
-                            <p-select [options]="groupByOperationOptions" class="full-width-selector"
-                                inputId="over_label2" optionLabel="label" appendTo="body" formControlName="operation" />
-                            <label for="over_label2">Operación matemática</label>
                         </p-floatlabel>
                     </form>
                 </div>
@@ -234,7 +217,7 @@
                                 </div>
                                 <p-select *ngIf="!first" [options]="externalOperationOptions"
                                     formControlName="externalOperation" [size]="'small'" />
-                                <p-select [options]="indicatorNames" formControlName="indicatorName" [size]="'small'" />
+                                <p-select *ngIf="alertType == 'composite'" [options]="indicatorNames" formControlName="indicatorName" [size]="'small'" />
                                 <p-select formControlName="comparation" class="select"
                                     [options]="clauseComparationOptions" optionLabel="label" appendTo="body"
                                     size="small" />
@@ -624,10 +607,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="!checkAllFinalExpressions() || configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="!checkAllFinalExpressions() || configuredAlertExists || indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0 || !allValuesCompleted() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
 </app-page-wrapper>

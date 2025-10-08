@@ -5,34 +5,7 @@ export class MetricOptions
 
 //STEP 1
 
-export const metricOperationOptions = [
-    {
-        value: 'ADD',
-        label: 'Sumar ( + )',
-        symbol: '+',
-        description: 'Sumar con la métrica anterior'
-    },
-    {
-        value: 'SUBTRACT',
-        label: 'Restar ( - )',
-        symbol: '-',
-        description: 'Restar con la métrica anterior'
-    },
-    {
-        value: 'MULTIPLY',
-        label: 'Multiplicar ( * )',
-        symbol: '*',
-        description: 'Multiplicar con la métrica anterior'
-    },
-    {
-        value: 'DIVIDE',
-        label: 'Dividir ( / )',
-        symbol: '/',
-        description: 'Dividir con la métrica anterior'
-    }
-];
-
-export const groupByOperationOptions = [
+export const matOperationOptions = [
     {value: 'MEAN', label: 'Media'},
     {value: 'ADD', label: 'Suma'},
     {value: 'MIN', label: 'Mínimo'},

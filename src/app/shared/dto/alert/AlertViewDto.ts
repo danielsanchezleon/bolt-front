@@ -15,7 +15,6 @@ export class AlertViewDto {
   evaluationFrequency?: string;
   evaluationPeriod?: string;
   createdAt?: Date;
-  matOperation?: number;
   offset!: number;
   alarmNumPeriods!: number;
   alarmTotalPeriods!: number;
