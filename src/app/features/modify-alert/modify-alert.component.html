@@ -58,7 +58,7 @@
     </div>
 
     <div *ngIf="!isLoading && !isError" class="table-container">
-        <p-table class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
+        <p-table *ngIf="alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
             <ng-template #header>
                 <tr>
                     <th class="th-blue" style="width: 4rem; text-align: center;"><p-tableHeaderCheckbox /></th>

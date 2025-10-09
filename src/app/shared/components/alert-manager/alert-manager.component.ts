@@ -533,7 +533,7 @@ export class AlertManagerComponent implements OnInit{
 
     if (this.groupByForm.get('groupBy')?.value.length > 0)
     {
-      this.internalName += this.groupByForm.get('groupBy')?.value.join(',')
+      this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join(',')
     }
 
     if (this.mode == 'create' && !this.authService.isAdmin())
@@ -650,19 +650,12 @@ export class AlertManagerComponent implements OnInit{
   }
 
   getMetricTagsIntersection() {
-    this.groupByForm.get('groupBy')?.setValue([]);
-
     let intersection: Set<string> | null = null;
 
-    for (const indicator of this.indicatorArray.controls) 
-    {
-      const metricsArray = indicator.controls.metrics;
-
-      for (const metricGroup of metricsArray.controls) {
-        const metricValue = metricGroup.get('metric')?.value;
-
-        if (metricValue && Array.isArray(metricValue.dimension)) {
-          const currentSet = new Set(metricValue.dimension);
+    this.indicatorArray.controls.forEach((indicator, i) => {
+      indicator.get('metrics')?.value.forEach((metric, j) => {
+        if (metric && Array.isArray(metric.metric!.dimension)) {
+          const currentSet = new Set(metric.metric!.dimension);
 
           if (intersection === null) 
           {
@@ -673,8 +666,8 @@ export class AlertManagerComponent implements OnInit{
             intersection = new Set([...intersection].filter((dim: string) => currentSet.has(dim)));
           }
         }
-      }
-    }
+      });
+    });
 
     if (intersection && intersection != null && intersection != undefined)
       this.tagIntersectionOptions = Array.from(intersection).map(tag => ({ label: tag, value: tag }));
@@ -1384,6 +1377,7 @@ export class AlertManagerComponent implements OnInit{
           {
             this.onChangeMetricSelect(i);
             this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+            this.generateInternalNameAndName();
           }
       });
     });
