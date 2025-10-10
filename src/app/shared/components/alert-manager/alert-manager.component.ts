@@ -62,28 +62,24 @@ import {matOperationOptions,
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
 
-/** Alternativas de índices 1..n ordenadas por longitud descendente (evita que "10" coincida como "1") */
 function makeIdxAlternatives(n: number): string {
-  return Array.from({ length: n }, (_, i) => String(n - i)).join('|'); // n,n-1,...,1
+  return Array.from({ length: n }, (_, i) => String(n - i)).join('|'); // n|...|2|1
 }
 
-/** Regex de tokens válidos: variables [A-Z].(1..n), números (enteros/decimales), + - * / %, paréntesis y espacios */
+/** Regex de tokens válidos: variables [A-Z].(1..n), números, + - * / %, paréntesis y espacios */
 export function makeTokenRegex(n: number): RegExp {
   if (n < 1) throw new Error('n debe ser >= 1');
   const idx = makeIdxAlternatives(n);
   const num = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`; // 100 | 3.5 | .5
-
-  // Anclada y sólo con tokens permitidos (espacios opcionales entre tokens)
   const pattern = String.raw`^(?:\s*(?:\(|\)|[+\-*/%]|[A-Z]\.(?:${idx})|${num})\s*)+$`;
   return new RegExp(pattern);
 }
 
-/** Tokenizador (usa 'y' sticky para consumir secuencialmente) */
+/** Tokenizador (consume con flag 'y') */
 function tokenize(expr: string): Tok[] {
   const re = /\s*(?:([A-Z]\.\d+)|(\d+(?:\.\d+)?|\.\d+)|([+\-*/%])|([()]))\s*/gy;
   const tokens: Tok[] = [];
   let i = 0;
-
   while (i < expr.length) {
     re.lastIndex = i;
     const m = re.exec(expr);
@@ -98,16 +94,16 @@ function tokenize(expr: string): Tok[] {
   return tokens;
 }
 
-/** Gramática: paréntesis balanceados, sin terminar en operador, sin dobles operadores, admite + / - unarios */
-function isGrammarValid(expr: string): boolean {
+/** Chequeo de gramática SIN unario. Devuelve el tipo de error si falla. */
+function checkGrammar(expr: string): { ok: true } | { ok: false; error: 'unary' | 'order' } {
   const toks = tokenize(expr);
 
-  // Verifica que se haya tokenizado todo (si hay "basura", falla)
+  // Debe tokenizarse todo: si hay basura, es error de orden
   const joined = toks.map(t => t.value).join('');
   const stripped = expr.replace(/\s+/g, '');
-  if (joined.length !== stripped.length) return false;
+  if (joined.length !== stripped.length) return { ok: false, error: 'order' };
 
-  let expectOperand = true; // al inicio esperamos operando
+  let expectOperand = true; // al inicio se espera operando
   const stack: string[] = [];
 
   for (const t of toks) {
@@ -115,30 +111,35 @@ function isGrammarValid(expr: string): boolean {
       if (t.type === 'VAR' || t.type === 'NUM') {
         expectOperand = false;
       } else if (t.type === 'LPAREN') {
-        stack.push('('); // seguimos esperando operando
+        stack.push('(');
+        // seguimos esperando operando tras '('
       } else if (t.type === 'OP' && (t.value === '+' || t.value === '-')) {
-        // unario permitido; seguimos esperando operando
+        // AQUÍ detectaríamos unario: está prohibido
+        return { ok: false, error: 'unary' };
       } else {
-        return false; // operador binario o ')' donde debía ir un operando
+        // operador binario (* / %) o ')' donde debía ir un operando
+        return { ok: false, error: 'order' };
       }
     } else {
       if (t.type === 'OP') {
-        expectOperand = true; // tras operador, esperamos operando
+        expectOperand = true; // tras operador binario, esperamos operando
       } else if (t.type === 'RPAREN') {
-        if (stack.length === 0) return false;
+        if (stack.length === 0) return { ok: false, error: 'order' };
         stack.pop();
-        // seguimos sin esperar operando (puede venir operador o ')')
+        // seguimos sin esperar operando (puede venir OP o ')')
       } else {
-        return false; // dos operandos seguidos o '(' después de operando
+        // dos operandos seguidos o '(' después de operando
+        return { ok: false, error: 'order' };
       }
     }
   }
 
-  // Debe terminar en operando o ')', y no quedar paréntesis sin cerrar
-  return !expectOperand && stack.length === 0;
+  // Debe terminar en operando o ')', y paréntesis balanceados
+  if (expectOperand || stack.length !== 0) return { ok: false, error: 'order' };
+  return { ok: true };
 }
 
-/** Validador completo: tokens válidos, misma letra, índices 1..n, gramática correcta */
+/** Validador completo: tokens válidos, única letra, índices 1..n, SIN unario, gramática correcta */
 export function algebraExprValidator(n: number): ValidatorFn {
   const tokenRe = makeTokenRegex(n);
   const varRe = /\b([A-Z])\.(\d+)\b/g;
@@ -146,9 +147,14 @@ export function algebraExprValidator(n: number): ValidatorFn {
   return (control: AbstractControl) => {
     const raw = (control.value ?? '') as string;
     const value = raw.trim();
-    if (!value) return null; // deja 'required' a otro validador
 
-    // 1) Sólo tokens permitidos
+    // Si quieres marcar vacío como error aquí:
+    // if (!value) return { required: true };
+    // O usa Validators.required en el control (recomendado)
+
+    if (!value) return null; // deja el required a otro validador
+
+    // 1) Solo tokens permitidos
     if (!tokenRe.test(value)) return { algebraTokens: true };
 
     // 2) Variables: misma letra e índices en rango
@@ -164,8 +170,11 @@ export function algebraExprValidator(n: number): ValidatorFn {
     });
     if (!idxOk) return { indexOutOfRange: true };
 
-    // 3) Gramática (incluye paréntesis balanceados, sin terminar en operador, etc.)
-    if (!isGrammarValid(value)) return { invalidOrder: true };
+    // 3) Gramática sin unario
+    const g = checkGrammar(value);
+    if (!g.ok) {
+      return g.error === 'unary' ? { unaryNotAllowed: true } : { invalidOrder: true };
+    }
 
     return null;
   };
@@ -565,10 +574,6 @@ export class AlertManagerComponent implements OnInit{
 
     this.createMetric(indicatorIndex);
 
-    this.resultMetricMap.set(indicatorIndex, '');
-    this.resultMetricEditionMap.set(indicatorIndex, true);
-    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
-
     this.indicatorNames.push(this.letters[indicatorIndex]);
   }
 
@@ -605,6 +610,10 @@ export class AlertManagerComponent implements OnInit{
     }) as MetricFormGroup);
   
     this.rebindExprValidator(indicatorIndex);
+
+    this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? 'A.1' : '');
+    this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
+    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
   }
 
   removeMetric(indicatorIndex: number, metricIndex: number)
@@ -621,6 +630,10 @@ export class AlertManagerComponent implements OnInit{
     this.generateInternalNameAndName();
 
     this.rebindExprValidator(indicatorIndex);
+
+    this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? 'A.1' : '');
+    this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
+    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
   }
 
   onChangeMetricSelect(indicatorIndex: number)
@@ -1361,7 +1374,7 @@ export class AlertManagerComponent implements OnInit{
               this.indicatorArray.at(i).controls.metrics.push(this._fb.group({
                 metricId: this._fb.control(metric.metricId),
                 id: this._fb.control((j + 1).toString()),
-                metric: this._fb.control(response[0]),
+                metric: this._fb.control(response.find(met => met.table_name == metric.tableName)),
                 operation: this._fb.control(matOperationOptions.find((opt) => opt.value == metric.operation)),
                 options: this._fb.control(response)
               }) as MetricFormGroup);
@@ -1547,12 +1560,12 @@ export class AlertManagerComponent implements OnInit{
     //INDICATORS
     let alertIndicators: AlertIndicatorDto[] = [];
 
-    for (let indicator of this.indicatorArray.controls)
+    for (let i = 0; i < this.indicatorArray.length; i++)
     {
       //METRICS
       let alertMetrics: AlertMetricDto[] = [];
 
-      for (let metric of indicator.controls.metrics.controls) 
+      for (let metric of this.indicatorArray.at(i).controls.metrics.controls) 
       {
         if (metric.get('metric')?.value != null)
         {
@@ -1560,7 +1573,7 @@ export class AlertManagerComponent implements OnInit{
         }
       }
 
-      alertIndicators.push(new AlertIndicatorDto(indicator.get('id')?.value!, indicator.get('name')?.value!, alertMetrics, indicator.get('finalExpression')?.value!));
+      alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!));
     }
 
     //CONDITIONS
@@ -1697,7 +1710,7 @@ export class AlertManagerComponent implements OnInit{
       finalCtrl.markAsTouched({ onlySelf: true });
       finalCtrl.markAsDirty({ onlySelf: true });
 
-      if (finalCtrl.invalid) {
+      if (finalCtrl.invalid || this.resultMetricEditionMap.get(index)) {
         allValid = false;
       }
     });

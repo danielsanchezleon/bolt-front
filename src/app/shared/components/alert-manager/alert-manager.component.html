@@ -69,17 +69,20 @@
                             <div *ngIf="indicator.controls.metrics.controls.at(0)?.get('metric')?.value != undefined"
                                 class="metric-result-container">
                                 <div class="metric-result">
-                                    <div class="font-16 font-w-600">Expresión final:</div>
-                                    <div *ngIf="!resultMetricEditionMap.get(i)"
-                                        class="metric-result-ids font-16 font-w-600 c-blue" (click)="resultMetricEditionMap.set(i, true);">
-                                        <span>{{ resultMetricMap.get(i)! | sanitizeExpression}}</span>
-                                        <i class="pi pi-pencil" style="color: lightgray;"></i>
+                                    <div class="final-expression-content">
+                                        <div class="font-16 font-w-600">Expresión final:</div>
+                                        <div *ngIf="!resultMetricEditionMap.get(i)"
+                                            class="metric-result-ids font-16 font-w-600 c-blue" (click)="resultMetricEditionMap.set(i, true);">
+                                            <span>{{ resultMetricMap.get(i)! | sanitizeExpression}}</span>
+                                            <i class="pi pi-pencil" style="color: lightgray;"></i>
+                                        </div>
+                                        <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" formControlName="finalExpression" maxlength="40" />
+                                        <div *ngIf="resultMetricEditionMap.get(i)" style="display: flex; gap: 16px; margin-left: 16px;">
+                                            <p-button icon="pi pi-check" [rounded]="true" severity="success" [outlined]="true" title="Guardar cambios" (click)="resultMetricMap.set(i, indicator.get('finalExpression')?.value!); resultMetricEditionMap.set(i, false);" size="small" [disabled]="indicator.get('finalExpression')?.errors || (resultMetricMap.get(i)! == indicator.get('finalExpression')?.value!)" />
+                                            <p-button icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" title="Cancelar cambios" (click)="indicator.get('finalExpression')?.setValue(resultMetricMap.get(i)!); resultMetricEditionMap.set(i, false);" size="small" [disabled]="!resultMetricMap.get(i)!" />
+                                        </div>
                                     </div>
-                                    <input *ngIf="resultMetricEditionMap.get(i)" type="text" pInputText pSize="small" formControlName="finalExpression" maxlength="40" />
-                                    <div *ngIf="resultMetricEditionMap.get(i)" style="display: flex; gap: 16px; margin-left: 16px;">
-                                        <p-button *ngIf="!indicator.get('finalExpression')?.errors" icon="pi pi-check" [rounded]="true" severity="success" [outlined]="true" title="Guardar cambios" (click)="resultMetricMap.set(i, indicator.get('finalExpression')?.value!); resultMetricEditionMap.set(i, false);" size="small" [disabled]="indicator.get('finalExpression')?.errors" />
-                                        <p-button *ngIf="!indicator.get('finalExpression')?.errors" icon="pi pi-times" [rounded]="true" severity="danger" [outlined]="true" title="Cancelar cambios" (click)="indicator.get('finalExpression')?.setValue(resultMetricMap.get(i)!); resultMetricEditionMap.set(i, false);" size="small" />
-                                    </div>
+                                    <i class="pi pi-info-circle c-blue" style="cursor: pointer;" [pTooltip]="'Puedes editar la expresión haciendo click sobre ella. Para hacer referencia a una métrica, debes escribir el nombre del indicador, seguido de un punto y el índice numérico de la métrica que quieras (p.e: A.1)'" tooltipPosition="top" showDelay="500"></i>
                                 </div>
                                 <div *ngIf="indicator.get('finalExpression')?.errors" class="c-red">
                                     Debes introducir una expresión correcta.
