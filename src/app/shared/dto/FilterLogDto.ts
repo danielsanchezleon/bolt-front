@@ -1,6 +1,10 @@
-export interface FilterLogDto 
+export class FilterLogDto 
 {
-  operation: string;
-  value: string;
-  externalOperation: string;
+  constructor(
+    public id: number | null,
+    public externalOperation: string,
+    public field: string,
+    public operation: string,
+    public value: string
+  ) {}
 }

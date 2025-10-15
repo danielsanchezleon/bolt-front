@@ -52,12 +52,14 @@ import { AlertViewDto } from '../../dto/alert/AlertViewDto';
 import {matOperationOptions, 
         timeWindowOptions, 
         discardTimeOptions, 
-        periodicityOptions, 
+        periodicityOptions,
+        advancedSearchOptions, 
         severityOptions, 
         clauseComparationOptions, 
         activationRecoverEvaluationOptions, 
         silencePeriodDayOptions 
       } from '../../constants/alert-constants';
+import { AlertOcurrencesService } from '../../services/alert-ocurrences.service';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -233,6 +235,21 @@ type IndicatorFormGroup = FormGroup<{
 
 type IndicatorFormArray = FormArray<IndicatorFormGroup>;
 
+//LOGS
+
+type LogConditionFormGroup = FormGroup<{
+  logConditionId: FormControl<number | null>;
+  externalOperation: FormControl<string | null>;
+  field: FormControl<string | null>;
+  comparation: FormControl<any>;
+  value: FormControl<string | null>;
+  dimensions: FormControl<string[] | null>;
+}>;
+
+type LogConditionFormArray = FormArray<LogConditionFormGroup>;
+
+//END_LOGS
+
 type ClauseFormGroup = FormGroup<{
   clauseId: FormControl<number | null>;
   indicatorName: FormControl<string>;
@@ -315,6 +332,15 @@ export class AlertManagerComponent implements OnInit{
   groupByForm: FormGroup;
   advancedOptionsForm: FormGroup;
 
+  //LOGS
+  logsStep1Form: FormGroup;
+  advancedSearchOptions: any[] = [];
+
+  logsConditionArray: LogConditionFormArray;
+  logsDimensionsIntersectionOptions: any[] = [];
+
+  logsAgroupationForm: FormGroup;
+
   //Step 2
   severityOptions: any[] = [];
   clauseComparationOptions: any[] = [];
@@ -372,6 +398,23 @@ export class AlertManagerComponent implements OnInit{
   isError: boolean = false;
   dolphinError: boolean = false;
 
+  //LOGS
+  dataTypesLoading: boolean = false;
+  dataTypesError: boolean = false;
+  dataTypesList: string[] = [];
+
+  tableNamesByDataTypeLoading: boolean = false;
+  tableNamesByDataTypeError: boolean = false;
+  tableNamesByDataTypeList: string[] = [];
+
+  metricsByDataTypeAndTableLoading: boolean = false;
+  metricsByDataTypeAndTableError: boolean = false;
+  metricsByDataTypeAndTableList: string[] = [];
+
+  dimensionsByDataTypeTableAndMetricLoading: boolean = false;
+  dimensionsByDataTypeTableAndMetricError: boolean = false;
+  dimensionsByDataTypeTableAndMetricList: string[] = [];
+
   constructor(
     private router: Router,
     private _fb: FormBuilder,
@@ -379,7 +422,8 @@ export class AlertManagerComponent implements OnInit{
     private alertService: AlertService,
     private endpointService: EndpointService,
     private authService: AuthService,
-    private route: ActivatedRoute ) {
+    private route: ActivatedRoute,
+    private alertOcurrencesService: AlertOcurrencesService ) {
 
     this.route.snapshot.paramMap.has('alert_id') ? this.mode = 'edit' : this.mode = 'create';
 
@@ -404,6 +448,18 @@ export class AlertManagerComponent implements OnInit{
       timeWindow: [timeWindowOptions[1], [Validators.required]],
       discardTime: [discardTimeOptions[0], [Validators.required]],
       periodicity: [periodicityOptions[1], [Validators.required]]
+    });
+
+    //LOGS
+    this.logsStep1Form = this._fb.group({
+      service: ['', [Validators.required]],
+      catalog: [{value: '', disabled: true}, [Validators.required]]
+    });
+
+    this.logsConditionArray = this._fb.array<LogConditionFormGroup>([]);
+
+    this.logsAgroupationForm = this._fb.group({
+      groupBy: [[], []]
     });
 
     //Step 2
@@ -456,6 +512,12 @@ export class AlertManagerComponent implements OnInit{
       this.createSilencePeriod();
     }
 
+    if (this.alertType == 'logs')
+    {
+      this.getDistinctDataTypes();
+      this.createLogCondition();
+    }
+
     //Step 1
 
     this.matOperationOptions = matOperationOptions;
@@ -478,6 +540,9 @@ export class AlertManagerComponent implements OnInit{
     this.timeWindowOptions = timeWindowOptions;
     this.discardTimeOptions = discardTimeOptions;
     this.periodicityOptions = periodicityOptions;
+
+    //LOGS
+    this.advancedSearchOptions = advancedSearchOptions;
 
     //Step 2
     this.severityOptions = severityOptions;
@@ -526,23 +591,37 @@ export class AlertManagerComponent implements OnInit{
     this.internalName = '';
     this.name = '';
 
-    let metricNameList: string[] = [];
-
-    this.indicatorArray.controls.forEach(indicator => {
-      if (indicator.controls.metrics.controls.length > 0)
-      {
-        indicator.controls.metrics.controls.forEach(metric => {
-          metricNameList.push(metric.get('metric')?.value?.metric!);
-        });
-      }
-    });
-
-    this.internalName = metricNameList.join('_');
-    this.name = metricNameList.join(' ');
-
-    if (this.groupByForm.get('groupBy')?.value.length > 0)
+    if (this.alertType == 'simple' || this.alertType == 'composite')
     {
-      this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join(',')
+      let metricNameList: string[] = [];
+
+      this.indicatorArray.controls.forEach(indicator => {
+        if (indicator.controls.metrics.controls.length > 0)
+        {
+          indicator.controls.metrics.controls.forEach(metric => {
+            metricNameList.push(metric.get('metric')?.value?.metric!);
+          });
+        }
+      });
+
+      this.internalName = metricNameList.join('_');
+      this.name = metricNameList.join(' ');
+
+      if (this.groupByForm.get('groupBy')?.value.length > 0)
+      {
+        this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join(',')
+      }
+    }
+    else if (this.alertType == 'logs')
+    {
+      this.internalName = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
+
+      this.name = this.logsStep1Form.get('service')?.value + ' ' + this.logsStep1Form.get('catalog')?.value;
+
+      if (this.logsAgroupationForm.get('groupBy')?.value.length > 0)
+      {
+        this.internalName += '_' + this.logsAgroupationForm.get('groupBy')?.value.join(',')
+      }
     }
 
     if (this.mode == 'create' && !this.authService.isAdmin())
@@ -660,6 +739,27 @@ export class AlertManagerComponent implements OnInit{
         }
       }
     }
+  }
+
+  createLogCondition()
+  {
+    const group: LogConditionFormGroup = this._fb.group({
+      logConditionId: this._fb.control(null),
+      externalOperation: this._fb.control('AND'),
+      field: this._fb.control({value: null, disabled: !this.logsStep1Form.get('catalog')?.value}, [Validators.required]),
+      comparation: this._fb.control(advancedSearchOptions[0]),
+      value: this._fb.control(''),
+      dimensions: this._fb.control([] as string[])
+    }) as LogConditionFormGroup;
+
+    this.logsConditionArray.push(group);
+  }
+
+  removeLogCondition(logConditionIndex: number)
+  {
+    this.logsConditionArray.removeAt(logConditionIndex);
+
+    this.getLogsDimensionsIntersection();
   }
 
   getMetricTagsIntersection() {
@@ -1508,6 +1608,11 @@ export class AlertManagerComponent implements OnInit{
       this.permissionList.push(new Permission(alertViewDto.permissions![i].id, this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId), this.permissionTypeOptions.find((permissionType) => alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r')))
       this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)].disabled = true;
     }
+
+    if (this.alertType == 'logs')
+    {
+      this.generateInternalNameAndName();
+    }
   }
 
   onClickConfirmCrupdateAlert() 
@@ -1518,6 +1623,11 @@ export class AlertManagerComponent implements OnInit{
 
     //FILTER LOGS
     let filterLogs: FilterLogDto[] = [];
+
+    for (let i = 0; i < this.logsConditionArray.length; i++)
+    {
+      filterLogs.push(new FilterLogDto(this.logsConditionArray.at(i).get('logConditionId')?.value!, this.logsConditionArray.at(i).get('externalOperation')?.value!, this.logsConditionArray.at(i).get('field')?.value!, this.logsConditionArray.at(i).get('comparation')?.value!, this.logsConditionArray.at(i).get('value')?.value!));
+    }
 
     //PERMISSIONS
     let alertPermissions: AlertPermissionDto[] = [];
@@ -1615,12 +1725,14 @@ export class AlertManagerComponent implements OnInit{
       this.advancedOptionsForm.get('timeWindow')?.value.value,
       this.alertType == 'simple' ? 0 : this.alertType == 'composite' ? 1 : this.alertType == 'logs' ? 2 : 3,
       this.advancedOptionsForm.get('discardTime')?.value.value,
-      this.groupByForm.get('groupBy')?.value,
+      this.alertType == 'simple' || this.alertType == 'composite' ? this.groupByForm.get('groupBy')?.value : this.logsAgroupationForm.get('groupBy')?.value,
       null,
       this.activationRecoverForm.get('activation1')?.value.value,
       this.activationRecoverForm.get('activation2')?.value.value,
       this.activationRecoverForm.get('recover1')?.value.value,
-      this.activationRecoverForm.get('recover2')?.value.value
+      this.activationRecoverForm.get('recover2')?.value.value,
+      this.logsStep1Form.get('service')?.value ? this.logsStep1Form.get('service')?.value : null,
+      this.logsStep1Form.get('catalog')?.value ? this.logsStep1Form.get('catalog')?.value : null,
     );
 
     alertDto.alertConditions = alertConditions;
@@ -1716,5 +1828,105 @@ export class AlertManagerComponent implements OnInit{
     });
 
     return allValid;
+  }
+
+  getDistinctDataTypes()
+  {
+    this.dataTypesLoading = true;
+    this.dataTypesError = false;
+
+    this.alertOcurrencesService.getDistinctDataTypes().subscribe(
+      (response) => {
+        this.dataTypesList = response;
+        this.dataTypesLoading = false;
+        this.dataTypesError = false;
+
+        this.logsStep1Form.get('catalog')?.setValue('');
+        this.logsConditionArray = this._fb.array<LogConditionFormGroup>([]);
+        this.createLogCondition();
+        this.logsDimensionsIntersectionOptions = [];
+      },
+      (error) => {
+        this.dataTypesLoading = false;
+        this.dataTypesError = true;
+      }
+    )
+  }
+
+  getDistinctTableNamesByDataType(dataType: string)
+  {
+    this.tableNamesByDataTypeLoading = true;
+    this.tableNamesByDataTypeError = false;
+
+    this.alertOcurrencesService.getDistinctTableNamesByDataType(dataType).subscribe(
+      (response) => {
+        this.tableNamesByDataTypeList = response;
+        this.tableNamesByDataTypeLoading = false;
+        this.tableNamesByDataTypeError = false;
+
+        this.logsStep1Form.get('catalog')?.enable();
+        this.logsConditionArray = this._fb.array<LogConditionFormGroup>([]);
+        this.createLogCondition();
+        this.logsDimensionsIntersectionOptions = [];
+      },
+      (error) => {
+        this.tableNamesByDataTypeLoading = false;
+        this.tableNamesByDataTypeError = true;
+      }
+    );
+  }
+
+  getDistinctMetricsByDataTypeAndTable(dataType: string, tableName: string)
+  {
+    this.metricsByDataTypeAndTableLoading = true;
+    this.metricsByDataTypeAndTableError = false;
+
+    this.alertOcurrencesService.getDistinctMetricsByDataTypeAndTable(dataType, tableName).subscribe(
+      (response) => {
+        this.metricsByDataTypeAndTableList = response;
+        this.metricsByDataTypeAndTableLoading = false;
+        this.metricsByDataTypeAndTableError = false;
+
+        this.logsConditionArray.controls.forEach((group) => {
+          group.get('field')?.enable();
+        });
+      },
+      (error) => {
+        this.metricsByDataTypeAndTableLoading = false;
+        this.metricsByDataTypeAndTableError = true;
+      }
+    );
+  }
+
+  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string, metric: string, logConditionIndex: number)
+  {
+    this.dimensionsByDataTypeTableAndMetricLoading = true;
+    this.dimensionsByDataTypeTableAndMetricError = false;
+
+    this.alertOcurrencesService.getDistinctDimensionsByDataTypeTableAndMetric(dataType, tableName, metric).subscribe(
+      (response) => {
+        this.dimensionsByDataTypeTableAndMetricList = response;
+        this.dimensionsByDataTypeTableAndMetricLoading = false;
+        this.dimensionsByDataTypeTableAndMetricError = false;
+
+        this.logsConditionArray.at(logConditionIndex).get('dimensions')?.setValue(response);
+
+        this.getLogsDimensionsIntersection();
+      },
+      (error) => {
+        this.dimensionsByDataTypeTableAndMetricLoading = false;
+        this.dimensionsByDataTypeTableAndMetricError = true;
+      }
+    );
+  }
+
+  getLogsDimensionsIntersection()
+  {
+    this.logsConditionArray.controls.forEach((group, ind) => {
+      if (ind == 0) 
+        this.logsDimensionsIntersectionOptions = [...group.get('dimensions')?.value!];
+      else
+        this.logsDimensionsIntersectionOptions = this.logsDimensionsIntersectionOptions.filter(item => group.get('dimensions')?.value!.includes(item));
+    });
   }
 }

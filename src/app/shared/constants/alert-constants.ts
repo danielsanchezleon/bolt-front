@@ -6,7 +6,7 @@ export class MetricOptions
 //STEP 1
 
 export const matOperationOptions = [
-    {value: 'MEAN', label: 'Media'},
+    {value: 'AVG', label: 'Media'},
     {value: 'SUM', label: 'Suma'},
     {value: 'MIN', label: 'Mínimo'},
     {value: 'MAX', label: 'Máximo'},
@@ -43,6 +43,16 @@ export const periodicityOptions = [
     {value: "15m", label: '15 minutos'},
     {value: "30m", label: '30 minutos'},
     {value: "1h", label: '1 hora'}
+];
+
+//LOGS
+export const advancedSearchOptions = [
+    {value: 'CONTAINS', label: 'Contiene'},
+    {value: 'NOT_CONTAINS', label: 'No contiene'},
+    {value: 'EQUALS', label: 'Es igual a (texto exacto)'},
+    {value: 'NOT_EQUALS', label: 'No es igual a (texto exacto)'},
+    {value: 'REGEX', label: 'Coincide con expresión regular (regex)'},
+    {value: 'NOT_REGEX', label: 'No coincide con expresión regular (regex)'}
 ];
 
 //STEP 2

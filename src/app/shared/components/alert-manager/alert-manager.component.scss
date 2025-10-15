@@ -285,6 +285,75 @@
         }
     }
 
+    .logs-step-1-container
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+
+        .selects-container
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+
+            padding: 16px;
+
+            .select-container
+            {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+
+                border: 1px solid lightblue;
+                border-radius: 16px;
+                background-color: #dbeafe;
+
+                padding: 16px;
+
+                .select
+                {
+                    width: 100%;
+                }
+            }
+        }
+
+        .advanced-search-container
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            background-color: #f0fdf4;
+            border: 2px solid #bbf7d0;
+            width: 100%;
+            border-radius: 8px;
+
+            padding: 16px;
+
+            .condition-container
+            {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+
+                padding: 16px;
+
+                background-color: white;
+                border: 1px solid lightgray;
+                border-radius: 8px;
+            }
+        }
+
+        .titled-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+
     .step-2-container {
         display: flex;
         flex-direction: column;
