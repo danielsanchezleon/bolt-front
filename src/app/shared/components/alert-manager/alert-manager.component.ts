@@ -1626,7 +1626,7 @@ export class AlertManagerComponent implements OnInit{
 
     for (let i = 0; i < this.logsConditionArray.length; i++)
     {
-      filterLogs.push(new FilterLogDto(this.logsConditionArray.at(i).get('logConditionId')?.value!, this.logsConditionArray.at(i).get('externalOperation')?.value!, this.logsConditionArray.at(i).get('field')?.value!, this.logsConditionArray.at(i).get('comparation')?.value!, this.logsConditionArray.at(i).get('value')?.value!));
+      filterLogs.push(new FilterLogDto(this.logsConditionArray.at(i).get('logConditionId')?.value!, this.logsConditionArray.at(i).get('externalOperation')?.value!, this.logsConditionArray.at(i).get('field')?.value!, this.logsConditionArray.at(i).get('comparation')?.value!.value, this.logsConditionArray.at(i).get('value')?.value!));
     }
 
     //PERMISSIONS
