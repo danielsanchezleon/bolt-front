@@ -616,7 +616,7 @@ export class AlertManagerComponent implements OnInit{
     {
       this.internalName = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
 
-      this.name = this.logsStep1Form.get('service')?.value + ' ' + this.logsStep1Form.get('catalog')?.value;
+      this.name = this.logsStep1Form.get('service')?.value + ' ' + this.logsStep1Form.get('catalog')?.value + ' (CATALOG)';
 
       if (this.logsAgroupationForm.get('groupBy')?.value.length > 0)
       {
