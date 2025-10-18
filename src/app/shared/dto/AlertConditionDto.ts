@@ -1,5 +1,4 @@
 import { AlertClauseDto } from "./AlertClauseDto";
-import { ConditionFilterDto } from "./ConditionFilterDto";
 
 export class AlertConditionDto 
 {

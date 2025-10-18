@@ -1,4 +1,4 @@
-import { ConditionFilterDto } from "./ConditionFilterDto";
+import { AlertFiltersDto } from "./AlertFiltersDto";
 
 export class AlertClauseDto 
 {
@@ -14,6 +14,6 @@ export class AlertClauseDto
     public thresholdInclude: boolean | null,
     public thresholdUp: number | null,
     public thresholdIncludeUp: boolean | null,
-    public conditionFilters: ConditionFilterDto[] = []
+    public conditionFilters: AlertFiltersDto[] = []
   ) {}
 }

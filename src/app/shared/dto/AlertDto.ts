@@ -1,15 +1,15 @@
 import { AlertConditionDto } from "./AlertConditionDto";
 import { AlertConditionHistoryDto } from "./AlertConditionHistoryDto";
+import { AlertFiltersDto } from "./AlertFiltersDto";
 import { AlertIndicatorDto } from "./AlertIndicatorDto";
 import { AlertPermissionDto } from "./AlertPermissionDto";
 import { AlertSilenceDto } from "./AlertSilenceDto";
 import { EndpointAlertDto } from "./EndpointAlertDto";
-import { FilterLogDto } from "./FilterLogDto";
 
 export class AlertDto 
 {
   public alertConditions?: AlertConditionDto[];
-  public filterLogs?: FilterLogDto[];
+  public filterLogs?: AlertFiltersDto[];
   public alertIndicators?: AlertIndicatorDto[];
   public alertSilences?: AlertSilenceDto[];
   public alertConditionHistories?: AlertConditionHistoryDto[];

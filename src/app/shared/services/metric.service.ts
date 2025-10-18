@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TableMetricInfo } from '../models/TableMetricInfo';
 import { environment } from '../../../environments/environment';
+import { ChartDataRequestDto } from '../dto/metric/ChartDataRequestDto';
 
 @Injectable({
   providedIn: 'root'
@@ -30,5 +31,10 @@ export class MetricService {
     const params = new HttpParams().set('metric', metric).set('table', table);
 
     return this.http.get<TableMetricInfo>(this.apiUrl + '/getMetric', {params: params});
+  }
+
+  getChartData(chartDataRequestDto: ChartDataRequestDto): Observable<any>
+  {
+    return this.http.post<any>(this.apiUrl + '/getChartData', chartDataRequestDto);
   }
 }

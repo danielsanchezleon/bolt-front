@@ -1,4 +1,10 @@
-<div
+<div *ngIf="disabled"
+  class="floating-button"
+>
+  <p-button icon="pi pi-chart-line" [rounded]="true" size="large" [severity]="'secondary'" [disabled]="disabled"/>
+</div>
+
+<div *ngIf="!disabled"
   class="floating-button"
   (mouseenter)="onMouseEnter()"
   (mouseleave)="onMouseLeave()"
@@ -14,4 +20,8 @@
 >
   <!-- Contenido del modal -->
   <h2>Gráfico Interactivo</h2>
+
+  <p-chart #chart type="line" [data]="data" [options]="options" />
 </div>
+
+<div *ngIf="isHovering" class="blur"></div>

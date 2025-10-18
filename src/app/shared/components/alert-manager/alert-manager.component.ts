@@ -38,9 +38,7 @@ import { AlertIndicatorDto } from '../../../shared/dto/AlertIndicatorDto';
 import { AlertMetricDto } from '../../../shared/dto/AlertMetricDto';
 import { AlertPermissionDto } from '../../../shared/dto/AlertPermissionDto';
 import { AlertSilenceDto } from '../../../shared/dto/AlertSilenceDto';
-import { ConditionFilterDto } from '../../../shared/dto/ConditionFilterDto';
 import { EndpointAlertDto } from '../../../shared/dto/EndpointAlertDto';
-import { FilterLogDto } from '../../../shared/dto/FilterLogDto';
 import { AlertService } from '../../../shared/services/alert.service';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { EndpointService } from '../../../shared/services/endpoint.service';
@@ -60,6 +58,11 @@ import {matOperationOptions,
         silencePeriodDayOptions 
       } from '../../constants/alert-constants';
 import { AlertOcurrencesService } from '../../services/alert-ocurrences.service';
+import { ChartDataDto } from '../../dto/metric/ChartDataDto';
+import { ChartDataRequestDto } from '../../dto/metric/ChartDataRequestDto';
+import { MetricDataDto } from '../../dto/metric/MetricDataDto';
+import { AlertFiltersDto } from '../../dto/AlertFiltersDto';
+import { IndicatorDataDto } from '../../dto/metric/IndicatorDataDto';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -288,7 +291,7 @@ type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
 @Component({
   selector: 'app-alert-manager',
-  imports: [ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [FloatingGraphComponent, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './alert-manager.component.html',
   styleUrl: './alert-manager.component.scss'
 })
@@ -300,6 +303,12 @@ export class AlertManagerComponent implements OnInit{
   subscriptions: Subscription[] = [];
 
   isInitialMetricListLoading: boolean = false;
+
+  isChartDataLoading: boolean = false;
+  isChartDataError: boolean = false;
+  chartData!: ChartDataDto;
+
+  conditionGraphList: any[] = [];
 
   //Step 1
   matOperationOptions: any[] = [];
@@ -713,6 +722,8 @@ export class AlertManagerComponent implements OnInit{
     this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? 'A.1' : '');
     this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
     this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
+
+    this.getChartData();
   }
 
   onChangeMetricSelect(indicatorIndex: number)
@@ -739,6 +750,8 @@ export class AlertManagerComponent implements OnInit{
         }
       }
     }
+
+    this.getChartData();
   }
 
   createLogCondition()
@@ -918,6 +931,8 @@ export class AlertManagerComponent implements OnInit{
     this.selectedDimensionValuesMap.delete(this.conditionArray.at(conditionIndex).controls.clauses.at(clauseIndex).get('id')?.value!);
     this.conditionArray.at(conditionIndex).controls.clauses.removeAt(clauseIndex);
     this.conditionArray.at(conditionIndex).controls.clauses.at(0).get('externalOperation')?.setValue(null);
+
+    this.buildConditionGraphsList();
   }
 
   createCondition() {
@@ -1147,6 +1162,8 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray.controls.forEach((condition, i) => {
       condition.get('id')?.setValue((i + 1).toString());
     });
+
+    this.buildConditionGraphsList();
   }
 
   onClickThresholdArrowDown(index: number) {
@@ -1622,11 +1639,14 @@ export class AlertManagerComponent implements OnInit{
     this.isError = false;
 
     //FILTER LOGS
-    let filterLogs: FilterLogDto[] = [];
+    let filterLogs: AlertFiltersDto[] = [];
 
-    for (let i = 0; i < this.logsConditionArray.length; i++)
+    if (this.alertType == 'logs')
     {
-      filterLogs.push(new FilterLogDto(this.logsConditionArray.at(i).get('logConditionId')?.value!, this.logsConditionArray.at(i).get('externalOperation')?.value!, this.logsConditionArray.at(i).get('field')?.value!, this.logsConditionArray.at(i).get('comparation')?.value!.value, this.logsConditionArray.at(i).get('value')?.value!));
+      for (let i = 0; i < this.logsConditionArray.length; i++)
+      {
+        filterLogs.push(new AlertFiltersDto(this.logsConditionArray.at(i).get('logConditionId')?.value!, this.logsConditionArray.at(i).get('comparation')?.value!.value, this.logsConditionArray.at(i).get('externalOperation')?.value!, this.logsConditionArray.at(i).get('field')?.value!, this.logsConditionArray.at(i).get('value')?.value!));
+      }
     }
 
     //PERMISSIONS
@@ -1694,7 +1714,7 @@ export class AlertManagerComponent implements OnInit{
 
       //CLAUSES
       for (let clause of condition.controls.clauses.controls) {
-        let conditionFilters: ConditionFilterDto[] = [];
+        let conditionFilters: AlertFiltersDto[] = [];
         let dimensionValuesMap: Map<string, string[]> = this.selectedDimensionValuesMap.get(clause.get('id')?.value!)!;
 
         for (let key of dimensionValuesMap.keys())
@@ -1703,7 +1723,7 @@ export class AlertManagerComponent implements OnInit{
           {
             for (let value of dimensionValuesMap.get(key)!)
             {
-              conditionFilters.push(new ConditionFilterDto(key, value));
+              // conditionFilters.push(new AlertFiltersDto(null, key, value));
             }
           }
         }
@@ -1928,5 +1948,82 @@ export class AlertManagerComponent implements OnInit{
       else
         this.logsDimensionsIntersectionOptions = this.logsDimensionsIntersectionOptions.filter(item => group.get('dimensions')?.value!.includes(item));
     });
+  }
+
+  getChartData()
+  {
+    this.isChartDataLoading = true;
+    this.isChartDataError = false;
+    
+    let indicatorDataDtoList: IndicatorDataDto[] = [];
+
+    this.indicatorArray.controls.forEach((indicator, i) => {
+      let metricDataDtoList: MetricDataDto[] = [];
+      indicator.get('metrics')?.value.forEach((metric, j) => {
+        if (metric.metric != null)
+          metricDataDtoList.push(new MetricDataDto(metric.metric!.table_name!, metric.metric!.metric!, metric.operation!.value!));
+      });
+      indicatorDataDtoList.push(new IndicatorDataDto(metricDataDtoList));
+    });
+
+    let chartDataRequestDto: ChartDataRequestDto = new ChartDataRequestDto(indicatorDataDtoList, [], this.advancedOptionsForm.get('timeWindow')?.value.value, 24);
+
+    this.metricService.getChartData(chartDataRequestDto).subscribe(
+      (response) => {
+        this.isChartDataLoading = false;
+        this.isChartDataError = false;
+        this.chartData = response;
+      },
+      (error) => {
+        this.isChartDataLoading = false;
+        this.isChartDataError = true;
+      }
+    )
+  }
+
+  countMetrics()
+  {
+    let count = 0;
+
+    this.indicatorArray.controls.forEach((indicator) => {
+      indicator.get('metrics')?.value.forEach((metric: any) => {
+        if (metric.metric != null)
+          count++;
+      });
+    });
+
+    return count;
+  }
+
+  buildConditionGraphsList()
+  {
+    this.conditionGraphList = [];
+
+    this.conditionArray.controls.forEach((condition, i) => {
+      condition.get('clauses')?.value.forEach((clause: any, j) => {
+
+        if (clause.value)
+        {
+          switch (clause.comparation.value) {
+            case 'MORE_THAN':
+              this.conditionGraphList.push({type: 'line', label: `Clause ${i + 1}_${j + 1}`, y: clause.value, color: 'red'});
+            break;
+
+            case 'LESS_THAN':
+              this.conditionGraphList.push({type: 'line', label: `Clause ${i + 1}_${j + 1}`, y: clause.value, color: 'red'});
+            break;
+
+            case 'WITHIN_RANGE':
+              
+            break;
+
+            case 'OUT_OF_RANGE':
+            break;
+          }
+        }
+      });
+    });
+
+    console.log(this.conditionGraphList)
   }
 }
