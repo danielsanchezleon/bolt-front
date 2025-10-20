@@ -1766,11 +1766,17 @@ export class AlertManagerComponent implements OnInit{
     this.alertService.crupdateAlert(this.mode == 'create' ? null : this.alertId, alertDto).subscribe(
       (response) => 
       {
-        if (response.status == 'DISABLED')
+        if (response.status == 'DOLPHIN_ERROR')
+        {
           this.dolphinError = true;
+          this.isError = true;
+        }
+        else
+        {
+          this.isSuccess = true;
+        }
 
         this.isLoading = false;
-        this.isSuccess = true;
       },
       (error) =>
       {

@@ -140,4 +140,13 @@ export class AlertService {
 
     return this.http.delete<any>(this.apiUrl + '/deleteAlert', {params: params});
   }
+
+  recreateAlert(alertId: number): Observable<AlertViewDto>
+  {
+    let params = new HttpParams();
+
+    params = params.append('alertId', alertId);
+
+    return this.http.get<AlertViewDto>(this.apiUrl + '/recreateAlert', {params: params});
+  }
 }

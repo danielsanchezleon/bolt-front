@@ -97,9 +97,9 @@ export class ModifyAlertComponent implements OnInit
 
   selectedAlerts: AlertViewDto[] = [];
 
+  //UPDATE ALERTS
   saveChangesModalVisible: boolean = false;
 
-  //UPDATE ALERTS
   saveChangesMapLoading: Map<number, boolean> = new Map();
   saveChangesMapSuccess: Map<number, boolean> = new Map();
   saveChangesMapError: Map<number, boolean> = new Map();
@@ -116,6 +116,16 @@ export class ModifyAlertComponent implements OnInit
 
   failedDeletes: number = 0;
   completedDeletes: number = 0;
+
+  //RECREATE ALERTS
+  recreateAlertModalVisible: boolean = false;
+
+  recreateAlertsMapLoading: Map<number, boolean> = new Map();
+  recreateAlertsMapSuccess: Map<number, boolean> = new Map()
+  recreateAlertsMapError: Map<number, boolean> = new Map();
+
+  failedRecreates: number = 0;
+  completedRecreates: number = 0;
 
   alertMessageEdited: AlertViewDto | null = null;
   newAlertMessage: string = '';
@@ -286,6 +296,7 @@ export class ModifyAlertComponent implements OnInit
           this.saveChangesModalVisible = false;
           this.completedUpdates = 0;
           this.failedUpdates = 0;
+          this.selectedAlerts = [];
         }
       },
       (error) => {
@@ -373,6 +384,7 @@ export class ModifyAlertComponent implements OnInit
           this.deleteAlertsModalVisible = false;
           this.completedDeletes = 0;
           this.failedDeletes = 0;
+          this.selectedAlerts = [];
         }
       },
       (error) => {
@@ -388,6 +400,83 @@ export class ModifyAlertComponent implements OnInit
   deleteAlertsLoading(): boolean
   {
     for (const value of this.deleteAlertsMapLoading.values()) 
+    {
+      if (value) 
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  allSelectedAlertsHaveDolphinError(): boolean
+  {
+    for (const alert of this.selectedAlerts)
+    {
+      if (alert.status != 'DOLPHIN_ERROR')
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  onClickConfirmRecreateAlerts()
+  {
+    this.selectedAlerts.forEach((alert) => {
+      this.recreateAlert(alert);
+    });
+  }
+
+  recreateAlert(alert: AlertViewDto)
+  {
+    this.recreateAlertsMapLoading.set(alert.alertId!, true);
+    this.recreateAlertsMapSuccess.set(alert.alertId!, false);
+    this.recreateAlertsMapError.set(alert.alertId!, false);
+
+    this.alertService.recreateAlert(alert.alertId!).subscribe(
+      (response) => {
+
+        if (response.status == 'DOLPHIN_ERROR')
+        {
+          this.recreateAlertsMapLoading.set(alert.alertId!, false);
+          this.recreateAlertsMapSuccess.set(alert.alertId!, false);
+          this.recreateAlertsMapError.set(alert.alertId!, true);
+          this.failedRecreates++;
+        }
+        else
+        {
+          this.recreateAlertsMapLoading.set(alert.alertId!, false);
+          this.recreateAlertsMapSuccess.set(alert.alertId!, true);
+          this.recreateAlertsMapError.set(alert.alertId!, false);
+        }
+        
+        this.completedRecreates++;
+
+        if ((this.completedRecreates == this.selectedAlerts.length) && this.failedRecreates == 0)
+        {
+          this.getAllAlerts(this.page, this.size, '', null);
+          this.recreateAlertModalVisible = false;
+          this.completedRecreates = 0;
+          this.failedRecreates = 0;
+          this.selectedAlerts = [];
+        }
+      },
+      (error) => {
+        this.recreateAlertsMapLoading.set(alert.alertId!, false);
+        this.recreateAlertsMapSuccess.set(alert.alertId!, false);
+        this.recreateAlertsMapError.set(alert.alertId!, true);
+        this.completedRecreates++;
+        this.failedRecreates++;
+      }
+    )
+  }
+
+  recreateAlertsLoading(): boolean
+  {
+    for (const value of this.recreateAlertsMapLoading.values()) 
     {
       if (value) 
       {

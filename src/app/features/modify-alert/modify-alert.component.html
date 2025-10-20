@@ -78,7 +78,7 @@
             <ng-template #body let-alert>
                 <tr>
                     <td style="width: 4rem; text-align: center;">
-                        <p-tableCheckbox [value]="alert" />
+                        <p-tableCheckbox [value]="alert" chan />
                     </td>
                     <td class="title-container">
                         <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.name" (click)="onClickGoToEditAlert(alert);">
@@ -205,7 +205,8 @@
                     </td>
                     <td style="text-align: center;">
                         <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta activa'"></i>
-                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
+                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-gray" [title]="'Alerta desactivada'"></i>
+                        <i *ngIf="alert.status == 'DOLPHIN_ERROR'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
                     </td>
                 </tr>
             </ng-template>
@@ -245,7 +246,10 @@
         <div><span class="font-20 font-w-600">{{selectedAlerts.length}}</span> &nbsp; {{selectedAlerts.length == 1 ? 'alerta seleccionada' : 'alertas seleccionadas'}}</div>
         <p-button icon="pi pi-times" label="Borrar selección" (onClick)="selectedAlerts = [];" severity="secondary" />
     </div>
-    <p-button icon="pi pi-trash" label="Eliminar alerta" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
+    <div style="display: flex; flex-direction: row; gap: 16px;">
+        <p-button *ngIf="allSelectedAlertsHaveDolphinError();" icon="pi pi-replay" label="Recrear alerta" severity="primary" (onClick)="recreateAlertModalVisible = true;" />
+        <p-button icon="pi pi-trash" label="Eliminar alerta" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
+    </div>
     <div class="buttons">
         <p-floatlabel variant="on">
             <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalTimeWindow($event);"/>
@@ -288,7 +292,7 @@
     </div>
 </app-modal>
 
-<app-modal [title]="'Eliminar alertas'" [visible]="deleteAlertsModalVisible">
+<app-modal [title]="selectedAlerts.length == 1 ? 'Eliminar alerta' : 'Eliminar alertas'" [visible]="deleteAlertsModalVisible">
     <div class="modal-container">
         <div class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-trash" style="font-size: 128px"></i>
@@ -314,6 +318,36 @@
         <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
         <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmDeleteAlerts();" [disabled]="deleteAlertsLoading()" />
         <div *ngIf="completedDeletes == selectedAlerts.length"></div>
-        <p-button *ngIf="completedDeletes == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, '', null); saveChangesModalVisible = false;" [disabled]="deleteAlertsLoading()" />
+        <p-button *ngIf="completedDeletes == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedDeletes = 0; getAllAlerts(page, size, '', null); deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
+    </div>
+</app-modal>
+
+<app-modal [title]="selectedAlerts.length == 1 ? 'Recrear alerta' : 'Recrear alertas'" [visible]="recreateAlertModalVisible">
+    <div class="modal-container">
+        <div class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-replay" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se van a recrear {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser recreada' : 'A continuación se muestran las alertas que van a ser recreadas'}}</div>
+        </div>
+        <div class="changed-alerts-container">
+            <div class="changed-alert-container" *ngFor="let selectedAlert of selectedAlerts; let i = index; let last = last;">
+                <div class="data">
+                    <div class="font-w-600">{{selectedAlert.name}}</div>
+                    <i *ngIf="!this.recreateAlertsMapLoading.get(selectedAlert.alertId!) && !this.recreateAlertsMapSuccess.get(selectedAlert.alertId!) && !this.recreateAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-circle"></i>
+                    <i *ngIf="this.recreateAlertsMapLoading.get(selectedAlert.alertId!)" class="pi pi-spinner spin"></i>
+                    <i *ngIf="this.recreateAlertsMapSuccess.get(selectedAlert.alertId!)" class="pi pi-check-circle" style="color: green;"></i>
+                    <i *ngIf="this.recreateAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-times-circle" style="color: red;"></i>
+                </div>
+
+                <div *ngIf="!last" class="separator"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <p-button *ngIf="completedRecreates != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
+        <p-button *ngIf="completedRecreates != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmRecreateAlerts();" [disabled]="recreateAlertsLoading()" />
+        <div *ngIf="completedRecreates == selectedAlerts.length"></div>
+        <p-button *ngIf="completedRecreates == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedRecreates = 0; getAllAlerts(page, size, '', null); recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
     </div>
 </app-modal>
