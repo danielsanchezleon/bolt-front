@@ -9,7 +9,7 @@ import { EndpointAlertDto } from "./EndpointAlertDto";
 export class AlertDto 
 {
   public alertConditions?: AlertConditionDto[];
-  public filterLogs?: AlertFiltersDto[];
+  public alertFilters?: AlertFiltersDto[];
   public alertIndicators?: AlertIndicatorDto[];
   public alertSilences?: AlertSilenceDto[];
   public alertConditionHistories?: AlertConditionHistoryDto[];

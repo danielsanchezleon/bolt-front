@@ -1761,7 +1761,7 @@ export class AlertManagerComponent implements OnInit{
     alertDto.alertIndicators = alertIndicators;
     alertDto.alertPermissions = alertPermissions;
     alertDto.alertConditionHistories = alertConditionHistories;
-    alertDto.filterLogs = filterLogs;
+    alertDto.alertFilters = filterLogs;
 
     this.alertService.crupdateAlert(this.mode == 'create' ? null : this.alertId, alertDto).subscribe(
       (response) => 
