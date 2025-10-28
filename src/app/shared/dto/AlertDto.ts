@@ -1,6 +1,6 @@
 import { AlertConditionDto } from "./AlertConditionDto";
 import { AlertConditionHistoryDto } from "./AlertConditionHistoryDto";
-import { AlertFiltersDto } from "./AlertFiltersDto";
+import { ConditionFilterDto } from "./ConditionFilterDto";
 import { AlertIndicatorDto } from "./AlertIndicatorDto";
 import { AlertPermissionDto } from "./AlertPermissionDto";
 import { AlertSilenceDto } from "./AlertSilenceDto";
@@ -9,7 +9,6 @@ import { EndpointAlertDto } from "./EndpointAlertDto";
 export class AlertDto 
 {
   public alertConditions?: AlertConditionDto[];
-  public alertFilters?: AlertFiltersDto[];
   public alertIndicators?: AlertIndicatorDto[];
   public alertSilences?: AlertSilenceDto[];
   public alertConditionHistories?: AlertConditionHistoryDto[];

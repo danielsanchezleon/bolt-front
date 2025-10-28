@@ -1,4 +1,5 @@
 import { AlertClauseDto } from "./AlertClauseDto";
+import { ConditionFilterDto } from "./ConditionFilterDto";
 
 export class AlertConditionDto 
 {
@@ -6,6 +7,7 @@ export class AlertConditionDto
     public id: number | null,
     public severity: string,
     public status: boolean,
-    public alertClauses: AlertClauseDto[] = []
+    public alertClauses: AlertClauseDto[] = [],
+    public conditionFilters: ConditionFilterDto[] = []
   ) {}
 }

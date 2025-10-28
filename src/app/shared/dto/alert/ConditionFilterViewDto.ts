@@ -1,4 +1,7 @@
 export class ConditionFilterViewDto {
-  conditionFilterField?: string;
-  conditionFilterValue?: string;
+  conditionFilterId?: number;
+  externalOperation?: string | null;
+  compOperation?: string;
+  filterField?: string;
+  filterValue?: string;
 }

@@ -1,5 +1,3 @@
-import { AlertFiltersDto } from "./AlertFiltersDto";
-
 export class AlertClauseDto 
 {
   constructor(
@@ -14,6 +12,5 @@ export class AlertClauseDto
     public thresholdInclude: boolean | null,
     public thresholdUp: number | null,
     public thresholdIncludeUp: boolean | null,
-    public conditionFilters: AlertFiltersDto[] = []
   ) {}
 }

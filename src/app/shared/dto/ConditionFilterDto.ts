@@ -1,9 +1,9 @@
-export class AlertFiltersDto
+export class ConditionFilterDto
 {
     constructor(
         public id: number | null,
-        public comparation: string,
-        public externalOperation: string,
+        public externalOperation: string | null,
+        public compOperation: string,
         public filterField: string,
         public filterValue: string
     ) {}

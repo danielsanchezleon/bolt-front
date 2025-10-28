@@ -28,6 +28,8 @@ export class FloatingGraphComponent {
 
   @ViewChild('chart') chart?: UIChart;
 
+  onClickButton: boolean = false;
+
   constructor(private cd: ChangeDetectorRef) { }
 
   ngOnInit() {

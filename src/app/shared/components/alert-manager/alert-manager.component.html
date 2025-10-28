@@ -19,7 +19,7 @@
                             <div class="name"><span
                                     class="text-white font-w-700">{{indicator.get('name')?.value}}</span></div>
                             <div *ngIf="this.alertType == 'composite'" class="buttons">
-                                <p-button icon="pi pi-plus" severity="primary" (onClick)="createIndicator();" />
+                                <p-button *ngIf="indicatorArray.length < 3" icon="pi pi-plus" severity="primary" (onClick)="createIndicator();" />
                                 <p-button *ngIf="indicatorArray.length > 1" icon="pi pi-minus" severity="secondary"
                                     (onClick)="removeIndicator(i);" />
                             </div>
@@ -58,10 +58,10 @@
                                     </ng-template>
                                 </p-select>
                                 <div class="buttons">
-                                    <p-button icon="pi pi-plus" severity="primary"
+                                    <p-button *ngIf="indicator.controls.metrics.length < 5" icon="pi pi-plus" severity="primary"
                                         (onClick)="createMetric(i);" />
                                     <p-button
-                                        *ngIf="(indicator.controls.metrics.controls.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)"
+                                        *ngIf="(indicator.controls.metrics.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)"
                                         icon="pi pi-minus" severity="secondary"
                                         (onClick)="removeMetric(i, j);" />
                                 </div>
@@ -97,7 +97,7 @@
                     <div class="font-16 font-w-600">Agrupaciones</div>
                     <form class="group-by-options" [formGroup]="groupByForm">
                         <p-floatlabel class="full-width-selector" variant="on">
-                            <p-multiselect [options]="tagIntersectionOptions" class="full-width-selector"
+                            <p-multiselect [options]="dimensionIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
                                 (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
@@ -147,7 +147,7 @@
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <span class="font-14 font-w-600">Servicio</span>
-                            <p-select class="select" [options]="dataTypesList" formControlName="service" appendTo="body" placeholder="Selecciona un servicio" (onChange)="getDistinctTableNamesByDataType(logsStep1Form.get('service')?.value); this.generateInternalNameAndName();" />
+                            <p-select class="select" [options]="dataTypesList" formControlName="service" appendTo="body" placeholder="Selecciona un servicio" (onChange)="getDistinctTableNamesByDataType(logsStep1Form.get('service')?.value, true); this.generateInternalNameAndName();" />
                         </div>
                     </div>
                     <div class="select-container">
@@ -161,7 +161,7 @@
                 <app-inner-accordion [title]="'Búsqueda avanzada'" [isOpen]="mode == 'edit' ? true : false">
                     <div class="advanced-search-container">
                         <span class="font-14 font-w-600">Patrón de búsqueda avanzada en logs</span>
-                        <div class="condition-container" *ngFor="let logCondition of logsConditionArray.controls; let i = index; let first = first;" [formGroup]="logCondition" [pTooltip]="!this.logsStep1Form.get('catalog')?.value ? 'Debes seleccionar primero un catálogo' : ''" tooltipPosition="top" showDelay="500">
+                        <div class="condition-container" *ngFor="let logCondition of logsConditionArray.controls; let i = index; let first = first;" [formGroup]="logCondition" [pTooltip]="!logsStep1Form.get('catalog')?.value ? 'Debes seleccionar primero un catálogo' : ''" tooltipPosition="top" showDelay="500">
                             <p-select *ngIf="!first" [options]="externalOperationOptions" formControlName="externalOperation" [size]="'small'" />
                             <p-select class="select" [options]="metricsByDataTypeAndTableList" appendTo="body" placeholder="Selecciona un campo" [loading]="metricsByDataTypeAndTableLoading" [size]="'small'" formControlName="field" (onChange)="getDistinctDimensionsByDataTypeTableAndMetric(logsStep1Form.get('service')?.value, logsStep1Form.get('catalog')?.value, logCondition.get('field')?.value!, i);" />
                             <p-select class="select" [options]="advancedSearchOptions" optionLabel="label" appendTo="body" [size]="'small'" [ngStyle]="{'width': '320px', 'min-width': '320px'}" formControlName="comparation" />
@@ -174,11 +174,11 @@
 
                 <div class="titled-container">
                     <div class="font-16 font-w-600">Agrupaciones</div>
-                    <form class="group-by-options" [formGroup]="logsAgroupationForm">
+                    <form class="group-by-options" [formGroup]="groupByForm">
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-multiselect [options]="logsDimensionsIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
-                                (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
+                                (onChange)="onChangeLogsGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                     </form>
@@ -190,7 +190,7 @@
 
         <app-accordion *ngIf="!isInitialMetricListLoading"
             [title]="'Paso 2: Configura las condiciones de salto y recuperación'" [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [disabled]="(alertType == 'simple' || alertType == 'composite') && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)"
             [isOpen]="mode == 'edit' ? true : false">
             <div class="step-2-container">
                 <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
@@ -205,7 +205,7 @@
                 </div>
 
                 <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;"
-                    [ngStyle]="{'border': ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN') && condition.controls.clauses.at(0).get('value')?.value == undefined) || ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE') && (condition.controls.clauses.at(0).get('min')?.value == undefined || condition.controls.clauses.at(0).get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
+                    [ngStyle]="{'border': ( (condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN') && condition.controls.clauses.at(0).get('value')?.value == undefined) || ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE') && (condition.controls.clauses.at(0).get('min')?.value == undefined || condition.controls.clauses.at(0).get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
                     <div class="condition-content">
                         <div class="condition-top">
                             <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
@@ -239,7 +239,7 @@
                                 *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
                                 [pTooltip]="'Eliminar condición'" tooltipPosition="top" showDelay="1000"
                                 icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
-                                (onClick)="onClickRemoveSelectedThreshold(i);" />
+                                (onClick)="removeCondition(i);" />
                         </div>
                         <div class="condition-clause"
                             *ngFor="let clause of condition.controls.clauses.controls; let j = index; let first = first;"
@@ -312,14 +312,16 @@
                                     severity="secondary" (onClick)="removeClause(i, j);" />
                             </div>
                         </div>
-                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="separator"></div>
-                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0" class="condition-dimensions">
-                            <p-multiselect
-                                *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;"
-                                class="multiselect" [options]="dimensionValuesMap.get(dimension)"
-                                [ngModel]="dimensionValuesMap.get(dimension)"
-                                (onChange)="onChangeDimensionValuesSelection(condition, dimension, $event);"
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0 && conditionFiltersMap.get(condition.get('id')?.value!)" class="separator"></div>
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0 && conditionFiltersMap.get(condition.get('id')?.value!)" class="condition-dimensions">
+                            <ng-container *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;">
+                                <p-multiselect
+                                *ngIf="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!"
+                                class="multiselect" [options]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('values')!"
+                                [ngModel]="mode == 'create' ? conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('values')! : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!"
+                                (onChange)="onChangeConditionFiltersSelection(condition, dimension, $event);"
                                 appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1" />
+                            </ng-container>
                         </div>
                     </div>
                 </div>
@@ -431,7 +433,7 @@
                                 (onClick)="deleteSilencePeriod(i);" />
                         </div>
 
-                        <p-button label="Añadir otro periodo de silencio" icon="pi pi-plus"
+                        <p-button label="{{silencePeriodArray.length == 0 ? 'Añadir periodo de silencio' : 'Añadir otro periodo de silencio'}}" icon="pi pi-plus"
                             (onClick)="createSilencePeriod();" severity="secondary" />
                     </div>
                 </app-inner-accordion>
@@ -462,7 +464,7 @@
 
         <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 3: Configura los destinatarios de la alerta'"
             [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [disabled]="(alertType == 'simple' || alertType == 'composite') && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)"
             [isOpen]="mode == 'edit' ? true : false">
             <div class="step-3-container">
                 <div class="endpoint-list-container">
@@ -611,7 +613,7 @@
 
         <app-accordion *ngIf="!isInitialMetricListLoading"
             [title]="'Paso 4: Configura los aspectos relativos a los permisos'" [highlightTitle]="true"
-            [disabled]="indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0"
+            [disabled]="(alertType == 'simple' || alertType == 'composite') && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)"
             [isOpen]="mode == 'edit' ? true : false">
             <div class="step-4-container">
                 <div class="notice c-blue">
@@ -766,8 +768,8 @@
                 <div class="font-16 font-w-600">Agrupaciones</div>
                 <div class="title-description-block-1">
                     <div class="title">Agrupar por</div>
-                    <div class="description">{{logsAgroupationForm.get('groupBy')?.value.length == 0 ? 'Sin agrupar' :
-                        logsAgroupationForm.get('groupBy')?.value}}</div>
+                    <div class="description">{{groupByForm.get('groupBy')?.value.length == 0 ? 'Sin agrupar' :
+                        groupByForm.get('groupBy')?.value}}</div>
                 </div>
             </div>
         </div>
