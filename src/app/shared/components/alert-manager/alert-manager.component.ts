@@ -63,8 +63,6 @@ import { ChartDataRequestDto } from '../../dto/metric/ChartDataRequestDto';
 import { MetricDataDto } from '../../dto/metric/MetricDataDto';
 import { ConditionFilterDto } from '../../dto/ConditionFilterDto';
 import { IndicatorDataDto } from '../../dto/metric/IndicatorDataDto';
-import { DistinctValuesRequest } from '../../dto/DistinctValuesRequest';
-import { SelectedDimensionDto } from '../../dto/SelectedDimensionDto';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -309,8 +307,11 @@ export class AlertManagerComponent implements OnInit{
   isChartDataLoading: boolean = false;
   isChartDataError: boolean = false;
   chartData!: ChartDataDto;
+  groupByChartMap: Map<string, string[]> = new Map<string, string[]>();
 
   conditionGraphList: any[] = [];
+
+  hours: number = 24;
 
   //Step 1
   matOperationOptions: any[] = [];
@@ -735,7 +736,10 @@ export class AlertManagerComponent implements OnInit{
 
     this.getChartData();
 
-    this.resetConditionFilters();
+    this.conditionFiltersMap = new Map();
+    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
+      this.resetConditionFilters(condition);
+    });
   }
 
   createLogCondition()
@@ -805,7 +809,7 @@ export class AlertManagerComponent implements OnInit{
       id: this._fb.control((this.conditionArray.at(conditionIndex).controls.clauses.length! + 1).toString()),
       comparation: this._fb.control(clauseComparationOptions[0]),
       order: this._fb.control(this.conditionArray.length + 1),
-      value: this._fb.control(null),
+      value: this._fb.control(null, [Validators.required]),
       minIncluded: this._fb.control(true),
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
@@ -938,19 +942,17 @@ export class AlertManagerComponent implements OnInit{
     this.groupByForm.get('groupBy')?.value.forEach( (dimension: any) => {
       if (this.alertType == 'simple' || this.alertType == 'composite')
       {
-        this.resetConditionFilters();
+        this.resetConditionFilters(group);
       }
       else
       {
-        this.resetLogsConditionFilters();
+        this.resetLogsConditionFilters(group);
       }
     });
   }
 
   allValuesCompleted(): boolean {
-    return this.conditionArray.controls.every(group => {
-      return group.valid;
-    });
+    return this.conditionArray.controls.every(condition => condition.valid && condition.controls.clauses.controls.every((clause) => clause.valid));
   }
 
   createSilencePeriod() {
@@ -1024,7 +1026,7 @@ export class AlertManagerComponent implements OnInit{
 
   onClickSetConditionType(condition: any, type: any) {
 
-    this.severityOptions[severityOptions.findIndex((svt) => svt.label == condition.get('severity').value.label)].disabled = true;
+    // this.severityOptions[severityOptions.findIndex((svt) => svt.label == condition.get('severity').value.label)].disabled = true;
 
     condition.get('severity').setValue(type);
 
@@ -1142,7 +1144,7 @@ export class AlertManagerComponent implements OnInit{
 
   removeCondition(index: number) {
 
-    this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == this.conditionArray.controls.at(index)!.get('severity')?.value.label)].disabled = true;
+    // this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == this.conditionArray.controls.at(index)!.get('severity')?.value.label)].disabled = true;
 
     this.conditionArray.controls.splice(index, 1);
 
@@ -1386,28 +1388,30 @@ export class AlertManagerComponent implements OnInit{
 
   getNextAvailableSeverity(): number
   {
-    if (this.isSeveritySelected(this.severityOptions[0]))
-    {
-      if (this.isSeveritySelected(this.severityOptions[1]))
-      {
-        if (this.isSeveritySelected(this.severityOptions[2]))
-        {
-          return 3;
-        }
-        else
-        {
-          return 2;
-        }
-      }
-      else
-      {
-        return 1;
-      }
-    }
-    else
-    {
-      return 0;
-    }
+    // if (this.isSeveritySelected(this.severityOptions[0]))
+    // {
+    //   if (this.isSeveritySelected(this.severityOptions[1]))
+    //   {
+    //     if (this.isSeveritySelected(this.severityOptions[2]))
+    //     {
+    //       return 3;
+    //     }
+    //     else
+    //     {
+    //       return 2;
+    //     }
+    //   }
+    //   else
+    //   {
+    //     return 1;
+    //   }
+    // }
+    // else
+    // {
+    //   return 0;
+    // }
+
+    return 0;
   }
 
   async fromDtoToForm(alertViewDto: AlertViewDto)
@@ -1444,7 +1448,7 @@ export class AlertManagerComponent implements OnInit{
                 this.indicatorArray.at(i).controls.metrics.push(this._fb.group({
                   metricId: this._fb.control(metric.metricId),
                   id: this._fb.control((j + 1).toString()),
-                  metric: this._fb.control(response.find(met => met.table_name == metric.tableName)),
+                  metric: this._fb.control(response.find(met => (met.table_name == metric.tableName) && (met.dimension!.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).join(',') == metric.dimensions))),
                   operation: this._fb.control(matOperationOptions.find((opt) => opt.value == metric.operation)),
                   options: this._fb.control(response)
                 }) as MetricFormGroup);
@@ -1737,7 +1741,7 @@ export class AlertManagerComponent implements OnInit{
       {
         if (metric.get('metric')?.value != null)
         {
-          alertMetrics.push(new AlertMetricDto(metric.get('metricId')?.value!, metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!));
+          alertMetrics.push(new AlertMetricDto(metric.get('metricId')?.value!, metric.get('metric')?.value!.bbdd!, metric.get('metric')?.value!.table_name!, metric.get('metric')?.value!.metric!, metric.get('operation')?.value!.value!, metric.get('metric')?.value!.dimension?.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })).join(',')!));
         }
       }
 
@@ -2025,7 +2029,7 @@ export class AlertManagerComponent implements OnInit{
       indicatorDataDtoList.push(new IndicatorDataDto(metricDataDtoList));
     });
 
-    let chartDataRequestDto: ChartDataRequestDto = new ChartDataRequestDto(indicatorDataDtoList, [], this.advancedOptionsForm.get('timeWindow')?.value.value, 24);
+    let chartDataRequestDto: ChartDataRequestDto = new ChartDataRequestDto(indicatorDataDtoList, this.groupByForm.get('groupBy')?.value.sort((a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })), this.advancedOptionsForm.get('timeWindow')?.value.value, this.hours);
 
     this.metricService.getChartData(chartDataRequestDto).subscribe(
       (response) => {
@@ -2084,70 +2088,116 @@ export class AlertManagerComponent implements OnInit{
     });
   }
 
-  resetConditionFilters()
+  resetConditionFilters(condition: ConditionFormGroup)
   {
-    this.conditionFiltersMap = new Map();
-
-    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
-      this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
-      this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-        this.indicatorArray.controls.forEach(indicator => {
-          indicator.controls.metrics.controls.forEach(metric => {
-            const metricField = metric.get('metric')?.value;
-            if (metricField) {
-              this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
-                (response) => {
-                  if (this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
-                  {
-                    let dimensionValuesIntersection: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.get('values')!.filter((value) => response.includes(value))!;
-                    this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.set('values', dimensionValuesIntersection);
-                  }
-                  else
-                  {
-                    this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', []))
-                  }
-                },
-                (error) => {
-
+    this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
+    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+      this.indicatorArray.controls.forEach(indicator => {
+        indicator.controls.metrics.controls.forEach(metric => {
+          const metricField = metric.get('metric')?.value;
+          if (metricField) {
+            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
+              (response) => {
+                if (this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
+                {
+                  let dimensionValuesIntersection: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.get('values')!.filter((value) => response.includes(value))!;
+                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.set('values', dimensionValuesIntersection);
                 }
-              )
-            }
-          });
+                else
+                {
+                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', []))
+                }
+              },
+              (error) => {
+
+              }
+            )
+          }
         });
       });
     });
   }
 
-  resetLogsConditionFilters()
+  resetLogsConditionFilters(condition: ConditionFormGroup)
   {
-    this.conditionFiltersMap = new Map();
+    this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
+    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+      this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dimension, null).subscribe(
+        (response) => {
+          this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', response).set('selected', []));
+        },
+        (error) => {
 
-    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
-      this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
-      this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-        this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dimension, null).subscribe(
-          (response) => {
-            this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', response).set('selected', []));
-          },
-          (error) => {
-
-          }
-        )
-      });
+        }
+      )
     });
   }
 
-  onChangeGroupBy(event: MultiSelectChangeEvent)
-  {
+  onChangeGroupBy()
+  { 
+    this.groupByChartMap = new Map<string, string[]>();
+
+    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+      this.indicatorArray.controls.forEach(indicator => {
+        indicator.controls.metrics.controls.forEach(metric => {
+          const metricField = metric.get('metric')?.value;
+          if (metricField) {
+            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
+              (response) => {
+                if (this.groupByChartMap.has(dimension))
+                {
+                  let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
+                  this.groupByChartMap.set(dimension, dimensionValuesIntersection);
+                  this.groupByChartMap = new Map(this.groupByChartMap);
+                }
+                else
+                {
+                  this.groupByChartMap.set(dimension, response);
+                  this.groupByChartMap = new Map(this.groupByChartMap);
+                }
+              },
+              (error) => {
+
+              }
+            )
+          }
+        });
+      });
+    });
+
     this.generateInternalNameAndName();
 
-    this.resetConditionFilters();
+    this.conditionFiltersMap = new Map();
+    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
+      this.resetConditionFilters(condition);
+    });
+
+    this.getChartData();
   }
 
-  onChangeLogsGroupBy(event: MultiSelectChangeEvent)
+  onChangeLogsGroupBy()
   {
+    this.groupByChartMap = new Map<string, string[]>();
+
+    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+      this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dimension, null).subscribe(
+        (response) => {
+          this.groupByChartMap.set(dimension, response);
+          this.groupByChartMap = new Map(this.groupByChartMap);
+        },
+        (error) => {
+
+        }
+      )
+    });
+
     this.generateInternalNameAndName();
 
-    this.resetLogsConditionFilters();
+    this.conditionFiltersMap = new Map();
+    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
+      this.resetLogsConditionFilters(condition);
+    });
+
+    this.getChartData();
   }
 }

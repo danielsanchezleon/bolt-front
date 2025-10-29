@@ -1,15 +1,18 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, Input, PLATFORM_ID, SimpleChanges, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output, PLATFORM_ID, SimpleChanges, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule, UIChart } from 'primeng/chart';
 import { Chart } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { FormsModule } from '@angular/forms';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 Chart.register(annotationPlugin);
 
 @Component({
   selector: 'app-floating-graph',
-  imports: [ButtonModule, ChartModule, CommonModule],
+  imports: [ButtonModule, ChartModule, CommonModule, SelectButtonModule, FormsModule, MultiSelectModule],
   templateUrl: './floating-graph.component.html',
   styleUrls: ['./floating-graph.component.scss']
 })
@@ -30,6 +33,14 @@ export class FloatingGraphComponent {
 
   onClickButton: boolean = false;
 
+  hoursOptions: any[] = [{ label: '1 h', value: 1 }, { label: '3 h', value: 3 }, { label: '6 h', value: 6 }, { label: '12 h', value: 12 }, { label: '24 h', value: 24 }];
+  selectedHoursOption: number = 24;
+
+  @Output('hoursEvent') hoursEvent: EventEmitter<number> = new EventEmitter<number>();
+
+  @Input('groupByChartMap') groupByChartMap!: Map<string, string[]>;
+  groupBy: string[] = [];
+
   constructor(private cd: ChangeDetectorRef) { }
 
   ngOnInit() {
@@ -45,6 +56,15 @@ export class FloatingGraphComponent {
     if ((changes['conditionGraphList'] && !changes['conditionGraphList'].firstChange && this.conditionGraphList))
     {
       this.updateConditionGraphs();
+    }
+
+    if ((changes['groupByChartMap'] && !changes['groupByChartMap'].firstChange && this.groupByChartMap)) 
+    {
+      this.groupBy = [];
+      for(let key of this.groupByChartMap.keys())
+      {
+        this.groupBy.push(key);
+      }
     }
   }
 
@@ -150,5 +170,10 @@ export class FloatingGraphComponent {
     });
 
     return annotations;
+  }
+
+  onChangeHoursSelectButton(event: any)
+  {
+    this.hoursEvent.emit(event.value);
   }
 }

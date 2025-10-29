@@ -4,5 +4,5 @@ export class AlertMetricViewDto {
   tableName?: string;
   metricName?: string;
   operation?: string;
-  order?: number;
+  dimensions?: string;
 }

@@ -17,10 +17,18 @@
 >
   <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
     <h2>Gráfico Interactivo</h2>
-    <i class="pi pi-times" style="cursor: pointer;" (click)="onClickButton = false;"></i>
+    <p-selectbutton [options]="hoursOptions" [(ngModel)]="selectedHoursOption" optionLabel="label" optionValue="value" aria-labelledby="basic" (onChange)="onChangeHoursSelectButton($event)"/>
+    <i class="pi pi-times" style="cursor: pointer" [ngStyle]="{'visibility': onClickButton ? 'visible' : 'hidden'}" (click)="onClickButton = false;"></i>
   </div>
 
   <p-chart #chart type="line" [data]="data" [options]="options" />
+
+  <div *ngIf="false && groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
+
+  <div *ngIf="false && groupBy.length > 0">
+    <h3>Agrupaciones</h3>
+    <p-multiselect [options]="groupBy" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" />
+  </div>
 </div>
 
 <div *ngIf="isHovering || onClickButton" class="blur" (click)="onClickButton = false;"></div>

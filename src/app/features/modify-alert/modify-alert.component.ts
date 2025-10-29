@@ -133,7 +133,7 @@ export class ModifyAlertComponent implements OnInit
   //Pagination
   first: number = 0;
   page: number = 0;
-  size: number = 5;
+  size: number = 20;
 
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute) 
   {
