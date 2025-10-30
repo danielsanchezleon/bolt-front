@@ -41,6 +41,11 @@ export class FloatingGraphComponent {
   @Input('groupByChartMap') groupByChartMap!: Map<string, string[]>;
   groupBy: string[] = [];
 
+  groupByChartSelectedMap: Map<string, string[]> = new Map<string, string[]>();
+  selectedGroupBy: string[] = [];
+
+  @Output('groupByEvent') groupByEvent: EventEmitter<Map<string, string[]>> = new EventEmitter<Map<string, string[]>>();
+
   constructor(private cd: ChangeDetectorRef) { }
 
   ngOnInit() {
@@ -61,10 +66,16 @@ export class FloatingGraphComponent {
     if ((changes['groupByChartMap'] && !changes['groupByChartMap'].firstChange && this.groupByChartMap)) 
     {
       this.groupBy = [];
+      this.selectedGroupBy = [];
+      this.groupByChartSelectedMap = new Map();
       for(let key of this.groupByChartMap.keys())
       {
         this.groupBy.push(key);
+        this.selectedGroupBy.push(key);
+        this.groupByChartSelectedMap.set(key, this.groupByChartMap.get(key)!);
       }
+
+      this.groupByEvent.emit(this.groupByChartSelectedMap);
     }
   }
 
@@ -175,5 +186,16 @@ export class FloatingGraphComponent {
   onChangeHoursSelectButton(event: any)
   {
     this.hoursEvent.emit(event.value);
+  }
+
+  onChangeGroupBy(event: any)
+  {
+    this.selectedGroupBy = event.value;
+
+    event.value.forEach((dimension: string) => {
+      this.groupByChartSelectedMap.set(dimension, this.groupByChartMap.get(dimension)!);
+    });
+
+    this.groupByEvent.emit(this.groupByChartSelectedMap);
   }
 }

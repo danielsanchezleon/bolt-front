@@ -210,19 +210,19 @@
                         <div class="condition-top">
                             <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
                             <div class="type-buttons-container">
-                                <div *ngIf="condition.get('severity')?.value == severityOptions[0] || !isSeveritySelected(severityOptions[0])"
+                                <div
                                     class="type-button-container"
                                     [ngClass]="{'disaster': condition.get('severity')?.value == severityOptions[0], 'text-white': condition.get('severity')?.value == severityOptions[0]}"
                                     (click)="onClickSetConditionType(condition, severityOptions[0]);">Disaster</div>
-                                <div *ngIf="condition.get('severity')?.value == severityOptions[1] || !isSeveritySelected(severityOptions[1])"
+                                <div
                                     class="type-button-container"
                                     [ngClass]="{'critical': condition.get('severity')?.value == severityOptions[1], 'text-white': condition.get('severity')?.value == severityOptions[1]}"
                                     (click)="onClickSetConditionType(condition, severityOptions[1]);">Critical</div>
-                                <div *ngIf="condition.get('severity')?.value == severityOptions[2] || !isSeveritySelected(severityOptions[2])"
+                                <div
                                     class="type-button-container"
                                     [ngClass]="{'major': condition.get('severity')?.value == severityOptions[2]}"
                                     (click)="onClickSetConditionType(condition, severityOptions[2]);">Major</div>
-                                <div *ngIf="condition.get('severity')?.value == severityOptions[3] || !isSeveritySelected(severityOptions[3])"
+                                <div
                                     class="type-button-container"
                                     [ngClass]="{'warning': condition.get('severity')?.value == severityOptions[3]}"
                                     (click)="onClickSetConditionType(condition, severityOptions[3]);">Warning</div>
@@ -326,7 +326,7 @@
                     </div>
                 </div>
 
-                <p-button *ngIf="conditionArray.length < 4" label="Añadir otra condición" icon="pi pi-plus"
+                <p-button label="Añadir otra condición" icon="pi pi-plus"
                     (onClick)="createCondition();" severity="secondary" />
 
                 <app-inner-accordion [title]="'Opciones de activación y recuperación'"
@@ -662,7 +662,7 @@
     </div>
 </app-page-wrapper>
 
-<app-floating-graph *ngIf="alertType == 'simple' || alertType == 'composite'" [chartData]="chartData" [disabled]="countMetrics() == 0" [conditionGraphList]="conditionGraphList" (hoursEvent)="hours = $event; getChartData();" [groupByChartMap]="groupByChartMap"></app-floating-graph>
+<app-floating-graph *ngIf="alertType == 'simple' || alertType == 'composite'" [chartData]="chartData" [disabled]="countMetrics() == 0" [conditionGraphList]="conditionGraphList" (hoursEvent)="hours = $event; getChartData();" [groupByChartMap]="groupByChartMap" (groupByEvent)="groupByChartSelectedMap = $event; getChartData();"></app-floating-graph>
 
 <app-modal [title]="mode == 'create' ? 'Crear alerta' : 'Actualizar alerta'" [visible]="modalVisible">
     <div class="modal-container">

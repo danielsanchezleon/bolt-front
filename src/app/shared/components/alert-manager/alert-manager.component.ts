@@ -308,6 +308,7 @@ export class AlertManagerComponent implements OnInit{
   isChartDataError: boolean = false;
   chartData!: ChartDataDto;
   groupByChartMap: Map<string, string[]> = new Map<string, string[]>();
+  groupByChartSelectedMap: Map<string, string[]> = new Map<string, string[]>();
 
   conditionGraphList: any[] = [];
 
@@ -915,12 +916,10 @@ export class AlertManagerComponent implements OnInit{
 
   createCondition() {
 
-    let selectedSeverityIndex: number = this.getNextAvailableSeverity();
-
     const group: ConditionFormGroup = this._fb.group({
       conditionId: this._fb.control(null),
       id: this._fb.control((this.conditionArray.length + 1).toString()),
-      severity: this._fb.control(severityOptions[selectedSeverityIndex]),
+      severity: this._fb.control(severityOptions[0]),
       status: this._fb.control(true),
       clauses:  this._fb.array<ClauseFormGroup>([])
     }) as ConditionFormGroup;
@@ -932,8 +931,6 @@ export class AlertManagerComponent implements OnInit{
     this.watchGroupValidity(group);
 
     this.lastThresholdArrayLength = this.conditionArray.length;
-
-    severityOptions[selectedSeverityIndex].disabled = false;
 
     //WHEN A CONDITION IS CREATED, CONDITION FILTERS MAP MUST HAVE AN ENTRY FOR IT
 
@@ -1372,46 +1369,6 @@ export class AlertManagerComponent implements OnInit{
   onChangeTeam(event: any)
   {
     this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
-  }
-
-  isSeveritySelected(type: any)
-  {
-    let isSelected = false;
-
-    this.conditionArray.controls.forEach(condition => {
-      if (condition.get('severity')?.value.value == type.value)
-        isSelected = true;
-    });
-
-    return isSelected;
-  }
-
-  getNextAvailableSeverity(): number
-  {
-    // if (this.isSeveritySelected(this.severityOptions[0]))
-    // {
-    //   if (this.isSeveritySelected(this.severityOptions[1]))
-    //   {
-    //     if (this.isSeveritySelected(this.severityOptions[2]))
-    //     {
-    //       return 3;
-    //     }
-    //     else
-    //     {
-    //       return 2;
-    //     }
-    //   }
-    //   else
-    //   {
-    //     return 1;
-    //   }
-    // }
-    // else
-    // {
-    //   return 0;
-    // }
-
-    return 0;
   }
 
   async fromDtoToForm(alertViewDto: AlertViewDto)
