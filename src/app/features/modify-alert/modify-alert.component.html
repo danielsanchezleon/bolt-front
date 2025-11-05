@@ -81,10 +81,10 @@
                         <p-tableCheckbox [value]="alert" chan />
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.name" (click)="onClickGoToEditAlert(alert);">
+                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' ? alert.alertDefinition : alert.name" (click)="onClickGoToEditAlert(alert);">
                             {{alert.name}}
                         </div>
-                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.name">
+                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' ? alert.alertDefinition : alert.name">
                             {{alert.name}}
                         </div>
                         <div class="owner-container">

@@ -4,4 +4,5 @@ export class ConditionFilterViewDto {
   compOperation?: string;
   filterField?: string;
   filterValue?: string;
+  isCreated?: boolean;
 }

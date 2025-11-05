@@ -12,6 +12,7 @@ export const matOperationOptions = [
     {value: 'MAX', label: 'Máximo'},
     {value: 'COUNT', label: 'Count'},
     {value: 'LAST', label: 'Último'},
+    {value: 'MEDIAN', label: 'Mediana'},
 ];
 
 export const timeWindowOptions = [

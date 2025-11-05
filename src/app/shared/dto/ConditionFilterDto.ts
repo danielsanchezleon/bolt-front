@@ -5,6 +5,7 @@ export class ConditionFilterDto
         public externalOperation: string | null,
         public compOperation: string,
         public filterField: string,
-        public filterValue: string
+        public filterValue: string,
+        public isCreated: boolean
     ) {}
 }
