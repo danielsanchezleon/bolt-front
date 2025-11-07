@@ -13,6 +13,7 @@ import { CommonModule } from '@angular/common';
 export class CreateAlertComponent 
 {
   alertTypeSelected: boolean = false;
+  baselineSelected: boolean = false;
 
   constructor(private router: Router)
   {
@@ -36,6 +37,11 @@ export class CreateAlertComponent
   onClickNavigateToCompositeCondition()
   {
     this.router.navigate(['alert/create', 'composite']);
+  }
+
+  onClickNavigateToBaseline(type: string)
+  {
+    // this.router.navigate(['alert/create', 'baseline', type]);
   }
 
   onClickNavigateToLogs()

@@ -6,7 +6,7 @@
 }
 
 .create-alert-wrapper {
-    width: 900px;
+    width: 1200px;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -140,8 +140,12 @@
                 }
             }
 
-            .threshold-alert-option:hover {
+            .threshold-alert-option:hover:not(.selected) {
                 border: 1px solid #2563eb;
+            }
+
+            .threshold-alert-option.selected {
+                border: 2px solid #2563eb;
             }
         }
 

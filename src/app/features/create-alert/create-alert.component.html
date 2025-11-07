@@ -44,7 +44,7 @@
       </div>
 
       <div *ngIf="alertTypeSelected" class="threshold-alert-options-container">
-        <div class="font-20 font-w-600">Selecciona el tipo de alerta de umbral a definir</div>
+        <div class="font-20 font-w-600">Selecciona el tipo de alerta de umbral</div>
         <div class="threshold-alert-options">
 
           <div class="threshold-alert-option" (click)="onClickNavigateToSimpleCondition();">
@@ -70,9 +70,66 @@
               </div>
             </div>
           </div>
+
+          <div class="threshold-alert-option" (click)="baselineSelected = true;" [class.selected]="baselineSelected">
+            <div class="icon-wrapper bg-green">
+              <i class="pi pi-chart-bar font-32 c-green"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">Baseline</div>
+              <div class="font-12 text-gray text-a-center">
+                Umbral dinámico. Compara tu métrica con su comportamiento histórico para detectar anomalías reales
+              </div>
+            </div>
+          </div>
         </div>
         <div class="buttons-container">
-          <p-button label="Cancelar" variant="text" severity="secondary" (onClick)="alertTypeSelected = false;" />
+          <p-button label="Cancelar" variant="text" severity="secondary" (onClick)="baselineSelected = false; alertTypeSelected = false;" />
+        </div>
+      </div>
+
+      <div *ngIf="baselineSelected" class="threshold-alert-options-container">
+        <div class="font-20 font-w-600">Selecciona el tipo de alerta de baseline</div>
+        <div class="threshold-alert-options">
+
+          <div class="threshold-alert-option" (click)="onClickNavigateToBaseline('past-average');">
+            <div class="icon-wrapper bg-red">
+              <i class="pi pi-chart-bar font-32 c-red"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">PAST_AVERAGE</div>
+              <div class="font-12 text-gray text-a-center">
+                Compara con el promedio histórico. Ajusta el umbral con factores fijos que definas
+              </div>
+            </div>
+          </div>
+
+          <div class="threshold-alert-option" (click)="onClickNavigateToBaseline('past-average-pondered');">
+            <div class="icon-wrapper bg-red">
+              <i class="pi pi-chart-line font-32 c-red"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">PAST_AVERAGE_PONDERED</div>
+              <div class="font-12 text-gray text-a-center">
+                Compara con el promedio, pero el umbral se ajusta dinámicamente según una métrica secundaria (p.e: audiencia)
+              </div>
+            </div>
+          </div>
+
+          <div class="threshold-alert-option" (click)="onClickNavigateToBaseline('k-sigma');">
+            <div class="icon-wrapper bg-red">
+              <i class="pi pi-chart-scatter font-32 c-red"></i>
+            </div>
+            <div class="title-description-container">
+              <div class="font-16">K-SIGMA</div>
+              <div class="font-12 text-gray text-a-center">
+                Detecta anomalías estadísticas. Alerta si la métrica se desvía más de K desviaciones estándar de su média histórica.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="buttons-container">
+          <p-button label="Cancelar" variant="text" severity="secondary" (onClick)="baselineSelected = false;" />
         </div>
       </div>
     </div>

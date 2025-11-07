@@ -1511,7 +1511,7 @@ export class AlertManagerComponent implements OnInit{
     }
     else if (this.alertType == 'logs')
     {
-      let logsAlertData: string[] = alertViewDto.name!.split(" ")!;
+      let logsAlertData: string[] = alertViewDto.name!.split("_")!;
       this.logsStep1Form.get('service')?.setValue(logsAlertData[0]);
       this.getDistinctTableNamesByDataType(logsAlertData[0], false);
       this.logsStep1Form.get('catalog')?.setValue(logsAlertData[1]);
