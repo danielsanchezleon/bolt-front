@@ -1948,10 +1948,10 @@ export class AlertManagerComponent implements OnInit{
       let alertClauses: AlertClauseDto[] = [];
 
       let baselinesVariables = new BaselinesVariablesDto(
-        (condition.get('baselineVariables')?.value as FormGroup).get('baselinesVariablesId')?.value,
-        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar1')?.value,
-        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar2')?.value,
-        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar3')?.value
+        (condition.get('baselineVariables') as FormGroup).get('baselinesVariablesId')?.value,
+        (condition.get('baselineVariables') as FormGroup).get('auxVar1')?.value,
+        (condition.get('baselineVariables') as FormGroup).get('auxVar2')?.value,
+        (condition.get('baselineVariables') as FormGroup).get('auxVar3')?.value
       );
 
       //CLAUSES

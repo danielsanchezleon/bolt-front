@@ -333,7 +333,7 @@
                                     [options]="baselinesClauseComparationOptions" optionLabel="label" appendTo="body"
                                     size="small" />
                                 <p-select
-                                    *ngIf="(isSimpleConditionAlert || isCompositeConditionAlert) || (isBaselineAlert && clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD')"
+                                    *ngIf="(isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert) || (isBaselineAlert && clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD')"
                                     formControlName="comparation" class="select" [options]="clauseComparationOptions"
                                     optionLabel="label" appendTo="body" size="small" />
                                 <p-inputnumber class="threshold-value"
