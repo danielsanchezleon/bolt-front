@@ -42,11 +42,13 @@
     background-color: white;
     border: 1px solid lightgray;
     border-radius: 8px;
-    margin-top: 24px;
+    margin: 24px 0px;
 
     display: flex;
     flex-direction: column;
     gap: 24px;
+
+    width: 100%;
 
     form {
         width: 100%;

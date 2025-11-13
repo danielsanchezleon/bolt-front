@@ -33,5 +33,6 @@ export class AlertDto
     public recoveryTotalPeriods: number,
     public logsService: string | null,
     public logsCatalog: string | null,
+    public baselineType: string | null
   ) {}
 }

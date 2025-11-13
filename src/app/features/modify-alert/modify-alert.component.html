@@ -24,7 +24,7 @@
         </p-iconfield>
         <p-skeleton *ngIf="isLoading && !isError" width="1343px" height="39px" borderRadius="8px" />
 
-        <p-button *ngIf="!isLoading && !isError && false" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
+        <p-button *ngIf="!isLoading && !isError" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
             label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true"
             [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button"
             (onClick)="filterPanelOpen = !filterPanelOpen;" />
@@ -32,23 +32,11 @@
     </div>
 
     <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
-        <form *ngIf="filterForm" [formGroup]="filterForm">
-            <p-floatlabel variant="on">
-                <input pInputText autocomplete="off" formControlName="name" />
-                <label>Nombre</label>
-            </p-floatlabel>
-            <p-floatlabel variant="on">
-                <input pInputText autocomplete="off" formControlName="message" />
-                <label>Mensaje</label>
-            </p-floatlabel>
-            <p-floatlabel variant="on">
-                <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="timeWindow" />
-                <label for="timeWindowLabel">Ventana de tiempo</label>
-            </p-floatlabel>
-            <p-floatlabel variant="on">
-                <p-select [style]="{'width': '256px'}" inputId="periodicityLabel" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" formControlName="periodicity" />
-                <label for="periodicityLabel">Periodicidad</label>
-            </p-floatlabel>
+        <form *ngIf="filterForm" [formGroup]="filterForm" style="width: 100%;">
+            <p-select [ngStyle]="{'width': '100%'}" [options]="servicesList" appendTo="body" formControlName="service" placeholder="Service" />
+            <p-select [ngStyle]="{'width': '100%'}" [options]="sourcesList" appendTo="body" formControlName="source" placeholder="Source" />
+            <p-select [ngStyle]="{'width': '100%'}" [options]="dataTypesList" appendTo="body" formControlName="dataType" placeholder="Data type" />
+            <p-select [ngStyle]="{'width': '100%'}" [options]="categoriesList" appendTo="body" formControlName="category" placeholder="Category" />
         </form>
 
         <div class="buttons-container">

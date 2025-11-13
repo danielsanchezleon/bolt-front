@@ -55,7 +55,10 @@ import {matOperationOptions,
         severityOptions, 
         clauseComparationOptions, 
         activationRecoverEvaluationOptions, 
-        silencePeriodDayOptions 
+        silencePeriodDayOptions,
+        baselinesVariablesConditionTypes,
+        baselinesComparationTypes,
+        baselinesClauseComparationOptions
       } from '../../constants/alert-constants';
 import { AlertOcurrencesService } from '../../services/alert-ocurrences.service';
 import { ChartDataDto } from '../../dto/metric/ChartDataDto';
@@ -66,6 +69,8 @@ import { ChartIndicatorDto } from '../../dto/metric/ChartIndicatorDto';
 import { ChartDimensionDto } from '../../dto/metric/ChartDimensionDto';
 import { SelectedDimensionDto } from '../../dto/SelectedDimensionDto';
 import { DistinctValuesRequest } from '../../dto/DistinctValuesRequest';
+import { InventoryBaselinesService } from '../../services/inventory-baselines.service';
+import { BaselinesVariablesDto } from '../../dto/BaselinesVariablesDto';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -271,6 +276,7 @@ type ClauseFormGroup = FormGroup<{
   startBrackets: FormControl<number | null>;
   endBrackets: FormControl<number | null>;
   externalOperation: FormControl<string | null>;
+  baselineComparation: FormControl<any>;
 }>;
 
 type ConditionFormGroup = FormGroup<{
@@ -279,6 +285,7 @@ type ConditionFormGroup = FormGroup<{
   severity: FormControl<any>;
   status: FormControl<boolean>;
   clauses: FormArray<ClauseFormGroup>;
+  baselineVariables: FormGroup;
 }>;
 
 type ConditionFormArray = FormArray<ConditionFormGroup>;
@@ -304,8 +311,15 @@ export class AlertManagerComponent implements OnInit{
   //General
   alertId: number = 0;
   mode: string = 'create';
-  alertType: string = 'simple';
   subscriptions: Subscription[] = [];
+
+  isSimpleConditionAlert: boolean = false;
+  isCompositeConditionAlert: boolean = false;
+  isLogsAlert: boolean = false;
+  isBaselineAlert: boolean = false;
+  isBaselinePastAverageAlert: boolean = false;
+  isBaselinePastAveragePonderedAlert: boolean = false;
+  isBaselineKSigmaAlert: boolean = false;
 
   isInitialMetricListLoading: boolean = false;
 
@@ -359,6 +373,12 @@ export class AlertManagerComponent implements OnInit{
   catalogLoaded = new BehaviorSubject<boolean>(false);
   metricsLoaded = new BehaviorSubject<boolean>(false);
 
+  //BASELINE
+  baselinesListLoading: boolean = false;
+  baselinesListError: boolean = false;
+  baselinesList: string[] = [];
+  selectedBaseline: string = '';
+
   //Step 2
   severityOptions: any[] = [];
   clauseComparationOptions: any[] = [];
@@ -378,6 +398,11 @@ export class AlertManagerComponent implements OnInit{
   errorBehaviorOptions: any[] = [];
   errorBehaviorForm: FormGroup;
 
+  //BASELINE
+  baselinesClauseComparationOptions: any[] = [];
+  baselinesVariablesConditionTypes: any[] = [];
+  baselinesComparationTypes: any[] = [];
+
   //Step 3
   endpointsByTypeMap: any;
   endpointFieldValues: EndpointViewDto[] = [];
@@ -393,8 +418,8 @@ export class AlertManagerComponent implements OnInit{
   conditionalBlockOptions: any[] = [];
   templateVariableOptions: any[] = [];
 
-  @HostListener('document:click', ['$event']) clickout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
-  @HostListener('document:scroll', ['$event']) scrollout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
+  @HostListener('document:click', ['$event']) clickout(event: Event) { this.messageModalVisible = false; this.detailsModalVisible = false; }
+  @HostListener('document:scroll', ['$event']) scrollout(event: Event) { this.messageModalVisible = false; this.detailsModalVisible = false; }
   messageDialogStyle: any = {};
   detailsDialogStyle: any = {};
   messageModalVisible: boolean = false;
@@ -441,13 +466,48 @@ export class AlertManagerComponent implements OnInit{
     private endpointService: EndpointService,
     private authService: AuthService,
     private route: ActivatedRoute,
-    private alertOcurrencesService: AlertOcurrencesService ) {
+    private alertOcurrencesService: AlertOcurrencesService,
+    private inventoryBaselinesService: InventoryBaselinesService) {
 
     this.route.snapshot.paramMap.has('alert_id') ? this.mode = 'edit' : this.mode = 'create';
 
     if (this.route.snapshot.paramMap.has('alert_type'))
     {
-      this.alertType = this.route.snapshot.params['alert_type'];
+      switch (this.route.snapshot.params['alert_type'])
+      {
+        case 'simple':
+          this.isSimpleConditionAlert = true;
+          break;
+
+        case 'composite':
+          this.isCompositeConditionAlert = true;
+          break;
+
+        case 'logs':
+          this.isLogsAlert = true;
+          break;
+
+        case 'baseline':
+          this.isBaselineAlert = true;
+          if (this.route.snapshot.paramMap.has('alert_subtype'))
+          {
+            switch (this.route.snapshot.params['alert_subtype'])
+            {
+              case 'past-average':
+                this.isBaselinePastAverageAlert = true;
+                break;
+
+              case 'past-average-pondered':
+                this.isBaselinePastAveragePonderedAlert = true;
+                break;
+
+              case 'k-sigma':
+                this.isBaselineKSigmaAlert = true;
+                break;
+            }
+          }
+        break;
+      }
     }
 
     if (this.mode == 'edit')
@@ -519,21 +579,31 @@ export class AlertManagerComponent implements OnInit{
     {
       this.getAlert();
 
-      if (this.alertType == 'logs')
+      if (this.isLogsAlert)
       {
         this.getDistinctDataTypes();
+      }
+
+      if (this.isBaselineAlert)
+      {
+        this.getBaselines();
       }
     }
     else
     {
-      if (this.alertType == 'simple' || this.alertType == 'composite')
+      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
       {
         this.createIndicator();
       }
-      else if (this.alertType == 'logs')
+      else if (this.isLogsAlert)
       {
-        this.createLogCondition();
         this.getDistinctDataTypes();
+        this.createLogCondition();
+      }
+      else if (this.isBaselineAlert)
+      {
+        this.createIndicator();
+        this.getBaselines();
       }
 
       this.createCondition();
@@ -576,6 +646,11 @@ export class AlertManagerComponent implements OnInit{
 
     this.errorBehaviorOptions = errorBehaviorOptions;
 
+    //BASELINES
+    this.baselinesClauseComparationOptions = baselinesClauseComparationOptions;
+    this.baselinesVariablesConditionTypes = baselinesVariablesConditionTypes;
+    this.baselinesComparationTypes = baselinesComparationTypes;
+
     //Step 3
     this.getEndpointsByType();
 
@@ -613,7 +688,7 @@ export class AlertManagerComponent implements OnInit{
     this.internalName = '';
     this.name = '';
 
-    if (this.alertType == 'simple' || this.alertType == 'composite')
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
     {
       let metricNameList: string[] = [];
 
@@ -627,23 +702,42 @@ export class AlertManagerComponent implements OnInit{
       });
 
       this.internalName = metricNameList.join('_');
-      this.name = metricNameList.join(' ');
+      this.name = metricNameList.join('_');
 
       if (this.groupByForm.get('groupBy')?.value.length > 0)
       {
         this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join('_')
       }
     }
-    else if (this.alertType == 'logs')
+    else if (this.isLogsAlert)
     {
       this.internalName = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
 
-      this.name = this.logsStep1Form.get('service')?.value + ' ' + this.logsStep1Form.get('catalog')?.value + ' (CATALOG)';
+      this.name = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
 
       if (this.groupByForm.get('groupBy')?.value.length > 0)
       {
         this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join('_')
       }
+    }
+    else if (this.isBaselineAlert)
+    {
+      let metricNameList: string[] = [this.selectedBaseline];      
+
+      this.indicatorArray.controls.forEach(indicator => {
+        if (indicator.controls.metrics.controls.length > 0)
+        {
+          indicator.controls.metrics.controls.forEach(metric => {
+            if (metric.value.metric)
+            {
+              metricNameList.push(metric.value.metric!.metric!);
+            }
+          });
+        }
+      });
+
+      this.internalName = metricNameList.join('_');
+      this.name = metricNameList.join('_');
     }
 
     if (this.mode == 'create' && !this.authService.isAdmin())
@@ -706,7 +800,7 @@ export class AlertManagerComponent implements OnInit{
       metricId: this._fb.control(null),
       id: this._fb.control((this.indicatorArray.at(indicatorIndex).controls.metrics.length! + 1).toString()),
       name: this._fb.control(this.letters[indicatorIndex] + "." + (this.indicatorArray.at(indicatorIndex).controls.metrics.length!+1)),
-      metric: this._fb.control(null),
+      metric: this._fb.control(TableMetricInfo),
       operation: this._fb.control(matOperationOptions[1]),
       options: this._fb.control([] as TableMetricInfo[])
     }) as MetricFormGroup);
@@ -740,7 +834,7 @@ export class AlertManagerComponent implements OnInit{
     this.getChartData();
   }
 
-  onChangeMetricSelect(indicatorIndex: number)
+  onChangeMetricSelect()
   {
     this.generateInternalNameAndName();
 
@@ -799,83 +893,6 @@ export class AlertManagerComponent implements OnInit{
       this.dimensionIntersectionOptions = Array.from(intersection).map(dim => dim as string);
   }
 
-  watchGroupValidity(group: ConditionFormGroup) {
-    const fields = ['value', 'min', 'minIncluded', 'max', 'maxIncluded'];
-
-    fields.forEach(fieldName => {
-      const control = group.get(fieldName);
-      if (control) {
-        const sub = control.valueChanges.subscribe(() => {
-          group.updateValueAndValidity({ onlySelf: true, emitEvent: false });
-        });
-        this.subscriptions.push(sub);
-      }
-    });
-  }
-
-  createClause(conditionIndex: number)
-  {
-    this.conditionArray.at(conditionIndex).controls.clauses.push(this._fb.group({
-      clauseId: this._fb.control(null),
-      indicatorName: this._fb.control( (this.alertType == 'simple' || this.alertType == 'composite') ? 'A' : ''),
-      id: this._fb.control((this.conditionArray.at(conditionIndex).controls.clauses.length! + 1).toString()),
-      comparation: this._fb.control(clauseComparationOptions[0]),
-      order: this._fb.control(this.conditionArray.length + 1),
-      value: this._fb.control(null, [Validators.required]),
-      minIncluded: this._fb.control(true),
-      min: this._fb.control(null),
-      maxIncluded: this._fb.control(true),
-      max: this._fb.control(null),
-      startBrackets: this._fb.control(this.alertType == 'composite' ? 0 : null),
-      endBrackets: this._fb.control(this.alertType == 'composite' ? 0 : null),
-      externalOperation: this._fb.control(this.alertType == 'composite' ? 'AND' : null)
-    }) as ClauseFormGroup);
-
-    let group: ClauseFormGroup = this.conditionArray.at(conditionIndex).controls.clauses.at(this.conditionArray.at(conditionIndex).controls.clauses.length!-1);
-
-    group.valueChanges.subscribe(() => {
-      this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex));
-    });
-
-    // Suscripción para ajustar validadores dinámicamente
-    const comparationControl = group.get('comparation');
-    const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
-      const valueControl = group.get('value');
-      const minControl = group.get('min');
-      const minIncludedControl = group.get('minIncluded');
-      const maxControl = group.get('max');
-      const maxIncludedControl = group.get('maxIncluded');
-
-      if (comp.value === 0 || comp.value === 1) {
-        // Solo "value" requerido
-        valueControl?.setValidators(Validators.required);
-        minControl?.clearValidators();
-        maxControl?.clearValidators();
-        minIncludedControl?.clearValidators();
-        maxIncludedControl?.clearValidators();
-      } else if (comp.value === 2 || comp.value === 3) {
-        // Solo rango requerido
-        valueControl?.clearValidators();
-        minControl?.setValidators(Validators.required);
-        maxControl?.setValidators(Validators.required);
-        minIncludedControl?.setValidators(Validators.required);
-        maxIncludedControl?.setValidators(Validators.required);
-      }
-
-      // Importante: actualizar validación
-      valueControl?.updateValueAndValidity();
-      minControl?.updateValueAndValidity();
-      maxControl?.updateValueAndValidity();
-      minIncludedControl?.updateValueAndValidity();
-      maxIncludedControl?.updateValueAndValidity();
-    }) as Subscription;
-
-    this.subscriptions.push(dynamicValidationSub);
-
-    // Ejecutar validación inicial según el valor inicial
-    comparationControl?.updateValueAndValidity();
-  }
-
   generateConditionText(conditionIndex: number): string
   {
     let text: string = '';
@@ -883,15 +900,15 @@ export class AlertManagerComponent implements OnInit{
       if (clauseIndex > 0)
         text += ' ' + (clause.get('externalOperation')?.value ?? '') + ' ';
       text += (clause.get('startBrackets')?.value ?? 0) > 0 ? '( '.repeat(clause.get('startBrackets')?.value!) : '';
-      text += clause.get('indicatorName')?.value ?? '';
+      text += this.isBaselineAlert ? 'Baseline' : clause.get('indicatorName')?.value ?? '';
       switch (clause.get('comparation')?.value.value) {
         case 'MORE_THAN':
           text += ' > ';
-          text += clause.get('value')?.value ?? '?';
+          text += clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD' ? clause.get('value')?.value ?? '?' : 'A';
           break;
         case 'LESS_THAN':
           text += ' < ';
-          text += clause.get('value')?.value ?? '?';
+          text += clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD' ? clause.get('value')?.value ?? '?' : 'A';
           break;
         case 'WITHIN_RANGE':
           text += ' entre ';
@@ -927,19 +944,80 @@ export class AlertManagerComponent implements OnInit{
 
   createCondition() {
 
-    const group: ConditionFormGroup = this._fb.group({
+    let group: ConditionFormGroup = this._fb.group({
       conditionId: this._fb.control(null),
       id: this._fb.control((this.conditionArray.length + 1).toString()),
       severity: this._fb.control(severityOptions[0]),
       status: this._fb.control(true),
-      clauses:  this._fb.array<ClauseFormGroup>([])
+      clauses:  this._fb.array<ClauseFormGroup>([]),
+      baselineVariables: this._fb.group({
+        baselinesVariablesId: [null],
+        type: [baselinesVariablesConditionTypes[0]],
+        auxVar1: [],
+        auxVar2: [],
+        auxVar3: []
+      })
     }) as ConditionFormGroup;
 
     this.conditionArray.push(group);
 
-    this.createClause(this.conditionArray.length-1);
+    group = this.conditionArray.at(this.conditionArray.length-1);
 
-    this.watchGroupValidity(group);
+    if (this.isBaselineAlert)
+    {
+      // Suscripción para ajustar validadores dinámicamente
+      const comparationControl = (group.get('baselineVariables') as FormGroup).get('type');
+      const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
+        const auxVar1 = group.get('auxVar1');
+        const auxVar2 = group.get('auxVar2');
+        const auxVar3 = group.get('auxVar3');
+
+        if (this.isBaselinePastAverageAlert)
+        {
+          if (comp.value.value == 'LESS_THAN') 
+          {
+            auxVar1?.setValidators(Validators.required);
+            auxVar2?.clearValidators();
+            auxVar3?.clearValidators();
+          } 
+          else if (comp.value.value == 'MORE_THAN') 
+          {
+            auxVar1?.clearValidators();
+            auxVar2?.setValidators(Validators.required);
+            auxVar3?.clearValidators();
+          }
+          else
+          {
+            auxVar1?.setValidators(Validators.required);
+            auxVar2?.setValidators(Validators.required);
+            auxVar3?.clearValidators();
+          }
+        }
+        else if (this.isBaselinePastAveragePonderedAlert)
+        {
+          auxVar1?.setValidators(Validators.required);
+          auxVar2?.setValidators(Validators.required);
+          auxVar3?.setValidators(Validators.required);
+        }
+        else if (this.isBaselineKSigmaAlert)
+        {
+          auxVar1?.clearValidators();
+          auxVar2?.clearValidators();
+          auxVar3?.setValidators(Validators.required);
+        }
+
+        auxVar1?.updateValueAndValidity();
+        auxVar2?.updateValueAndValidity();
+        auxVar3?.updateValueAndValidity();
+      }) as Subscription;
+
+      this.subscriptions.push(dynamicValidationSub);
+
+      // Ejecutar validación inicial según el valor inicial
+      comparationControl?.updateValueAndValidity();
+    }
+
+    this.createClause(this.conditionArray.length-1);
 
     this.lastThresholdArrayLength = this.conditionArray.length;
 
@@ -948,7 +1026,7 @@ export class AlertManagerComponent implements OnInit{
     this.conditionFiltersMap.set(group.get('id')?.value!, new Map());
 
     this.groupByForm.get('groupBy')?.value.forEach( (dimension: any) => {
-      if (this.alertType == 'simple' || this.alertType == 'composite')
+      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
       {
         this.resetConditionFilters(group);
       }
@@ -959,7 +1037,109 @@ export class AlertManagerComponent implements OnInit{
     });
   }
 
-  allValuesCompleted(): boolean {
+  createClause(conditionIndex: number)
+  {
+    this.conditionArray.at(conditionIndex).controls.clauses.push(this._fb.group({
+      clauseId: this._fb.control(null),
+      indicatorName: this._fb.control( (this.isSimpleConditionAlert || this.isCompositeConditionAlert || this.isBaselineAlert) ? 'A' : ''),
+      id: this._fb.control((this.conditionArray.at(conditionIndex).controls.clauses.length! + 1).toString()),
+      comparation: this._fb.control(clauseComparationOptions[0]),
+      order: this._fb.control(this.conditionArray.length + 1),
+      value: this._fb.control(null, [Validators.required]),
+      minIncluded: this._fb.control(true),
+      min: this._fb.control(null),
+      maxIncluded: this._fb.control(true),
+      max: this._fb.control(null),
+      startBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
+      endBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
+      externalOperation: this._fb.control(this.isCompositeConditionAlert ? 'AND' : null),
+      baselineComparation: this._fb.control(baselinesComparationTypes[0])
+    }) as ClauseFormGroup);
+
+    let group: ClauseFormGroup = this.conditionArray.at(conditionIndex).controls.clauses.at(this.conditionArray.at(conditionIndex).controls.clauses.length!-1);
+
+    group.valueChanges.subscribe(() => {
+      this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex));
+    });
+
+    // Suscripción para ajustar validadores dinámicamente
+    const comparationControl = group.get('comparation');
+    const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
+      const valueControl = group.get('value');
+      const minControl = group.get('min');
+      const minIncludedControl = group.get('minIncluded');
+      const maxControl = group.get('max');
+      const maxIncludedControl = group.get('maxIncluded');
+      const baselineComparationControl = group.get('baselineComparation');
+
+      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert || this.isLogsAlert)
+      {
+        if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
+        {
+          valueControl?.setValidators(Validators.required);
+          minControl?.clearValidators();
+          maxControl?.clearValidators();
+          minIncludedControl?.clearValidators();
+          maxIncludedControl?.clearValidators();
+        } 
+        else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
+        {
+          valueControl?.clearValidators();
+          minControl?.setValidators(Validators.required);
+          maxControl?.setValidators(Validators.required);
+          minIncludedControl?.setValidators(Validators.required);
+          maxIncludedControl?.setValidators(Validators.required);
+        }
+      }
+      else
+      {
+        if (this.isBaselineAlert)
+        {
+          if (baselineComparationControl?.value.value === 'COMP_WITH_THRESHOLD')
+          {
+            if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
+            {
+              valueControl?.setValidators(Validators.required);
+              minControl?.clearValidators();
+              maxControl?.clearValidators();
+              minIncludedControl?.clearValidators();
+              maxIncludedControl?.clearValidators();
+            } 
+            else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
+            {
+              valueControl?.clearValidators();
+              minControl?.setValidators(Validators.required);
+              maxControl?.setValidators(Validators.required);
+              minIncludedControl?.setValidators(Validators.required);
+              maxIncludedControl?.setValidators(Validators.required);
+            }
+          }
+          else
+          {
+            valueControl?.clearValidators();
+            minControl?.clearValidators();
+            maxControl?.clearValidators();
+            minIncludedControl?.clearValidators();
+            maxIncludedControl?.clearValidators();
+          }
+        }
+      }
+
+      // Importante: actualizar validación
+      valueControl?.updateValueAndValidity();
+      minControl?.updateValueAndValidity();
+      maxControl?.updateValueAndValidity();
+      minIncludedControl?.updateValueAndValidity();
+      maxIncludedControl?.updateValueAndValidity();
+    }) as Subscription;
+
+    this.subscriptions.push(dynamicValidationSub);
+
+    // Ejecutar validación inicial según el valor inicial
+    comparationControl?.updateValueAndValidity();
+  }
+
+  allConditionsCorrect(): boolean {
     return this.conditionArray.controls.every(condition => condition.valid && condition.controls.clauses.controls.every((clause) => clause.valid));
   }
 
@@ -1413,7 +1593,7 @@ export class AlertManagerComponent implements OnInit{
 
   async fromDtoToForm(alertViewDto: AlertViewDto)
   {
-    if (this.alertType == 'simple' || this.alertType == 'composite')
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
     {
       //INDICATORS
       alertViewDto.indicators?.forEach((indicator, i) => 
@@ -1460,7 +1640,7 @@ export class AlertManagerComponent implements OnInit{
           {
             complete: () => 
             {
-              this.onChangeMetricSelect(i);
+              this.onChangeMetricSelect();
               this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
 
               this.conditionFiltersMap = new Map();
@@ -1509,7 +1689,7 @@ export class AlertManagerComponent implements OnInit{
         });
       });
     }
-    else if (this.alertType == 'logs')
+    else if (this.isLogsAlert)
     {
       let logsAlertData: string[] = alertViewDto.name!.split("_")!;
       this.logsStep1Form.get('service')?.setValue(logsAlertData[0]);
@@ -1589,7 +1769,14 @@ export class AlertManagerComponent implements OnInit{
         id: this._fb.control((this.conditionArray.length + 1).toString()),
         severity: this._fb.control(this.severityOptions.find((opt) => opt.value == condition.severity)),
         status: this._fb.control(condition.status),
-        clauses:  this._fb.array<ClauseFormGroup>([])
+        clauses:  this._fb.array<ClauseFormGroup>([]),
+        baselineVariables: this._fb.group({
+          baselinesVariablesId: [null],
+          type: [null],
+          auxVar1: [''],
+          auxVar2: [''],
+          auxVar3: ['']
+        })
       }) as ConditionFormGroup;
 
       this.conditionArray.push(newCondition);
@@ -1612,7 +1799,8 @@ export class AlertManagerComponent implements OnInit{
           max: this._fb.control(clause.thresholdUp),
           startBrackets: this._fb.control(clause.startBrackets),
           endBrackets: this._fb.control(clause.endBrackets),
-          externalOperation: this._fb.control(clause.externalOperation)
+          externalOperation: this._fb.control(clause.externalOperation),
+          baselineComparation: this._fb.control(baselinesComparationTypes[0])
         }) as ClauseFormGroup);
       });
 
@@ -1682,7 +1870,7 @@ export class AlertManagerComponent implements OnInit{
       this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)].disabled = true;
     }
 
-    if (this.alertType == 'logs')
+    if (this.isLogsAlert)
     {
       this.generateInternalNameAndName();
     }
@@ -1748,7 +1936,7 @@ export class AlertManagerComponent implements OnInit{
         }
       }
 
-      alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!));
+      alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!, this.isBaselineAlert));
     }
 
     //CONDITIONS
@@ -1758,6 +1946,13 @@ export class AlertManagerComponent implements OnInit{
       let conditionFiltersDimensionsMap: Map<string, Map<string, string[]>> = this.conditionFiltersMap.get(condition.get('id')?.value!)!;
       let conditionFiltersList: ConditionFilterDto[] = [];
       let alertClauses: AlertClauseDto[] = [];
+
+      let baselinesVariables = new BaselinesVariablesDto(
+        (condition.get('baselineVariables')?.value as FormGroup).get('baselinesVariablesId')?.value,
+        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar1')?.value,
+        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar2')?.value,
+        (condition.get('baselineVariables')?.value as FormGroup).get('auxVar3')?.value
+      );
 
       //CLAUSES
       for (let clause of condition.controls.clauses.controls) {
@@ -1798,14 +1993,14 @@ export class AlertManagerComponent implements OnInit{
         }
       });
 
-      if (this.alertType == 'logs')
+      if (this.isLogsAlert)
       {
         this.logsConditionArray.controls.forEach((logCondition) => {
           conditionFiltersList.push(new ConditionFilterDto(null, logCondition.get('externalOperation')?.value!, logCondition.get('comparation')?.value!.value!, logCondition.get('field')?.value!, logCondition.get('value')?.value!, false));
         });
       }
 
-      alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, alertClauses, conditionFiltersList));
+      alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariables, alertClauses, conditionFiltersList));
     }
 
     //ALERTA
@@ -1817,7 +2012,7 @@ export class AlertManagerComponent implements OnInit{
       this.tagList,
       this.advancedOptionsForm.get('periodicity')?.value.value,
       this.advancedOptionsForm.get('timeWindow')?.value.value,
-      this.alertType == 'simple' ? 0 : this.alertType == 'composite' ? 1 : this.alertType == 'logs' ? 2 : 3,
+      this.isSimpleConditionAlert ? 0 : this.isCompositeConditionAlert ? 1 : this.isLogsAlert ? 2 : 3,
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
       null,
@@ -1827,6 +2022,7 @@ export class AlertManagerComponent implements OnInit{
       this.activationRecoverForm.get('recover2')?.value.value,
       this.logsStep1Form.get('service')?.value ? this.logsStep1Form.get('service')?.value : null,
       this.logsStep1Form.get('catalog')?.value ? this.logsStep1Form.get('catalog')?.value : null,
+      this.isBaselinePastAverageAlert ? 'PAST_AVERAGE' : this.isBaselinePastAveragePonderedAlert ? 'PAST_AVERAGE_PONDERED' : this.isBaselineKSigmaAlert ? 'K-SIGMA' : null
     );
 
     alertDto.alertConditions = alertConditions;
@@ -1897,7 +2093,7 @@ export class AlertManagerComponent implements OnInit{
     finalCtrl.updateValueAndValidity({ emitEvent: false });
   }
 
-  checkAllFinalExpressions(): boolean 
+  allFinalExpressionsCorrect(): boolean 
   {
     let allValid = true;
 
@@ -2168,30 +2364,33 @@ export class AlertManagerComponent implements OnInit{
     this.groupByChartMap = new Map<string, string[]>();
 
     this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-      this.indicatorArray.controls.forEach(indicator => {
-        indicator.controls.metrics.controls.forEach(metric => {
-          const metricField = metric.get('metric')?.value;
-          if (metricField) {
-            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
-              (response) => {
-                if (this.groupByChartMap.has(dimension))
-                {
-                  let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
-                  this.groupByChartMap.set(dimension, dimensionValuesIntersection);
-                  this.groupByChartMap = new Map(this.groupByChartMap);
-                }
-                else
-                {
-                  this.groupByChartMap.set(dimension, response);
-                  this.groupByChartMap = new Map(this.groupByChartMap);
-                }
-              },
-              (error) => {
+      this.indicatorArray.controls.forEach((indicator, i) => {
+        if (this.isSimpleConditionAlert || this.isCompositeConditionAlert || (this.isBaselineAlert && i > 0))
+        {
+          indicator.controls.metrics.controls.forEach(metric => {
+            const metricField = metric.get('metric')?.value;
+            if (metricField) {
+              this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
+                (response) => {
+                  if (this.groupByChartMap.has(dimension))
+                  {
+                    let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
+                    this.groupByChartMap.set(dimension, dimensionValuesIntersection);
+                    this.groupByChartMap = new Map(this.groupByChartMap);
+                  }
+                  else
+                  {
+                    this.groupByChartMap.set(dimension, response);
+                    this.groupByChartMap = new Map(this.groupByChartMap);
+                  }
+                },
+                (error) => {
 
-              }
-            )
-          }
-        });
+                }
+              )
+            }
+          });
+        }
       });
     });
 
@@ -2281,5 +2480,44 @@ export class AlertManagerComponent implements OnInit{
     map.set('created', newCreated);
     map.set('selected', newSelected);
     map.set('merge', newMerge);
+  }
+
+  getBaselines()
+  {
+    this.baselinesListLoading = true;
+    this.baselinesListError = false;
+
+    this.inventoryBaselinesService.getBaselines(this.isBaselinePastAverageAlert ? 'past_average' : this.isBaselinePastAveragePonderedAlert ? 'past_average_pondered' : 'ksigma').subscribe(
+      (response) => {
+
+        this.baselinesList = response;
+        
+        this.baselinesListLoading = false;
+        this.baselinesListError = false;
+      },
+      (error) => {
+        this.baselinesListLoading = false;
+        this.baselinesListError = true;
+      }
+    )
+  }
+
+  onChangeBaselinesVariablesConditionType(condition: ConditionFormGroup)
+  {
+    condition.controls.baselineVariables.get('auxVar1')?.reset();
+    condition.controls.baselineVariables.get('auxVar2')?.reset();
+    condition.controls.baselineVariables.get('auxVar3')?.reset();
+    condition.controls.baselineVariables.updateValueAndValidity();
+  }
+
+  onChangeBaselineComparationType(clause: ClauseFormGroup)
+  {
+    clause.get('value')?.reset();
+    clause.get('min')?.reset();
+    clause.get('minIncluded')?.reset();
+    clause.get('max')?.reset();
+    clause.get('maxIncluded')?.reset();
+    clause.get('comparation')?.setValue(baselinesClauseComparationOptions[0]);
+    clause.updateValueAndValidity();
   }
 }

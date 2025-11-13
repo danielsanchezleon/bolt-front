@@ -95,6 +95,24 @@ export const silencePeriodDayOptions = [
     {value: 6, label: 'Domingo'}
 ];
 
+//BASELINES
+
+export const baselinesClauseComparationOptions = [
+    {value: 'MORE_THAN', label: 'Mayor que'},
+    {value: 'LESS_THAN', label: 'Menor que'}
+];
+
+export const baselinesVariablesConditionTypes = [
+    {value: 'MORE_THAN', label: 'Superior a la baseline'},
+    {value: 'LESS_THAN', label: 'Inferior a la baseline'},
+    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'}
+];
+
+export const baselinesComparationTypes = [
+    {value: 'COMP_WITH_THRESHOLD', label: 'Comparar con umbral'},
+    {value: 'COMP_WITH_INDICATOR', label: 'Comparar con indicador'}
+];
+
 //STEP 3
 export const endpointTypeOptions = [
     {value: 'email', label: 'Email', icon: 'pi-envelope'},

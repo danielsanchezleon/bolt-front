@@ -19,6 +19,7 @@
             background-color: #dbeafe;
 
             padding: 16px;
+            margin: 0px 16px;
 
             .indicator-container {
                 display: flex;
@@ -460,6 +461,20 @@
                         align-items: center;
                         gap: 8px;
                     }
+                }
+
+                .condition-baseline-variables
+                {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    gap: 16px;
+
+                    background-color: white;
+                    border-radius: 8px;
+                    border: 1px solid lightgray;
+
+                    padding: 16px;
                 }
 
                 .condition-clause {

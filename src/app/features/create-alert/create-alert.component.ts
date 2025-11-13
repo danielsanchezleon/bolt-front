@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-create-alert',
-  imports: [CommonModule, PageWrapperComponent, ButtonModule],
+  imports: [CommonModule, PageWrapperComponent, ButtonModule ],
   templateUrl: './create-alert.component.html',
   styleUrl: './create-alert.component.scss'
 })
@@ -41,7 +41,7 @@ export class CreateAlertComponent
 
   onClickNavigateToBaseline(type: string)
   {
-    // this.router.navigate(['alert/create', 'baseline', type]);
+    this.router.navigate(['alert/create', 'baseline', type]);
   }
 
   onClickNavigateToLogs()

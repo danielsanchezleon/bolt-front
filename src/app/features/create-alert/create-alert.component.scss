@@ -101,6 +101,9 @@
         border: 1px solid lightgray;
         border-radius: 8px;
 
+        position: relative;
+        overflow: hidden;
+
         .threshold-alert-options {
             display: flex;
             flex-direction: row;
@@ -156,4 +159,27 @@
             justify-content: end;
         }
     }
+}
+
+/* NUEVO: marco y pista del slide */
+.swap-frame {
+  overflow: hidden;          /* recorta lo que se desplaza */
+  position: relative;
+}
+
+.swap-track {
+  display: flex;
+  width: 200%;               /* 2 paneles */
+  transition: transform 300ms ease;
+  will-change: transform;
+}
+
+/* Cada panel ocupa exactamente el viewport del marco */
+.panel {
+  flex: 0 0 50%;             /* 2 paneles → 50% cada uno (de la pista al 200%) */
+}
+
+/* Cuando baselineSelected = true, muestra el panel 2 */
+.swap-frame.shift .swap-track {
+  transform: translateX(-50%);
 }

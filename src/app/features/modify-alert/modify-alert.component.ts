@@ -27,6 +27,7 @@ import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PaginatorModule } from 'primeng/paginator';
+import { MetadataService } from '../../shared/services/metadata.service';
 
 @Component({
   selector: 'app-modify-alert',
@@ -63,6 +64,12 @@ import { PaginatorModule } from 'primeng/paginator';
 })
 export class ModifyAlertComponent implements OnInit
 {
+  //METADATA FILTERS
+  servicesList: string[] = [];
+  sourcesList: string[] = [];
+  dataTypesList: string[] = [];
+  categoriesList: string[] = [];
+
   severityOptions: any[] = [
     {value: 'DISASTER', label: 'Disaster'},
     {value: 'CRITICAL', label: 'Critical'},
@@ -135,7 +142,7 @@ export class ModifyAlertComponent implements OnInit
   page: number = 0;
   size: number = 20;
 
-  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute) 
+  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService) 
   {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state as { alertId: any };
@@ -154,15 +161,20 @@ export class ModifyAlertComponent implements OnInit
     });
 
     this.filterForm = this._fb.group({
-      name: new FormControl(''),
-      message: new FormControl(''),
-      timeWindow: new FormControl(null),
-      periodicity: new FormControl(null)
+      service: new FormControl(''),
+      source: new FormControl(''),
+      dataType: new FormControl(''),
+      category: new FormControl('')
     });
   }
 
   ngOnInit() 
   {
+    this.getServices();
+    this.getSources();
+    this.getDataTypes();
+    this.getCategories();
+
     this.filterTextControl.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()).subscribe(
       (filterText) => 
       {
@@ -485,5 +497,53 @@ export class ModifyAlertComponent implements OnInit
     }
 
     return false;
+  }
+
+  getServices()
+  {
+    this.metadataService.getServices().subscribe(
+      (response) => {
+        this.servicesList = response;
+      },
+      (error) => {
+
+      }
+    );
+  }
+
+  getSources()
+  {
+    this.metadataService.getSources().subscribe(
+      (response) => {
+        this.sourcesList = response;
+      },
+      (error) => {
+
+      }
+    );
+  }
+
+  getDataTypes()
+  {
+    this.metadataService.getDataTypes().subscribe(
+      (response) => {
+        this.dataTypesList = response;
+      },
+      (error) => {
+
+      }
+    );
+  }
+
+  getCategories()
+  {
+    this.metadataService.getCategories().subscribe(
+      (response) => {
+        this.categoriesList = response;
+      },
+      (error) => {
+
+      }
+    );
   }
 }
