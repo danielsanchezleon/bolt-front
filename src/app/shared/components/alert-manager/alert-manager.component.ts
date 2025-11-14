@@ -1691,14 +1691,13 @@ export class AlertManagerComponent implements OnInit{
     }
     else if (this.isLogsAlert)
     {
-      let logsAlertData: string[] = alertViewDto.name!.split("_")!;
-      this.logsStep1Form.get('service')?.setValue(logsAlertData[0]);
-      this.getDistinctTableNamesByDataType(logsAlertData[0], false);
-      this.logsStep1Form.get('catalog')?.setValue(logsAlertData[1]);
+      this.logsStep1Form.get('service')?.setValue(alertViewDto.logsService);
+      this.getDistinctTableNamesByDataType(alertViewDto.logsService!, false);
+      this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
 
       this.catalogLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
-        this.logsStep1Form.get('catalog')?.setValue(logsAlertData[1]);
-        this.getDistinctMetricsByDataTypeAndTable(logsAlertData[0], logsAlertData[1])
+        this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
+        this.getDistinctMetricsByDataTypeAndTable(alertViewDto.logsService!, alertViewDto.logsCatalog!)
       });
 
       this.metricsLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
@@ -1716,7 +1715,7 @@ export class AlertManagerComponent implements OnInit{
         });
 
         this.logsConditionArray.controls.forEach((logCondition, i) => {
-          this.getDistinctDimensionsByDataTypeTableAndMetric(logsAlertData[0], logsAlertData[1], logCondition.get('field')?.value!, i);
+          this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, logCondition.get('field')?.value!, i);
         });
 
         this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
@@ -1725,7 +1724,7 @@ export class AlertManagerComponent implements OnInit{
           this.conditionFiltersMap.set((i + 1).toString(), new Map());
           let filterDimensionMap: Map<string, Map<string, string[]>> = new Map();
           alertViewDto.groupBy!.forEach((dimension) => {
-            this.alertOcurrencesService.getDistinctValuesForDimension(logsAlertData[1], dimension, null).subscribe(
+            this.alertOcurrencesService.getDistinctValuesForDimension(alertViewDto.logsCatalog!, dimension, null).subscribe(
               (response) => 
               {
                 let values: string[] = [];

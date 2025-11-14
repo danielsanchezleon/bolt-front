@@ -21,6 +21,9 @@ export class AlertViewDto {
   recoveryNumPeriods!: number;
   recoveryTotalPeriods!: number;
   status?: string;
+  logsService?: string;
+  logsCatalog?: string;
+  baselineType?: string;
   groupBy?: string[];
   alertTags?: TagViewDto[];
   conditions?: AlertConditionViewDto[];
