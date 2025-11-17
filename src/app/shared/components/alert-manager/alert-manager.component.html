@@ -133,7 +133,7 @@
                 </div>
 
                 <app-inner-accordion
-                    *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null"
+                    *ngIf="((isSimpleConditionAlert || isCompositeConditionAlert) && indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null) || isLogsAlert || isBaselineAlert"
                     [title]="'Opciones avanzadas'" [isOpen]="mode == 'edit' ? true : false">
                     <form class="group-by-options" [formGroup]="advancedOptionsForm">
                         <p-floatlabel class="full-width-selector" variant="on">
@@ -229,6 +229,42 @@
                         </p-floatlabel>
                     </form>
                 </div>
+
+                <app-inner-accordion
+                    [title]="'Opciones avanzadas'" [isOpen]="mode == 'edit' ? true : false">
+                    <form class="group-by-options" [formGroup]="advancedOptionsForm">
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select
+                                [pTooltip]="'Intervalo de tiempo sobre el cual se calcula la métrica seleccionada. Ejemplo: Con una ventana de 5 minutos, se calcula la media del uso de CPU durante ese intervalo.'"
+                                tooltipPosition="top" showDelay="500" [options]="timeWindowOptions"
+                                class="full-width-selector" inputId="over_label1" optionLabel="label" appendTo="body"
+                                formControlName="timeWindow" (onChange)="this.getChartData();" />
+                            <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;"
+                                for="over_label1">Ventana de tiempo <i class="pi pi-info-circle"
+                                    style="font-size: 0.8rem;"></i></label>
+                        </p-floatlabel>
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select
+                                [pTooltip]="'Aquí puedes introducir el número de minutos desde el momento actual que se van a descartar de datos.'"
+                                tooltipPosition="top" showDelay="500" [options]="discardTimeOptions"
+                                class="full-width-selector" inputId="over_label2" optionLabel="label" appendTo="body"
+                                formControlName="discardTime" />
+                            <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;"
+                                for="over_label2">Descartar últimos minutos <i class="pi pi-info-circle"
+                                    style="font-size: 0.8rem;"></i></label>
+                        </p-floatlabel>
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-select
+                                [pTooltip]="'Define cada cuánto se ejecuta la evaluación de la métrica. Si la ventana de tiempo es de 5 minutos y la periodicidad es de 1 minuto, se evaluará cada minuto considerando los últimos 5 minutos de datos.'"
+                                tooltipPosition="top" showDelay="500" [options]="periodicityOptions"
+                                class="full-width-selector" inputId="over_label3" optionLabel="label" appendTo="body"
+                                formControlName="periodicity" />
+                            <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;"
+                                for="over_label3">Periodicidad <i class="pi pi-info-circle"
+                                    style="font-size: 0.8rem;"></i></label>
+                        </p-floatlabel>
+                    </form>
+                </app-inner-accordion>
             </div>
         </app-accordion>
 
@@ -290,15 +326,15 @@
                                 size="small" (onChange)="onChangeBaselinesVariablesConditionType(condition);" />
                             <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
                                 *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'LESS_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
-                                formControlName="auxVar2" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
-                                size="small" placeholder="Factor inferior" />
+                                formControlName="auxVar1" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                                size="small" placeholder="Factor inferior" [min]="0" [max]="1" />
                             <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
                                 *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'MORE_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
-                                formControlName="auxVar1" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
-                                size="small" placeholder="Factor superior" />
+                                formControlName="auxVar2" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                                size="small" placeholder="Factor superior" [min]="0" [max]="1" />
                             <p-inputnumber class="threshold-value" [ngStyle]="{'width': '64px'}"
                                 *ngIf="isBaselinePastAveragePonderedAlert || isBaselineKSigmaAlert"
-                                formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                                formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="0"
                                 size="small" placeholder="K" />
                         </div>
                         <div class="condition-clause"

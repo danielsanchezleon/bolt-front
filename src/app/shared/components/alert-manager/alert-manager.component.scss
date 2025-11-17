@@ -353,6 +353,14 @@
             flex-direction: column;
             gap: 16px;
         }
+
+        .group-by-options {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 24px;
+        }
     }
 
     .step-2-container {

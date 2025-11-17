@@ -8,7 +8,7 @@ export class AlertConditionDto
     public id: number | null,
     public severity: string,
     public status: boolean,
-    public baselinesVariables: BaselinesVariablesDto,
+    public baselinesVariables: BaselinesVariablesDto | null,
     public alertClauses: AlertClauseDto[] = [],
     public conditionFilters: ConditionFilterDto[] = []
   ) {}

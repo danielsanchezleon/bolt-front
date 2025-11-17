@@ -831,7 +831,7 @@ export class AlertManagerComponent implements OnInit{
     this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
     this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
 
-    this.getChartData();
+    // this.getChartData();
   }
 
   onChangeMetricSelect()
@@ -840,7 +840,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.generateDimensionIntersection();
 
-    this.getChartData();
+    // this.getChartData();
 
     this.conditionFiltersMap = new Map();
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
@@ -1374,34 +1374,36 @@ export class AlertManagerComponent implements OnInit{
   {
     this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.set('selected', event.value);
 
-    let selectedDimensions: SelectedDimensionDto[] = [];
+    if (this.isLogsAlert)
+    { 
+      let selectedDimensions: SelectedDimensionDto[] = [];
 
-    this.groupByForm.get('groupBy')?.value.forEach((dim: string) => 
-    {
-      this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)?.get('selected')?.forEach((filter) => {
-        selectedDimensions.push(new SelectedDimensionDto(dim, filter));
-      });
-    });
-
-    let distinctValuesRequest: DistinctValuesRequest = new DistinctValuesRequest(selectedDimensions);
-
-    this.groupByForm.get('groupBy')?.value.forEach((dim: string) => {
-
-      if (dimension != dim)
+      this.groupByForm.get('groupBy')?.value.forEach((dim: string) => 
       {
-        this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dim, distinctValuesRequest).subscribe(
-          (response) => {
-            let auxSelectedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('selected')!;
-            let auxCreatedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('created')!;
-            this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim, new Map().set('values', response).set('selected', auxSelectedFilters).set('created', auxCreatedFilters).set('merge', auxCreatedFilters.concat(auxSelectedFilters)));          
-          },
-          (error) => {
+        this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)?.get('selected')?.forEach((filter) => {
+          selectedDimensions.push(new SelectedDimensionDto(dim, filter));
+        });
+      });
 
-          }
-        );
-      }
-    });
+      let distinctValuesRequest: DistinctValuesRequest = new DistinctValuesRequest(selectedDimensions);
 
+      this.groupByForm.get('groupBy')?.value.forEach((dim: string) => {
+
+        if (dimension != dim)
+        {
+          this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dim, distinctValuesRequest).subscribe(
+            (response) => {
+              let auxSelectedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('selected')!;
+              let auxCreatedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('created')!;
+              this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim, new Map().set('values', response).set('selected', auxSelectedFilters).set('created', auxCreatedFilters).set('merge', auxCreatedFilters.concat(auxSelectedFilters)));          
+            },
+            (error) => {
+
+            }
+          );
+        }
+      });
+    }
   }
 
   onClickGoToCreateAlert()
@@ -1935,7 +1937,7 @@ export class AlertManagerComponent implements OnInit{
         }
       }
 
-      alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!, this.isBaselineAlert));
+      alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!, false));
     }
 
     //CONDITIONS
@@ -1945,13 +1947,6 @@ export class AlertManagerComponent implements OnInit{
       let conditionFiltersDimensionsMap: Map<string, Map<string, string[]>> = this.conditionFiltersMap.get(condition.get('id')?.value!)!;
       let conditionFiltersList: ConditionFilterDto[] = [];
       let alertClauses: AlertClauseDto[] = [];
-
-      let baselinesVariables = new BaselinesVariablesDto(
-        (condition.get('baselineVariables') as FormGroup).get('baselinesVariablesId')?.value,
-        (condition.get('baselineVariables') as FormGroup).get('auxVar1')?.value,
-        (condition.get('baselineVariables') as FormGroup).get('auxVar2')?.value,
-        (condition.get('baselineVariables') as FormGroup).get('auxVar3')?.value
-      );
 
       //CLAUSES
       for (let clause of condition.controls.clauses.controls) {
@@ -1999,7 +1994,26 @@ export class AlertManagerComponent implements OnInit{
         });
       }
 
-      alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariables, alertClauses, conditionFiltersList));
+      let baselinesVariablesDto: BaselinesVariablesDto | null = null;
+
+      if (this.isBaselineAlert)
+      {
+        let baselinesVariablesDto: BaselinesVariablesDto = new BaselinesVariablesDto(
+          (condition.get('baselineVariables') as FormGroup).get('baselinesVariablesId')?.value,
+          (condition.get('baselineVariables') as FormGroup).get('auxVar1')?.value,
+          (condition.get('baselineVariables') as FormGroup).get('auxVar2')?.value,
+          (condition.get('baselineVariables') as FormGroup).get('auxVar3')?.value
+        );
+      }
+
+      alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariablesDto, alertClauses, conditionFiltersList));
+    }
+
+    //BASELINE
+    if (this.isBaselineAlert)
+    {
+      let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', 'inventory_baselines', this.selectedBaseline, 'SUM', '');
+      alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
     }
 
     //ALERTA
@@ -2400,7 +2414,7 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    this.getChartData();
+    // this.getChartData();
   }
 
   onChangeLogsGroupBy()
