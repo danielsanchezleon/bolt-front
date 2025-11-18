@@ -45,7 +45,8 @@
                                         class="font-12 text-white font-w-700">{{metric.get('id')?.value}}</span></div>
                                 <p-select
                                     [options]="matOperationOptions" formControlName="operation" optionLabel="label"
-                                    appendTo="body" (onChange)="this.getChartData();" />
+                                    appendTo="body"  />
+                                    <!-- (onChange)="this.getChartData();" -->
                                 <p-select
                                     class="full-width-selector" [loading]="loadingMetricList"
                                     [options]="metric.get('options')?.value" formControlName="metric" [filter]="true"
@@ -141,7 +142,8 @@
                                 [pTooltip]="'Intervalo de tiempo sobre el cual se calcula la métrica seleccionada. Ejemplo: Con una ventana de 5 minutos, se calcula la media del uso de CPU durante ese intervalo.'"
                                 tooltipPosition="top" showDelay="500" [options]="timeWindowOptions"
                                 class="full-width-selector" inputId="over_label1" optionLabel="label" appendTo="body"
-                                formControlName="timeWindow" (onChange)="this.getChartData();" />
+                                formControlName="timeWindow"  />
+                                <!-- (onChange)="this.getChartData();" -->
                             <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;"
                                 for="over_label1">Ventana de tiempo <i class="pi pi-info-circle"
                                     style="font-size: 0.8rem;"></i></label>
@@ -238,7 +240,8 @@
                                 [pTooltip]="'Intervalo de tiempo sobre el cual se calcula la métrica seleccionada. Ejemplo: Con una ventana de 5 minutos, se calcula la media del uso de CPU durante ese intervalo.'"
                                 tooltipPosition="top" showDelay="500" [options]="timeWindowOptions"
                                 class="full-width-selector" inputId="over_label1" optionLabel="label" appendTo="body"
-                                formControlName="timeWindow" (onChange)="this.getChartData();" />
+                                formControlName="timeWindow"  />
+                                <!-- (onChange)="this.getChartData();" -->
                             <label style="display: flex; flex-direction: row; align-items: center; gap: 4px;"
                                 for="over_label1">Ventana de tiempo <i class="pi pi-info-circle"
                                     style="font-size: 0.8rem;"></i></label>
