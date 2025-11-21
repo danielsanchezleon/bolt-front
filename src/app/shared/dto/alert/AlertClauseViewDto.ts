@@ -1,17 +1,17 @@
 export class AlertClauseViewDto {
   id?: number | null;
   indicatorName?: string;
-  startBrackets?: string | null;
+  startBrackets?: number | null;
   compOperation?: string;
   threshold?: number | null;
-  endBrackets?: string | null;
+  endBrackets?: number | null;
   order?: number;
   externalOperation?: string | null;
   thresholdInclude?: boolean | null;
   thresholdUp?: number | null;
   thresholdIncludeUp?: boolean | null;
 
-  constructor(id: number | null, indicatorName: string, startBrackets: string | null, compOperation: string, threshold: number | null, endBrackets: string | null, order: number, externalOperation: string | null, thresholdInclude: boolean | null, thresholdUp: number | null, thresholdIncludeUp: boolean | null)
+  constructor(id: number | null, indicatorName: string, startBrackets: number | null, compOperation: string, threshold: number | null, endBrackets: number | null, order: number, externalOperation: string | null, thresholdInclude: boolean | null, thresholdUp: number | null, thresholdIncludeUp: boolean | null)
   {
     this.id = id;
     this.indicatorName = indicatorName;

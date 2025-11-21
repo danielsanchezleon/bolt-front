@@ -71,6 +71,7 @@ import { SelectedDimensionDto } from '../../dto/SelectedDimensionDto';
 import { DistinctValuesRequest } from '../../dto/DistinctValuesRequest';
 import { InventoryBaselinesService } from '../../services/inventory-baselines.service';
 import { BaselinesVariablesDto } from '../../dto/BaselinesVariablesDto';
+import { BaselineResponse } from '../../responses/baselines/BaselineResponse';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -376,8 +377,8 @@ export class AlertManagerComponent implements OnInit{
   //BASELINE
   baselinesListLoading: boolean = false;
   baselinesListError: boolean = false;
-  baselinesList: string[] = [];
-  selectedBaseline: string = '';
+  baselineResponseList: BaselineResponse[] = [];
+  selectedBaseline: any = null;
 
   //Step 2
   severityOptions: any[] = [];
@@ -602,7 +603,6 @@ export class AlertManagerComponent implements OnInit{
       }
       else if (this.isBaselineAlert)
       {
-        this.createIndicator();
         this.getBaselines();
       }
 
@@ -2621,7 +2621,7 @@ export class AlertManagerComponent implements OnInit{
     this.inventoryBaselinesService.getBaselines(this.isBaselinePastAverageAlert ? 'past_average' : this.isBaselinePastAveragePonderedAlert ? 'past_average_pondered' : 'ksigma').subscribe(
       (response) => {
 
-        this.baselinesList = response;
+        this.baselineResponseList = response;
         
         this.baselinesListLoading = false;
         this.baselinesListError = false;
@@ -2650,5 +2650,35 @@ export class AlertManagerComponent implements OnInit{
     clause.get('maxIncluded')?.reset();
     clause.get('comparation')?.setValue(baselinesClauseComparationOptions[0]);
     clause.updateValueAndValidity();
+  }
+
+  onChangeBaselineSelection()
+  {
+    this.indicatorArray.clear();
+
+    const newIndicator: IndicatorFormGroup = this._fb.group({
+          id: this._fb.control(null),
+          name: this._fb.control(this.selectedBaseline.alertIndicatorViewDto.name),
+          metrics: this._fb.array<MetricFormGroup>([]),
+          finalExpression: this._fb.control({value: this.selectedBaseline.alertIndicatorViewDto.finalExpression, disabled: true})
+        }) as IndicatorFormGroup;
+
+    this.selectedBaseline.alertIndicatorViewDto.alertMetrics.forEach((metric: any, j: number) => {
+      console.log(metric)
+      let metricList: TableMetricInfo[] = [];
+      metricList.push(new TableMetricInfo(metric.dbName, metric.tableName, metric.metricName, []));
+      console.log(metricList)
+      newIndicator.controls.metrics.push(this._fb.group({
+              metricId: this._fb.control(metric.metricId),
+              id: this._fb.control((j + 1).toString()),
+              name: this._fb.control(this.letters[0] + "." + (j + 1)),
+              metric: this._fb.control({value: metricList[0], disabled: true}),
+              operation: this._fb.control({value: matOperationOptions.find((opt) => opt.value == metric.operation), disabled: true}),
+              options: this._fb.control(metricList)
+            }) as MetricFormGroup)});
+
+    this.indicatorArray.push(newIndicator);
+
+    this.resultMetricMap.set(0, this.selectedBaseline.alertIndicatorViewDto.finalExpression);
   }
 }

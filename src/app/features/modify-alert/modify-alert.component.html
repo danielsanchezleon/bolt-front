@@ -118,7 +118,7 @@
                         <p-popover #op1>
                             <div class="popover-container">
                                 <div class="font-w-600">Severidades</div>
-                                <div class="severities-container" *ngIf="alert.alertType == 'SIMPLE'">
+                                <div class="severities-container">
                                     <div class="severity-container" *ngFor="let condition of alert.conditions; let i = index;">
                                         <div class="id-container font-w-600">{{i+1}}</div>
                                         <p-select class="select" size="small" [(ngModel)]="condition.severity"
@@ -220,7 +220,7 @@
                 [rowsPerPageOptions]="[5, 10, 20, 50]"
                 [showPageLinks]="true"/>
 
-            <p-button *ngIf="false" icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
+            <p-button icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
         </div>
     </div>
 

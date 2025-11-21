@@ -6,7 +6,7 @@
         (onClick)="onClickNavigateToAlerts()" />
 
     <div class="steps-container">
-        <div class="font-32 font-w-600">{{isSimpleConditionAlert ? 'Condición simple' : isCompositeConditionAlert ? 'Condición compuesta' : isLogsAlert ? 'Patrones de logs' : 'Baseline'}}</div>
+        <div class="font-32 font-w-600">{{isSimpleConditionAlert ? 'Condición simple' : isCompositeConditionAlert ? 'Condición compuesta' : isLogsAlert ? 'Conteo de patrones' : 'Baseline'}}</div>
         <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 1: Configura la consulta'"
             [highlightTitle]="true" [isOpen]="true">
 
@@ -15,13 +15,13 @@
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <span class="font-14 font-w-600">Baseline</span>
-                            <p-select class="select" [options]="baselinesList" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" />
+                            <p-select class="select" [options]="baselineResponseList" optionLabel="name" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" (onChange)="onChangeBaselineSelection();" />
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isBaselineAlert"
+            <div *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || (isBaselineAlert && selectedBaseline)"
                 class="consult-configuration-container">
                 <div class="indicators-container">
                     <div class="indicator-container" *ngFor="let indicator of indicatorArray.controls; let i = index;"
@@ -45,7 +45,7 @@
                                         class="font-12 text-white font-w-700">{{metric.get('id')?.value}}</span></div>
                                 <p-select
                                     [options]="matOperationOptions" formControlName="operation" optionLabel="label"
-                                    appendTo="body"  />
+                                    appendTo="body" />
                                     <!-- (onChange)="this.getChartData();" -->
                                 <p-select
                                     class="full-width-selector" [loading]="loadingMetricList"
@@ -53,7 +53,7 @@
                                     (onFilter)="onFilterMetricsChange($event, metric);" optionLabel="metric"
                                     [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona una métrica'"
                                     emptyMessage=" " emptyFilterMessage=" " (onChange)="onChangeMetricSelect();"
-                                    appendTo="body">
+                                    appendTo="body" >
                                     <ng-template let-metric #item>
                                         <div style="display: flex; flex-direction: column; gap: 8px;">
                                             <div
@@ -75,10 +75,10 @@
                                 </p-select>
                                 <div
                                     class="buttons">
-                                    <p-button *ngIf="indicator.controls.metrics.length < 5" icon="pi pi-plus"
+                                    <p-button *ngIf="indicator.controls.metrics.length < 5 && !isBaselineAlert" icon="pi pi-plus"
                                         severity="primary" (onClick)="createMetric(i);" />
                                     <p-button
-                                        *ngIf="(indicator.controls.metrics.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)"
+                                        *ngIf="((indicator.controls.metrics.length > 1 && mode == 'create') || (mode == 'edit' && metric.get('metricId')?.value == null)) && !isBaselineAlert"
                                         icon="pi pi-minus" severity="secondary" (onClick)="removeMetric(i, j);" />
                                 </div>
                             </div>
@@ -175,15 +175,15 @@
                 <div class="selects-container" [formGroup]="logsStep1Form">
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <span class="font-14 font-w-600">Servicio</span>
+                            <span class="font-14 font-w-600">Origen</span>
                             <p-select class="select" [options]="dataTypesList" formControlName="service" appendTo="body"
-                                placeholder="Selecciona un servicio"
+                                placeholder="Selecciona un origen"
                                 (onChange)="getDistinctTableNamesByDataType(logsStep1Form.get('service')?.value, true); this.generateInternalNameAndName();" />
                         </div>
                     </div>
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;"
-                            [pTooltip]="!this.logsStep1Form.get('service')?.value ? 'Debes seleccionar primero un servicio' : ''"
+                            [pTooltip]="!this.logsStep1Form.get('service')?.value ? 'Debes seleccionar primero un origen' : ''"
                             tooltipPosition="top" showDelay="500">
                             <span class="font-14 font-w-600">Catálogo</span>
                             <p-select class="select" [options]="tableNamesByDataTypeList" formControlName="catalog"
@@ -194,31 +194,29 @@
                     </div>
                 </div>
 
-                <app-inner-accordion [title]="'Búsqueda avanzada'" [isOpen]="mode == 'edit' ? true : false">
-                    <div class="advanced-search-container">
-                        <span class="font-14 font-w-600">Patrón de búsqueda avanzada en logs</span>
-                        <div class="condition-container"
-                            *ngFor="let logCondition of logsConditionArray.controls; let i = index; let first = first;"
-                            [formGroup]="logCondition"
-                            [pTooltip]="!logsStep1Form.get('catalog')?.value ? 'Debes seleccionar primero un catálogo' : ''"
-                            tooltipPosition="top" showDelay="500">
-                            <p-select *ngIf="!first" [options]="externalOperationOptions"
-                                formControlName="externalOperation" [size]="'small'" />
-                            <p-select class="select" [options]="metricsByDataTypeAndTableList" appendTo="body"
-                                placeholder="Selecciona un campo" [loading]="metricsByDataTypeAndTableLoading"
-                                [size]="'small'" formControlName="field"
-                                (onChange)="getDistinctDimensionsByDataTypeTableAndMetric(logsStep1Form.get('service')?.value, logsStep1Form.get('catalog')?.value, logCondition.get('field')?.value!, i);" />
-                            <p-select class="select" [options]="advancedSearchOptions" optionLabel="label"
-                                appendTo="body" [size]="'small'" [ngStyle]="{'width': '320px', 'min-width': '320px'}"
-                                formControlName="comparation" />
-                            <input type="text" pInputText [pSize]="'small'" style="width: 100%;"
-                                formControlName="value" />
-                            <p-button icon="pi pi-plus" severity="secondary" (onClick)="createLogCondition();" />
-                            <p-button *ngIf="logsConditionArray.length > 1" icon="pi pi-minus" severity="secondary"
-                                (onClick)="removeLogCondition(i);" />
-                        </div>
+                <div class="advanced-search-container">
+                    <span class="font-14 font-w-600">Condiciones de filtrado</span>
+                    <div class="condition-container"
+                        *ngFor="let logCondition of logsConditionArray.controls; let i = index; let first = first;"
+                        [formGroup]="logCondition"
+                        [pTooltip]="!logsStep1Form.get('catalog')?.value ? 'Debes seleccionar primero un catálogo' : ''"
+                        tooltipPosition="top" showDelay="500">
+                        <p-select *ngIf="!first" [options]="externalOperationOptions"
+                            formControlName="externalOperation" [size]="'small'" />
+                        <p-select class="select" [options]="metricsByDataTypeAndTableList" appendTo="body"
+                            placeholder="Selecciona un campo" [loading]="metricsByDataTypeAndTableLoading"
+                            [size]="'small'" formControlName="field"
+                            (onChange)="getDistinctDimensionsByDataTypeTableAndMetric(logsStep1Form.get('service')?.value, logsStep1Form.get('catalog')?.value, logCondition.get('field')?.value!, i);" />
+                        <p-select class="select" [options]="advancedSearchOptions" optionLabel="label"
+                            appendTo="body" [size]="'small'" [ngStyle]="{'width': '320px', 'min-width': '320px'}"
+                            formControlName="comparation" />
+                        <input type="text" pInputText [pSize]="'small'" style="width: 100%;"
+                            formControlName="value" />
+                        <p-button icon="pi pi-plus" severity="secondary" (onClick)="createLogCondition();" />
+                        <p-button *ngIf="logsConditionArray.length > 1" icon="pi pi-minus" severity="secondary"
+                            (onClick)="removeLogCondition(i);" />
                     </div>
-                </app-inner-accordion>
+                </div>
 
                 <div class="titled-container">
                     <div class="font-16 font-w-600">Agrupaciones</div>
@@ -891,7 +889,7 @@
             <div *ngIf="isLogsAlert" class="modal-step-content">
                 <div class="font-16 font-w-600">Configuración básica</div>
                 <div class="title-description-block-1">
-                    <div class="title">Servicio</div>
+                    <div class="title">Origen</div>
                     <div class="description">{{logsStep1Form.get('service')?.value}}</div>
                 </div>
                 <div class="title-description-block-1">

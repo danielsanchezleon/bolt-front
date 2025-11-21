@@ -295,7 +295,8 @@
         .selects-container
         {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            align-items: center;
             gap: 16px;
 
             padding: 16px;
@@ -312,6 +313,8 @@
 
                 padding: 16px;
 
+                width: 100%;
+
                 .select
                 {
                     width: 100%;
@@ -327,10 +330,12 @@
 
             background-color: #f0fdf4;
             border: 2px solid #bbf7d0;
-            width: 100%;
-            border-radius: 8px;
+            width: calc(100% - 32px);
+            border-radius: 16px;
 
             padding: 16px;
+
+            margin: 0px 16px;
 
             .condition-container
             {

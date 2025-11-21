@@ -24,9 +24,7 @@ export const timeWindowOptions = [
     {value: "1h", label: '1 hora'},
     {value: "2h", label: '2 horas'},
     {value: "3h", label: '3 horas'},
-    {value: "6h", label: '6 horas'},
-    {value: "12h", label: '12 horas'},
-    {value: "24h", label: '24 horas'}
+    {value: "6h", label: '6 horas'}
 ];
 
 export const discardTimeOptions = [

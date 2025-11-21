@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { BaselineResponse } from '../responses/baselines/BaselineResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -12,10 +13,10 @@ export class InventoryBaselinesService {
 
   constructor(private http: HttpClient) {}
 
-  getBaselines(type: string): Observable<string[]> 
+  getBaselines(type: string): Observable<BaselineResponse[]> 
   {
     const params = new HttpParams().set('type', type);
 
-    return this.http.get<string[]>(this.apiUrl + '/getBaselines', {params: params});
+    return this.http.get<BaselineResponse[]>(this.apiUrl + '/getBaselines', {params: params});
   }
 }

@@ -7,6 +7,7 @@ import { TagViewDto } from "./TagViewDto";
 
 export class AlertViewDto {
   alertId?: number;
+  internalName?: string;
   name?: string;
   alertText?: string;
   alertDetail?: string;

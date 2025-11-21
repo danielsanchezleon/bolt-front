@@ -28,6 +28,17 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PaginatorModule } from 'primeng/paginator';
 import { MetadataService } from '../../shared/services/metadata.service';
+import { AlertPermissionDto } from '../../shared/dto/AlertPermissionDto';
+import { AlertConditionHistoryDto } from '../../shared/dto/AlertConditionHistoryDto';
+import { EndpointAlertDto } from '../../shared/dto/EndpointAlertDto';
+import { AlertSilenceDto } from '../../shared/dto/AlertSilenceDto';
+import { AlertIndicatorDto } from '../../shared/dto/AlertIndicatorDto';
+import { AlertMetricDto } from '../../shared/dto/AlertMetricDto';
+import { AlertConditionDto } from '../../shared/dto/AlertConditionDto';
+import { AlertDto } from '../../shared/dto/AlertDto';
+import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
+import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
+import { BaselinesVariablesDto } from '../../shared/dto/BaselinesVariablesDto';
 
 @Component({
   selector: 'app-modify-alert',
@@ -295,7 +306,115 @@ export class ModifyAlertComponent implements OnInit
     this.saveChangesMapSuccess.set(alert.alertId!, false);
     this.saveChangesMapError.set(alert.alertId!, false);
 
-    this.alertService.updateAlert(alert).subscribe(
+    //PERMISSIONS
+    let alertPermissions: AlertPermissionDto[] = [];
+    
+    for (let permission of alert.permissions!)
+    {
+      alertPermissions.push(new AlertPermissionDto(permission.id!, permission.writePermission!, permission.teamId!));
+    }
+    
+    //CONDITION HISTORIES
+    let alertConditionHistories: AlertConditionHistoryDto[] = [];
+    
+    //ENDPOINTS
+    let endpointAlerts: EndpointAlertDto[] = [];
+    
+    for (let endpoint of alert.endpoints!) 
+    {
+      let endpointAlert: EndpointAlertDto = new EndpointAlertDto(endpoint.id!, endpoint.severities!, endpoint.endpointId!);
+      endpointAlerts.push(endpointAlert);
+    }
+    
+    //PERIODOS DE SILENCIO
+    let alertSilences: AlertSilenceDto[] = [];
+
+    // for (let silencePeriod of alert.silencePeriods!) {
+    //   let days: any[] = silencePeriod.get('days')?.value!;
+
+    //   for (let i = 0; i < days.length; i++) {
+    //     let fromHour = silencePeriod.get('from')?.value!.getHours().toString().padStart(2, '0');
+    //     let fromMinutes = silencePeriod.get('from')?.value!.getMinutes().toString().padStart(2, '0');
+    //     let toHour = silencePeriod.get('to')?.value!.getHours().toString().padStart(2, '0');
+    //     let toMinutes = silencePeriod.get('to')?.value!.getMinutes().toString().padStart(2, '0');
+    //     alertSilences.push(new AlertSilenceDto(null, days[i].value, fromHour+':'+fromMinutes, toHour+':'+toMinutes));
+    //   }
+    // }
+    
+    //INDICATORS
+    let alertIndicators: AlertIndicatorDto[] = [];
+    
+    for (let i = 0; i < alert.indicators!.length; i++)
+    {
+      //METRICS
+      let alertMetrics: AlertMetricDto[] = [];
+
+      for (let metric of alert.indicators![i].alertMetrics!) 
+      {
+        alertMetrics.push(new AlertMetricDto(metric.metricId!, metric.dbName!, metric.tableName!, metric.metricName!, metric.operation!, metric.dimensions!));
+      }
+
+      alertIndicators.push(new AlertIndicatorDto(alert.indicators![i].id!, alert.indicators![i].name!, alertMetrics, alert.indicators![i].finalExpression!, alert.indicators![i].isBaseline!));
+    }
+    
+    //CONDITIONS
+    let alertConditions: AlertConditionDto[] = [];
+    
+    for (let condition of alert.conditions!) 
+    {
+      let conditionFiltersList: ConditionFilterDto[] = [];
+      let alertClauses: AlertClauseDto[] = [];
+    
+      //CLAUSES
+      for (let clause of condition.alertClauses!) {
+        alertClauses.push(new AlertClauseDto(clause.id!, clause.indicatorName!, clause.startBrackets!, clause.compOperation!, clause.threshold!, clause.endBrackets!, clause.order!, clause.externalOperation!, clause.thresholdInclude!, clause.thresholdUp!, clause.thresholdIncludeUp!));
+      }
+    
+      //CONDITION FILTERS
+      for (let conditionFilter of condition.conditionFilters!) {
+        conditionFiltersList.push(new ConditionFilterDto(null, conditionFilter.externalOperation!, conditionFilter.compOperation!, conditionFilter.filterField!, conditionFilter.filterValue!, conditionFilter.isCreated!));
+      }
+    
+      let baselinesVariablesDto: BaselinesVariablesDto | null = null;
+
+      if (alert.alertType == 'baseline')
+      {
+        baselinesVariablesDto = new BaselinesVariablesDto(condition.baselinesVariables!.id!, condition.baselinesVariables!.auxVar1!, condition.baselinesVariables!.auxVar2!, condition.baselinesVariables!.auxVar3!);
+      }
+
+      alertConditions.push(new AlertConditionDto(condition.id!, condition.severity!, condition.status!, baselinesVariablesDto, alertClauses, conditionFiltersList));
+    }
+    
+    //ALERTA
+    let alertDto: AlertDto = new AlertDto(
+      alert.internalName!,
+      alert.name!,
+      alert.alertText!,
+      alert.alertDetail!,
+      alert.alertTags!,
+      alert.evaluationFrequency!,
+      alert.evaluationPeriod!,
+      alert.alertType == 'simple' ? 0 : alert.alertType == 'composite' ? 1 : alert.alertType == 'logs' ? 2 : 3,
+      alert.offset!,
+      alert.groupBy!,
+      alert.opiUrl!,
+      alert.alarmNumPeriods,
+      alert.alarmTotalPeriods,
+      alert.recoveryNumPeriods,
+      alert.recoveryTotalPeriods,
+      alert.logsService!,
+      alert.logsCatalog!,
+      alert.baselineType!
+    );
+
+    alertDto.alertConditions = alertConditions;
+    alertDto.alertSilences = alertSilences;
+    alertDto.endpointAlerts = endpointAlerts;
+    alertDto.alertIndicators = alertIndicators;
+    alertDto.alertPermissions = alertPermissions;
+    alertDto.alertConditionHistories = alertConditionHistories;
+
+    this.alertService.crupdateAlert(alert.alertId!, alertDto).subscribe(
       (response) => {
         this.saveChangesMapLoading.set(alert.alertId!, false);
         this.saveChangesMapSuccess.set(alert.alertId!, true);
