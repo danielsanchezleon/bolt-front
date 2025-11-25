@@ -51,7 +51,11 @@ export const advancedSearchOptions = [
     {value: 'EQUALS', label: 'Es igual a (texto exacto)'},
     {value: 'NOT_EQUALS', label: 'No es igual a (texto exacto)'},
     {value: 'REGEX', label: 'Coincide con expresión regular (regex)'},
-    {value: 'NOT_REGEX', label: 'No coincide con expresión regular (regex)'}
+    {value: 'NOT_REGEX', label: 'No coincide con expresión regular (regex)'},
+    {value: 'GREATER_THAN', label: 'Mayor que (>)'},
+    {value: 'LESS_THAN', label: 'Menor que (<)'},
+    {value: 'GREATER_THAN_OR_EQUAL', label: 'Mayor o igual que (>=)'},
+    {value: 'LESS_THAN_OR_EQUAL', label: 'Menor o igual que (<=)'}
 ];
 
 //STEP 2

@@ -25,12 +25,12 @@ export class AlertOcurrencesService {
 
   getDistinctMetricsByDataTypeAndTable(dataType: string, tableName: string): Observable<string[]>
   {
-    return this.http.get<string[]>(this.apiUrl + '/data-types/' + dataType + '/tables/' + tableName + '/metrics');
+    return this.http.get<string[]>(this.apiUrl + '/data-types/' + dataType + '/tables/' + tableName + '/items');
   }
 
-  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string, metric: string): Observable<string[]>
+  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string): Observable<string[]>
   {
-    return this.http.get<string[]>(this.apiUrl + '/data-types/' + dataType + '/tables/' + tableName + '/metrics/' + metric + '/dimensions');
+    return this.http.get<string[]>(this.apiUrl + '/data-types/' + dataType + '/tables/' + tableName + '/items/dimensions');
   }
 
   getDistinctValuesForDimension(tableName: string, dimension: string, request: DistinctValuesRequest | null): Observable<string[]>

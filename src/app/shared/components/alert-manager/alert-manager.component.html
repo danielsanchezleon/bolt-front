@@ -206,7 +206,7 @@
                         <p-select class="select" [options]="metricsByDataTypeAndTableList" appendTo="body"
                             placeholder="Selecciona un campo" [loading]="metricsByDataTypeAndTableLoading"
                             [size]="'small'" formControlName="field"
-                            (onChange)="getDistinctDimensionsByDataTypeTableAndMetric(logsStep1Form.get('service')?.value, logsStep1Form.get('catalog')?.value, logCondition.get('field')?.value!, i);" />
+                            (onChange)="getDistinctDimensionsByDataTypeTableAndMetric(logsStep1Form.get('service')?.value, logsStep1Form.get('catalog')?.value, i);" />
                         <p-select class="select" [options]="advancedSearchOptions" optionLabel="label"
                             appendTo="body" [size]="'small'" [ngStyle]="{'width': '320px', 'min-width': '320px'}"
                             formControlName="comparation" />
@@ -244,7 +244,7 @@
                                 for="over_label1">Ventana de tiempo <i class="pi pi-info-circle"
                                     style="font-size: 0.8rem;"></i></label>
                         </p-floatlabel>
-                        <p-floatlabel class="full-width-selector" variant="on">
+                        <p-floatlabel class="full-width-selector" variant="on" *ngIf="!isLogsAlert">
                             <p-select
                                 [pTooltip]="'Aquí puedes introducir el número de minutos desde el momento actual que se van a descartar de datos.'"
                                 tooltipPosition="top" showDelay="500" [options]="discardTimeOptions"

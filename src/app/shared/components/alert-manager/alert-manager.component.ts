@@ -1385,7 +1385,8 @@ export class AlertManagerComponent implements OnInit{
         });
       });
 
-      let distinctValuesRequest: DistinctValuesRequest = new DistinctValuesRequest(selectedDimensions);
+      const filterParameters = this.buildFilterOccurrencesDtos();
+      let distinctValuesRequest: DistinctValuesRequest = new DistinctValuesRequest(selectedDimensions,filterParameters);
 
       this.groupByForm.get('groupBy')?.value.forEach((dim: string) => {
 
@@ -1484,6 +1485,29 @@ export class AlertManagerComponent implements OnInit{
     if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
 
     return parts.slice(0, -1).join(', ') + ' y ' + parts.slice(-1);
+  }
+
+  private buildFilterOccurrencesDtos(): any[] { 
+    const filters: any[] = [];
+    
+    this.logsConditionArray.controls.forEach((logCondition, i) => {
+        const field = logCondition.get('field')?.value;
+        const operator = logCondition.get('comparation')?.value?.value; 
+        const value = logCondition.get('value')?.value;
+        
+        const logicalOperator = i > 0 ? logCondition.get('externalOperation')?.value : null;
+
+        if (field && operator && value) {
+            filters.push({
+                field: field,
+                operator: operator,
+                value: value,
+                logicalOperator: logicalOperator
+            });
+        }
+    });
+
+    return filters;
   }
 
   disasterSelected()
@@ -1717,7 +1741,7 @@ export class AlertManagerComponent implements OnInit{
         });
 
         this.logsConditionArray.controls.forEach((logCondition, i) => {
-          this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, logCondition.get('field')?.value!, i);
+          this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, i);
         });
 
         this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
@@ -2333,12 +2357,12 @@ export class AlertManagerComponent implements OnInit{
     );
   }
 
-  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string, metric: string, logConditionIndex: number)
+  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string,logConditionIndex: number)
   {
     this.dimensionsByDataTypeTableAndMetricLoading = true;
     this.dimensionsByDataTypeTableAndMetricError = false;
 
-    this.alertOcurrencesService.getDistinctDimensionsByDataTypeTableAndMetric(dataType, tableName, metric).subscribe(
+    this.alertOcurrencesService.getDistinctDimensionsByDataTypeTableAndMetric(dataType, tableName).subscribe(
       (response) => {
         this.dimensionsByDataTypeTableAndMetricList = response;
         this.dimensionsByDataTypeTableAndMetricLoading = false;
@@ -2479,9 +2503,15 @@ export class AlertManagerComponent implements OnInit{
   {
     this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
     this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-      this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dimension, null).subscribe(
+      const filterParameters = this.buildFilterOccurrencesDtos();
+      const distinctValuesRequest = new DistinctValuesRequest(
+        null, 
+        filterParameters 
+      );
+      this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dimension, distinctValuesRequest).subscribe(
         (response) => {
           this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', response).set('selected', response).set('created', []).set('merge', response));
+          this.getLogsDimensionsIntersection();
         },
         (error) => {
 
