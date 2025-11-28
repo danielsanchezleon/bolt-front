@@ -7,6 +7,7 @@ import { AlertViewDto } from '../dto/alert/AlertViewDto';
 import { HomePanelsViewDto } from '../dto/home/HomePanelsViewDto';
 import { TeamViewDto } from '../dto/TeamViewDto';
 import { TableViewDto } from '../dto/table/TableViewDto';
+import { CrupdateAlertResultResponse } from '../responses/alerts/CrupdateAlertResultResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -30,20 +31,20 @@ export class AlertService {
     return this.http.get<AlertViewDto>(this.apiUrl + '/getAlert', {params: params});
   }
 
-  getAllAlerts(page: number, size: number, filterText: string | null, alertId: number | null): Observable<any>
+  getAllAlerts(page: number, size: number, filters: any): Observable<any>
   {
     let params: HttpParams = new HttpParams();
 
     params = params.append('page', page).append('size', size);
 
-    if (filterText != null)
+    if (filters)
     {
-      params = params.append('filterText', filterText);
-    }
-
-    if (alertId != null)
-    {
-      params = params.append('alertId', alertId);
+      Object.keys(filters).forEach(key => {
+        const value = filters[key];
+        if (value !== null && value !== undefined && value !== '') {
+          params = params.set(key, value);
+        }
+      });
     }
 
     return this.http.get<any>(this.apiUrl + '/getAllAlerts', {params: params});
@@ -80,14 +81,14 @@ export class AlertService {
     return this.http.put<AlertViewDto>(this.apiUrl + '/updateAlert', alertViewDto);
   }
 
-  crupdateAlert(alertId: number | null, alertDto: AlertDto): Observable<AlertViewDto>
+  crupdateAlert(alertId: number | null, alertDto: AlertDto): Observable<CrupdateAlertResultResponse>
   {
     let params = new HttpParams();
 
     if (alertId != null)
       params = params.append('alertId', alertId);
 
-    return this.http.put<AlertViewDto>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
+    return this.http.put<CrupdateAlertResultResponse>(this.apiUrl + '/crupdateAlert', alertDto, {params: params});
   }
 
   getUserAlertsTable(page: number, size: number, filterText: string | null): Observable<TableViewDto>

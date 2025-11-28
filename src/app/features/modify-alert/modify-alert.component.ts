@@ -19,7 +19,7 @@ import { modifyAlertTimeWindowOptions, periodicityOptions } from '../../shared/c
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { AlertService } from '../../shared/services/alert.service';
 import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { AlertConditionViewDto } from '../../shared/dto/alert/AlertConditionViewDto';
 import { AlertClauseViewDto } from '../../shared/dto/alert/AlertClauseViewDto';
@@ -39,10 +39,12 @@ import { AlertDto } from '../../shared/dto/AlertDto';
 import { ConditionFilterDto } from '../../shared/dto/ConditionFilterDto';
 import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
 import { BaselinesVariablesDto } from '../../shared/dto/BaselinesVariablesDto';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -71,7 +73,8 @@ import { BaselinesVariablesDto } from '../../shared/dto/BaselinesVariablesDto';
         animate('0ms ease-in')
       ]),
     ]),
-  ]
+  ],
+  providers: [MessageService]
 })
 export class ModifyAlertComponent implements OnInit
 {
@@ -111,7 +114,7 @@ export class ModifyAlertComponent implements OnInit
 
   tagForm: FormGroup;
 
-  filterForm: FormGroup;
+  filterForm!: FormGroup;
 
   selectedAlerts: AlertViewDto[] = [];
 
@@ -153,53 +156,43 @@ export class ModifyAlertComponent implements OnInit
   page: number = 0;
   size: number = 20;
 
-  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService) 
+  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService) 
   {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state as { alertId: any };
-    if (state?.alertId)
-    {
-      this.getAllAlerts(this.page, this.size, null, state?.alertId);
-    }
-    else
-    {
-      this.getAllAlerts(this.page, this.size, null, null);
-    }
+    
+    this.getAllAlerts(this.page, this.size, null);
 
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
       value: ['', [Validators.required]]
     });
+  }
 
+  ngOnInit() 
+  {
     this.filterForm = this._fb.group({
+      filterText: new FormControl(''),
       service: new FormControl(''),
       source: new FormControl(''),
       dataType: new FormControl(''),
       category: new FormControl('')
     });
-  }
 
-  ngOnInit() 
-  {
+    this.filterForm.valueChanges
+    .pipe(
+      debounceTime(1000), // espera 300ms tras dejar de escribir
+      distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr))
+    )
+    .subscribe(filters => 
+    {
+      this.getAllAlerts(this.page, this.size, filters)
+    });
+
     this.getServices();
     this.getSources();
     this.getDataTypes();
     this.getCategories();
-
-    this.filterTextControl.valueChanges.pipe(debounceTime(1000), distinctUntilChanged()).subscribe(
-      (filterText) => 
-      {
-        if (filterText.length == 0)
-        {
-          this.getAllAlerts(this.page, this.size, null, null);
-        }
-
-        if (filterText.length > 2)
-        {
-          this.getAllAlerts(this.page, this.size, filterText, null);
-        }
-      }
-    );
 
     this.modifyAlertTimeWindowOptions = modifyAlertTimeWindowOptions;
     this.periodicityOptions = periodicityOptions;
@@ -295,6 +288,8 @@ export class ModifyAlertComponent implements OnInit
 
   onClickConfirmSaveChanges()
   {
+    this.messageService.clear();
+    
     this.changedAlerts.forEach((alert) => {
       this.updateAlert(alert);
     });
@@ -421,9 +416,22 @@ export class ModifyAlertComponent implements OnInit
         this.saveChangesMapError.set(alert.alertId!, false);
         this.completedUpdates++;
 
+        if (response.dbSuccess && response.dolphinSuccess)
+        {
+          this.showToast('success', 'Alerta actualizada', `La alerta #${alert.alertId} ha sido actualizada correctamente.`);
+        }
+        else if (response.dbSuccess)
+        {
+          this.showToast('warn', 'Error de dolphin', `La alerta #${alert.alertId} ha sido actualizada en la base de datos, pero ha habido un error al actualizarla en Dolphin.`);
+        }
+        else if (!response.dbSuccess && !response.dolphinSuccess)
+        {
+          this.showToast('error', 'Error de actualización', `La alerta #${alert.alertId} no ha podido ser actualizada.`);
+        }
+
         if ((this.completedUpdates == this.changedAlerts.length) && this.failedUpdates == 0)
         {
-          this.getAllAlerts(this.page, this.size, '', null);
+          this.getAllAlerts(this.page, this.size, '');
           this.saveChangesModalVisible = false;
           this.completedUpdates = 0;
           this.failedUpdates = 0;
@@ -436,6 +444,8 @@ export class ModifyAlertComponent implements OnInit
         this.saveChangesMapError.set(alert.alertId!, true);
         this.completedUpdates++;
         this.failedUpdates++;
+
+        this.showToast('error', 'Error de actualización', `La alerta #${alert.alertId} no ha podido ser actualizada.`);
       }
     )
   }
@@ -458,12 +468,12 @@ export class ModifyAlertComponent implements OnInit
     this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
   }
 
-  getAllAlerts(page: number, size: number, filterText: string | null, alertId: number | null)
+  getAllAlerts(page: number, size: number, filters: any)
   {
     this.isLoading = true;
     this.isError = false;
 
-    this.alertService.getAllAlerts(page, size, filterText, alertId).subscribe(
+    this.alertService.getAllAlerts(page, size, filters).subscribe(
       (response) => {
         this.isLoading = false;
         this.isError = false;
@@ -486,7 +496,7 @@ export class ModifyAlertComponent implements OnInit
     this.page = event.page;
     this.size = event.rows;
 
-    this.getAllAlerts(this.page, this.size, null, null);
+    this.getAllAlerts(this.page, this.size, null);
   }
 
   onClickConfirmDeleteAlerts()
@@ -511,7 +521,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedDeletes == this.selectedAlerts.length) && this.failedDeletes == 0)
         {
-          this.getAllAlerts(this.page, this.size, '', null);
+          this.getAllAlerts(this.page, this.size, '');
           this.deleteAlertsModalVisible = false;
           this.completedDeletes = 0;
           this.failedDeletes = 0;
@@ -588,7 +598,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedRecreates == this.selectedAlerts.length) && this.failedRecreates == 0)
         {
-          this.getAllAlerts(this.page, this.size, '', null);
+          this.getAllAlerts(this.page, this.size, '');
           this.recreateAlertModalVisible = false;
           this.completedRecreates = 0;
           this.failedRecreates = 0;
@@ -664,5 +674,10 @@ export class ModifyAlertComponent implements OnInit
 
       }
     );
+  }
+
+  showToast(type: string, summary: string, detail: string) 
+  {
+    this.messageService.add({ severity: type, summary: summary, detail: detail, sticky: true });
   }
 }

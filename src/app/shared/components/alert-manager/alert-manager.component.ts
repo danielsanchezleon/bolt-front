@@ -276,8 +276,7 @@ type ClauseFormGroup = FormGroup<{
   max: FormControl<number | null>;
   startBrackets: FormControl<number | null>;
   endBrackets: FormControl<number | null>;
-  externalOperation: FormControl<string | null>;
-  baselineComparation: FormControl<any>;
+  externalOperation: FormControl<string | null>
 }>;
 
 type ConditionFormGroup = FormGroup<{
@@ -439,7 +438,7 @@ export class AlertManagerComponent implements OnInit{
   isDetails: boolean = false;
   isLoading: boolean = false;
   isSuccess: boolean = false;
-  isError: boolean = false;
+  dbError: boolean = false;
   dolphinError: boolean = false;
 
   //LOGS
@@ -604,6 +603,7 @@ export class AlertManagerComponent implements OnInit{
       else if (this.isBaselineAlert)
       {
         this.getBaselines();
+        this.indicatorNames.push('A');
       }
 
       this.createCondition();
@@ -904,11 +904,11 @@ export class AlertManagerComponent implements OnInit{
       switch (clause.get('comparation')?.value.value) {
         case 'MORE_THAN':
           text += ' > ';
-          text += clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD' ? clause.get('value')?.value ?? '?' : 'A';
+          text += clause.get('value')?.value ?? '?';
           break;
         case 'LESS_THAN':
           text += ' < ';
-          text += clause.get('baselineComparation')?.value.value == 'COMP_WITH_THRESHOLD' ? clause.get('value')?.value ?? '?' : 'A';
+          text += clause.get('value')?.value ?? '?';
           break;
         case 'WITHIN_RANGE':
           text += ' entre ';
@@ -1052,8 +1052,7 @@ export class AlertManagerComponent implements OnInit{
       max: this._fb.control(null),
       startBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
       endBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
-      externalOperation: this._fb.control(this.isCompositeConditionAlert ? 'AND' : null),
-      baselineComparation: this._fb.control(baselinesComparationTypes[0])
+      externalOperation: this._fb.control(this.isCompositeConditionAlert || this.isBaselineAlert ? 'AND' : null)
     }) as ClauseFormGroup);
 
     let group: ClauseFormGroup = this.conditionArray.at(conditionIndex).controls.clauses.at(this.conditionArray.at(conditionIndex).controls.clauses.length!-1);
@@ -1070,7 +1069,6 @@ export class AlertManagerComponent implements OnInit{
       const minIncludedControl = group.get('minIncluded');
       const maxControl = group.get('max');
       const maxIncludedControl = group.get('maxIncluded');
-      const baselineComparationControl = group.get('baselineComparation');
 
       if (this.isSimpleConditionAlert || this.isCompositeConditionAlert || this.isLogsAlert)
       {
@@ -1095,32 +1093,21 @@ export class AlertManagerComponent implements OnInit{
       {
         if (this.isBaselineAlert)
         {
-          if (baselineComparationControl?.value.value === 'COMP_WITH_THRESHOLD')
+          if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
           {
-            if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
-            {
-              valueControl?.setValidators(Validators.required);
-              minControl?.clearValidators();
-              maxControl?.clearValidators();
-              minIncludedControl?.clearValidators();
-              maxIncludedControl?.clearValidators();
-            } 
-            else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
-            {
-              valueControl?.clearValidators();
-              minControl?.setValidators(Validators.required);
-              maxControl?.setValidators(Validators.required);
-              minIncludedControl?.setValidators(Validators.required);
-              maxIncludedControl?.setValidators(Validators.required);
-            }
-          }
-          else
-          {
-            valueControl?.clearValidators();
+            valueControl?.setValidators(Validators.required);
             minControl?.clearValidators();
             maxControl?.clearValidators();
             minIncludedControl?.clearValidators();
             maxIncludedControl?.clearValidators();
+          } 
+          else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
+          {
+            valueControl?.clearValidators();
+            minControl?.setValidators(Validators.required);
+            maxControl?.setValidators(Validators.required);
+            minIncludedControl?.setValidators(Validators.required);
+            maxIncludedControl?.setValidators(Validators.required);
           }
         }
       }
@@ -1923,8 +1910,7 @@ export class AlertManagerComponent implements OnInit{
           max: this._fb.control(clause.thresholdUp),
           startBrackets: this._fb.control(clause.startBrackets),
           endBrackets: this._fb.control(clause.endBrackets),
-          externalOperation: this._fb.control(clause.externalOperation),
-          baselineComparation: this._fb.control(baselinesComparationTypes[0])
+          externalOperation: this._fb.control(clause.externalOperation)
         }) as ClauseFormGroup);
       });
 
@@ -2023,7 +2009,8 @@ export class AlertManagerComponent implements OnInit{
   {
     this.isLoading = true;
     this.isSuccess = false;
-    this.isError = false;
+    this.dbError = false;
+    this.dolphinError = false;
 
     //PERMISSIONS
     let alertPermissions: AlertPermissionDto[] = [];
@@ -2190,22 +2177,26 @@ export class AlertManagerComponent implements OnInit{
     this.alertService.crupdateAlert(this.mode == 'create' ? null : this.alertId, alertDto).subscribe(
       (response) => 
       {
-        if (response.status == 'DOLPHIN_ERROR')
+        if (!response.dbSuccess)
+        {
+          this.dbError = true;
+        }
+
+        if (!response.dolphinSuccess)
         {
           this.dolphinError = true;
-          this.isError = true;
         }
-        else
-        {
+
+        if (response.dbSuccess && response.dolphinSuccess)
           this.isSuccess = true;
-        }
 
         this.isLoading = false;
       },
       (error) =>
       {
         this.isLoading = false;
-        this.isError = true;
+        this.dbError = true;
+        this.dolphinError = true;
       }
     )
   }
@@ -2669,17 +2660,6 @@ export class AlertManagerComponent implements OnInit{
     condition.controls.baselineVariables.get('auxVar2')?.reset();
     condition.controls.baselineVariables.get('auxVar3')?.reset();
     condition.controls.baselineVariables.updateValueAndValidity();
-  }
-
-  onChangeBaselineComparationType(clause: ClauseFormGroup)
-  {
-    clause.get('value')?.reset();
-    clause.get('min')?.reset();
-    clause.get('minIncluded')?.reset();
-    clause.get('max')?.reset();
-    clause.get('maxIncluded')?.reset();
-    clause.get('comparation')?.setValue(baselinesClauseComparationOptions[0]);
-    clause.updateValueAndValidity();
   }
 
   onChangeBaselineSelection()

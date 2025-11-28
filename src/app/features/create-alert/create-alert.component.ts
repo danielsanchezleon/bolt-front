@@ -12,8 +12,8 @@ import { CommonModule } from '@angular/common';
 })
 export class CreateAlertComponent 
 {
-  alertTypeSelected: boolean = false;
-  baselineSelected: boolean = false;
+  thresholdTypeSelected: boolean = false;
+  baselineTypeSelected: boolean = false;
 
   constructor(private router: Router)
   {
@@ -21,7 +21,8 @@ export class CreateAlertComponent
     const isThreshold = navigation?.extras.state?.['isThreshold'];
 
     if (isThreshold)
-      this.alertTypeSelected = true;
+      this.thresholdTypeSelected = true;
+
   }
 
   onClickNavigateToHome()
