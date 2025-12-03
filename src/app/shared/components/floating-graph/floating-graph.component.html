@@ -23,7 +23,7 @@
 
   <p-chart #chart type="line" [data]="data" [options]="options" />
 
-  <div *ngIf="false && groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
+  <!-- <div *ngIf="false && groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
 
   <div *ngIf="false && groupBy.length > 0" style="display: flex; flex-direction: column; gap: 8px;">
     <div class="font-20 font-w-600">Agrupaciones</div>
@@ -37,7 +37,7 @@
       <div class="font-16 font-w-600">{{selectedDimension}}</div>
       <p-multiselect [options]="groupByChartMap.get(selectedDimension)" [ngModel]="groupByChartSelectedMap.get(selectedDimension)" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" [ngStyle]="{'width': '250px'}" />
     </div>
-  </div>
+  </div> -->
 </div>
 
 <div *ngIf="isHovering || onClickButton" class="blur" (click)="onClickButton = false;"></div>

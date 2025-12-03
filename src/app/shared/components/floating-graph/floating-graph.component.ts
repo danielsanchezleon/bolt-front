@@ -2,7 +2,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output, PLATFORM_ID, SimpleChanges, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule, UIChart } from 'primeng/chart';
-import { Chart } from 'chart.js';
+import { Chart, ChartDataset } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
@@ -16,16 +16,18 @@ Chart.register(annotationPlugin);
   templateUrl: './floating-graph.component.html',
   styleUrls: ['./floating-graph.component.scss']
 })
-export class FloatingGraphComponent {
+export class FloatingGraphComponent 
+{
   isHovering = false;
-  @Input('disabled') disabled: boolean = false;
-
   options: any;
-
-  @Input('chartData') chartData: any;
   data: any;
 
+  @Input('disabled') disabled: boolean = false;
+  @Input('graphSeries') graphSeries: any;
   @Input('conditionGraphList') conditionGraphList: any[] = [];
+  // @Input('groupByChartMap') groupByChartMap!: Map<string, string[]>;
+
+  @Output('hoursEvent') hoursEvent: EventEmitter<number> = new EventEmitter<number>();
 
   platformId = inject(PLATFORM_ID);
 
@@ -36,9 +38,6 @@ export class FloatingGraphComponent {
   hoursOptions: any[] = [{ label: '1 h', value: 1 }, { label: '3 h', value: 3 }, { label: '6 h', value: 6 }, { label: '12 h', value: 12 }, { label: '24 h', value: 24 }];
   selectedHoursOption: number = 24;
 
-  @Output('hoursEvent') hoursEvent: EventEmitter<number> = new EventEmitter<number>();
-
-  @Input('groupByChartMap') groupByChartMap!: Map<string, string[]>;
   groupBy: string[] = [];
 
   groupByChartSelectedMap: Map<string, string[]> = new Map<string, string[]>();
@@ -48,35 +47,40 @@ export class FloatingGraphComponent {
 
   constructor(private cd: ChangeDetectorRef) { }
 
-  ngOnInit() {
+  ngOnInit() 
+  {
     this.initChart();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if ((changes['chartData'] && !changes['chartData'].firstChange && this.chartData)) 
+  ngOnChanges(changes: SimpleChanges) 
+  {
+    //If series data changes, update the chart datasets
+    if ((changes['graphSeries'] && !changes['graphSeries'].firstChange && this.graphSeries)) 
     {
       this.updateDataSets();
     }
 
+    //If condition graphs change, update the annotations
     if ((changes['conditionGraphList'] && !changes['conditionGraphList'].firstChange && this.conditionGraphList))
     {
       this.updateConditionGraphs();
     }
 
-    if ((changes['groupByChartMap'] && !changes['groupByChartMap'].firstChange && this.groupByChartMap)) 
-    {
-      this.groupBy = [];
-      this.selectedGroupBy = [];
-      this.groupByChartSelectedMap = new Map();
-      for(let key of this.groupByChartMap.keys())
-      {
-        this.groupBy.push(key);
-        this.selectedGroupBy.push(key);
-        this.groupByChartSelectedMap.set(key, this.groupByChartMap.get(key)!);
-      }
+    //If group by options change, reset the selected options and emit the new map
+    // if ((changes['groupByChartMap'] && !changes['groupByChartMap'].firstChange && this.groupByChartMap)) 
+    // {
+    //   this.groupBy = [];
+    //   this.selectedGroupBy = [];
+    //   this.groupByChartSelectedMap = new Map();
+    //   for(let key of this.groupByChartMap.keys())
+    //   {
+    //     this.groupBy.push(key);
+    //     this.selectedGroupBy.push(key);
+    //     this.groupByChartSelectedMap.set(key, this.groupByChartMap.get(key)!);
+    //   }
 
-      this.groupByEvent.emit(this.groupByChartSelectedMap);
-    }
+    //   this.groupByEvent.emit(this.groupByChartSelectedMap);
+    // }
   }
 
   onMouseEnter() {
@@ -87,8 +91,11 @@ export class FloatingGraphComponent {
     this.isHovering = false;
   }
 
-  initChart() {
-    if (isPlatformBrowser(this.platformId)) {
+  //This method is called once to initialize the chart options with theme colors
+  initChart() 
+  {
+    if (isPlatformBrowser(this.platformId)) 
+    {
       const documentStyle = getComputedStyle(document.documentElement);
       const textColor = documentStyle.getPropertyValue('--p-text-color');
       const textColorSecondary = documentStyle.getPropertyValue('--p-text-muted-color');
@@ -130,20 +137,46 @@ export class FloatingGraphComponent {
     }
   }
 
-  updateDataSets() {
-    if (isPlatformBrowser(this.platformId)) {
+  private generateRandomColor(alpha: number = 1): string {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  updateDataSets() 
+  {
+    if (isPlatformBrowser(this.platformId)) 
+    {
       const documentStyle = getComputedStyle(document.documentElement);
 
-      this.data = {
-        labels: [...this.chartData.labels],
-        datasets: [...this.chartData.datasets]
-      };
+      if (!this.graphSeries || this.graphSeries.length === 0)
+        return;
 
-      this.data.datasets.forEach((dataset: any) => {
-        dataset.borderColor = documentStyle.getPropertyValue(dataset.borderColor);
+      // 1) labels del eje X (asumo que todas las series comparten los mismos labels)
+      const labels = this.graphSeries[0].seriePointList.map((p: any) => p.label);
+
+      // 2) datasets: cada serie del backend -> una curva
+      const datasets = this.graphSeries.map((serie: any, index: number) => 
+      {
+        return {
+          label: serie.name,
+          data: serie.seriePointList.map( (p: any) => p.value),
+          borderColor: this.generateRandomColor(1),
+          fill: false,
+          tension: 0.3,
+          pointRadius: 3,
+        } as ChartDataset<'line'>;
       });
 
+      // 3) actualizar la gráfica
       this.chart?.refresh();
+
+      this.data = {
+        labels: labels,
+        datasets: datasets
+      };
+
       this.cd.markForCheck();
     }
   }
@@ -188,14 +221,14 @@ export class FloatingGraphComponent {
     this.hoursEvent.emit(event.value);
   }
 
-  onChangeGroupBy(event: any)
-  {
-    this.selectedGroupBy = event.value;
+  // onChangeGroupBy(event: any)
+  // {
+  //   this.selectedGroupBy = event.value;
 
-    event.value.forEach((dimension: string) => {
-      this.groupByChartSelectedMap.set(dimension, this.groupByChartMap.get(dimension)!);
-    });
+  //   event.value.forEach((dimension: string) => {
+  //     this.groupByChartSelectedMap.set(dimension, this.groupByChartMap.get(dimension)!);
+  //   });
 
-    this.groupByEvent.emit(this.groupByChartSelectedMap);
-  }
+  //   this.groupByEvent.emit(this.groupByChartSelectedMap);
+  // }
 }

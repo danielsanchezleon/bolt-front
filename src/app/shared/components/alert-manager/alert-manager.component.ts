@@ -72,6 +72,9 @@ import { DistinctValuesRequest } from '../../dto/DistinctValuesRequest';
 import { InventoryBaselinesService } from '../../services/inventory-baselines.service';
 import { BaselinesVariablesDto } from '../../dto/BaselinesVariablesDto';
 import { BaselineResponse } from '../../responses/baselines/BaselineResponse';
+import { GraphSerieResponse } from '../../responses/plotting/GraphSerieResponse';
+import { PlottingService } from '../../services/plotting.service';
+import { GraphRequest } from '../../requests/GraphRequest';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -323,6 +326,10 @@ export class AlertManagerComponent implements OnInit{
 
   isInitialMetricListLoading: boolean = false;
 
+  graphSeriesLoading: boolean = false;
+  graphSeriesError: boolean = false;
+  graphSeries: GraphSerieResponse[] = [];
+
   isChartDataLoading: boolean = false;
   isChartDataError: boolean = false;
   chartData!: ChartDataDto;
@@ -467,7 +474,8 @@ export class AlertManagerComponent implements OnInit{
     private authService: AuthService,
     private route: ActivatedRoute,
     private alertOcurrencesService: AlertOcurrencesService,
-    private inventoryBaselinesService: InventoryBaselinesService) {
+    private inventoryBaselinesService: InventoryBaselinesService,
+    private plottingService: PlottingService) {
 
     this.route.snapshot.paramMap.has('alert_id') ? this.mode = 'edit' : this.mode = 'create';
 
@@ -807,9 +815,28 @@ export class AlertManagerComponent implements OnInit{
   
     this.rebindExprValidator(indicatorIndex);
 
-    this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? this.letters[indicatorIndex] + '.1' : '');
-    this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
-    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
+    this.generateFinalExpression(indicatorIndex);
+
+    // this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? this.letters[indicatorIndex] + '.1' : '');
+    // this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
+    // this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
+  }
+
+  private generateFinalExpression(indicatorIndex: number): string
+  {
+    let expression: string = '';
+    let metricExpressionList: string[] = [];
+    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach( (metric, metricIndex) => {
+      metricExpressionList.push(metric.get('name')?.value ?? '');
+    });
+
+    expression = metricExpressionList.join('+');
+
+    this.resultMetricMap.set(indicatorIndex, expression);
+    this.resultMetricEditionMap.set(indicatorIndex,  false);
+    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(expression);
+
+    return expression;
   }
 
   removeMetric(indicatorIndex: number, metricIndex: number)
@@ -827,11 +854,9 @@ export class AlertManagerComponent implements OnInit{
 
     this.rebindExprValidator(indicatorIndex);
 
-    this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? 'A.1' : '');
-    this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
-    this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
+    this.generateFinalExpression(indicatorIndex);
 
-    // this.getChartData();
+    this.getGraphSeries();
   }
 
   onChangeMetricSelect()
@@ -840,7 +865,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.generateDimensionIntersection();
 
-    // this.getChartData();
+    this.getGraphSeries();
 
     this.conditionFiltersMap = new Map();
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
@@ -1659,11 +1684,11 @@ export class AlertManagerComponent implements OnInit{
               this.conditionFiltersMap = new Map();
 
               alertViewDto.conditions!.forEach((condition, i) => {
+                this.conditionFiltersMap.set((i+1).toString(), new Map());
                 alertViewDto.groupBy!.forEach((dimension: string) => {
                   indicator.alertMetrics!.forEach(metric => {
                     this.alertService.getDimensionValues(metric.dbName!, metric.tableName!, metric.metricName!, dimension).subscribe(
                       (response) => {
-
                         let selected: string[] = [];
 
                         condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((conditionFilter) => {
@@ -2422,7 +2447,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.indicatorArray.controls.forEach((indicator) => {
       indicator.get('metrics')?.value.forEach((metric: any) => {
-        if (metric.metric != null)
+        if (metric.metric != null && metric.metric.metric != null)
           count++;
       });
     });
@@ -2553,7 +2578,7 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    // this.getChartData();
+    this.getGraphSeries();
   }
 
   onChangeLogsGroupBy()
@@ -2690,5 +2715,39 @@ export class AlertManagerComponent implements OnInit{
     this.indicatorArray.push(newIndicator);
 
     this.resultMetricMap.set(0, this.selectedBaseline.alertIndicatorViewDto.finalExpression);
+  }
+
+  getGraphSeries()
+  {
+    this.graphSeriesLoading = true;
+    this.graphSeriesError = false;
+    
+    let indicatorDataDtoList: AlertIndicatorDto[] = [];
+
+    this.indicatorArray.controls.forEach((indicator, i) => {
+      let metricDataDtoList: AlertMetricDto[] = [];
+      indicator.get('metrics')?.value.forEach((metric, j) => {
+        if (metric.metric != null && metric.metric.metric != null)
+          metricDataDtoList.push(new AlertMetricDto(null, 'OSS_Platform', metric.metric!.table_name!, metric.metric!.metric!, metric.operation!.value!, ''));
+      });
+
+      if (metricDataDtoList.length > 0)
+        indicatorDataDtoList.push(new AlertIndicatorDto(null, indicator.get('name')?.value!, metricDataDtoList, indicator.get('finalExpression')?.value!, this.isBaselineAlert));
+    });
+
+    let graphRequest: GraphRequest = new GraphRequest(this.hours, this.groupByForm.get('groupBy')?.value, indicatorDataDtoList);
+
+    this.plottingService.getGraphSeries(graphRequest).subscribe(
+      (response) => {
+        this.graphSeriesLoading = false;
+        this.graphSeriesError = false;
+        
+        this.graphSeries = response;
+      },
+      (error) => {
+        this.graphSeriesLoading = false;
+        this.graphSeriesError = true;
+      }
+    )
   }
 }
