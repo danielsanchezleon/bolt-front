@@ -856,7 +856,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.generateFinalExpression(indicatorIndex);
 
-    this.getGraphSeries();
+    // this.getGraphSeries();
   }
 
   onChangeMetricSelect()
@@ -865,7 +865,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.generateDimensionIntersection();
 
-    this.getGraphSeries();
+    // this.getGraphSeries();
 
     this.conditionFiltersMap = new Map();
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
@@ -2578,7 +2578,7 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    this.getGraphSeries();
+    // this.getGraphSeries();
   }
 
   onChangeLogsGroupBy()
@@ -2717,37 +2717,37 @@ export class AlertManagerComponent implements OnInit{
     this.resultMetricMap.set(0, this.selectedBaseline.alertIndicatorViewDto.finalExpression);
   }
 
-  getGraphSeries()
-  {
-    this.graphSeriesLoading = true;
-    this.graphSeriesError = false;
+  // getGraphSeries()
+  // {
+  //   this.graphSeriesLoading = true;
+  //   this.graphSeriesError = false;
     
-    let indicatorDataDtoList: AlertIndicatorDto[] = [];
+  //   let indicatorDataDtoList: AlertIndicatorDto[] = [];
 
-    this.indicatorArray.controls.forEach((indicator, i) => {
-      let metricDataDtoList: AlertMetricDto[] = [];
-      indicator.get('metrics')?.value.forEach((metric, j) => {
-        if (metric.metric != null && metric.metric.metric != null)
-          metricDataDtoList.push(new AlertMetricDto(null, 'OSS_Platform', metric.metric!.table_name!, metric.metric!.metric!, metric.operation!.value!, ''));
-      });
+  //   this.indicatorArray.controls.forEach((indicator, i) => {
+  //     let metricDataDtoList: AlertMetricDto[] = [];
+  //     indicator.get('metrics')?.value.forEach((metric, j) => {
+  //       if (metric.metric != null && metric.metric.metric != null)
+  //         metricDataDtoList.push(new AlertMetricDto(null, 'OSS_Platform', metric.metric!.table_name!, metric.metric!.metric!, metric.operation!.value!, ''));
+  //     });
 
-      if (metricDataDtoList.length > 0)
-        indicatorDataDtoList.push(new AlertIndicatorDto(null, indicator.get('name')?.value!, metricDataDtoList, indicator.get('finalExpression')?.value!, this.isBaselineAlert));
-    });
+  //     if (metricDataDtoList.length > 0)
+  //       indicatorDataDtoList.push(new AlertIndicatorDto(null, indicator.get('name')?.value!, metricDataDtoList, indicator.get('finalExpression')?.value!, this.isBaselineAlert));
+  //   });
 
-    let graphRequest: GraphRequest = new GraphRequest(this.hours, this.groupByForm.get('groupBy')?.value, indicatorDataDtoList);
+  //   let graphRequest: GraphRequest = new GraphRequest(this.hours, this.groupByForm.get('groupBy')?.value, indicatorDataDtoList);
 
-    this.plottingService.getGraphSeries(graphRequest).subscribe(
-      (response) => {
-        this.graphSeriesLoading = false;
-        this.graphSeriesError = false;
+  //   this.plottingService.getGraphSeries(graphRequest).subscribe(
+  //     (response) => {
+  //       this.graphSeriesLoading = false;
+  //       this.graphSeriesError = false;
         
-        this.graphSeries = response;
-      },
-      (error) => {
-        this.graphSeriesLoading = false;
-        this.graphSeriesError = true;
-      }
-    )
-  }
+  //       this.graphSeries = response;
+  //     },
+  //     (error) => {
+  //       this.graphSeriesLoading = false;
+  //       this.graphSeriesError = true;
+  //     }
+  //   )
+  // }
 }
