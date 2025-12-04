@@ -700,13 +700,13 @@
                                         <textarea class="full-w-field" pTextarea #message id="message" rows="2"
                                             [autoResize]="true" formControlName="message"
                                             (ngModelChange)="verifyMessageText(message.value, message)"
-                                            placeholder="Escribe aquí el mensaje de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..."></textarea>
+                                            placeholder="Escribe aquí el mensaje de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..." [maxlength]="1024"></textarea>
 
                                         <label class="font-w-600" for="details">Detalles adicionales</label>
                                         <textarea class="full-w-field" pTextarea #details id="details" rows="2"
                                             [autoResize]="true" formControlName="details"
                                             (ngModelChange)="verifyDetailsText(details.value, details)"
-                                            placeholder="Escribe aquí los detalles adicionales de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..."></textarea>
+                                            placeholder="Escribe aquí los detalles adicionales de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..." [maxlength]="1024"></textarea>
 
                                         <label class="font-w-600" for="proccedure">Procedimiento (OPI)</label>
                                         <input class="full-w-field" pInputText id="proccedure"

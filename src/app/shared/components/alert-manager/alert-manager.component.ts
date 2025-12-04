@@ -429,6 +429,7 @@ export class AlertManagerComponent implements OnInit{
   @HostListener('document:scroll', ['$event']) scrollout(event: Event) { this.messageModalVisible = false; this.detailsModalVisible = false; }
   messageDialogStyle: any = {};
   detailsDialogStyle: any = {};
+  messageTokenIndex: number = 1;
   messageModalVisible: boolean = false;
   detailsModalVisible: boolean = false;
   previousMessageValue: string = '';
@@ -871,6 +872,14 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
       this.resetConditionFilters(condition);
     });
+
+    //Reset groupBy with values in the intersection only
+    let newGroupBy: string[] = [];
+    this.groupByForm.get('groupBy')?.value.forEach( (dimension: string) => {
+      if (!this.dimensionIntersectionOptions.includes(dimension))
+        newGroupBy.push(dimension);
+    });
+    this.groupByForm.get('groupBy')?.setValue(newGroupBy);
   }
 
   createLogCondition()
@@ -1265,74 +1274,122 @@ export class AlertManagerComponent implements OnInit{
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  verifyMessageText(value: string, messageInput: HTMLElement) {
-    let messageInputRect = messageInput.getBoundingClientRect();
+  verifyMessageText(value: string, messageInput: HTMLTextAreaElement) {
+    const prev = this.previousMessageValue || '';
 
-    const isOpeningDoubleBraces = value.length > this.previousMessageValue.length && value.endsWith('{{') && !this.previousMessageValue.endsWith('{{');
+    // Posición actual del cursor
+    const caretPos = messageInput.selectionStart ?? value.length;
 
-    // Comparar el valor anterior con el nuevo
-    if (isOpeningDoubleBraces) {
-      this.messageDialogStyle =
-      {
+    // ¿Se ha escrito un nuevo '{{' justo antes del cursor?
+    const justTypedDoubleBraces =
+      value.length > prev.length &&          // ha añadido caracteres
+      caretPos >= 2 &&                       // hay al menos 2 chars
+      value.slice(caretPos - 2, caretPos) === '{{';
+
+    if (justTypedDoubleBraces) {
+
+      // Aquí guardamos la posición EXACTA del '{{' que acaba de escribir
+      this.messageTokenIndex = caretPos - 2;
+
+      const messageInputRect = messageInput.getBoundingClientRect();
+
+      this.messageDialogStyle = {
         position: 'fixed',
         top: messageInputRect.bottom + 'px',
         left: messageInputRect.left + 'px',
         width: '300px'
-      }
+      };
 
       this.messageModalVisible = true;
-    }
-    else {
+    } else {
       this.messageModalVisible = false;
     }
 
-    // Guardar el valor actual como "anterior" para la próxima comparación
     this.previousMessageValue = value;
   }
 
-  verifyDetailsText(value: string, detailsInput: HTMLElement) {
-    let detailsInputRect = detailsInput.getBoundingClientRect();
+  verifyDetailsText(value: string, detailsInput: HTMLTextAreaElement) {
+    const prev = this.previousMessageValue || '';
 
-    const isOpeningDoubleBraces = value.length > this.previousDetailsValue.length && value.endsWith('{{') && !this.previousDetailsValue.endsWith('{{');
+    // Posición actual del cursor
+    const caretPos = detailsInput.selectionStart ?? value.length;
 
-    // Comparar el valor anterior con el nuevo
-    if (isOpeningDoubleBraces) {
-      this.detailsDialogStyle =
-      {
+    // ¿Se ha escrito un nuevo '{{' justo antes del cursor?
+    const justTypedDoubleBraces =
+      value.length > prev.length &&          // ha añadido caracteres
+      caretPos >= 2 &&                       // hay al menos 2 chars
+      value.slice(caretPos - 2, caretPos) === '{{';
+
+    if (justTypedDoubleBraces) {
+
+      // Aquí guardamos la posición EXACTA del '{{' que acaba de escribir
+      this.messageTokenIndex = caretPos - 2;
+
+      const messageInputRect = detailsInput.getBoundingClientRect();
+
+      this.detailsDialogStyle = {
         position: 'fixed',
-        top: detailsInputRect.bottom + 'px',
-        left: detailsInputRect.left + 'px',
+        top: messageInputRect.bottom + 'px',
+        left: messageInputRect.left + 'px',
         width: '300px'
-      }
+      };
 
       this.detailsModalVisible = true;
-    }
-    else {
+    } else {
       this.detailsModalVisible = false;
     }
 
-    // Guardar el valor actual como "anterior" para la próxima comparación
-    this.previousDetailsValue = value;
+    this.previousMessageValue = value;
   }
 
-  onClickAddConditionalBlockToMessage(i: number) {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' + conditionalBlockOptions[i].value + '}}');
+  onClickAddConditionalBlockToMessage(i: number) 
+  {
+    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
+    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
+
+    let newMessage = before + `{{${conditionalBlockOptions[i].label}}\n\n{{${conditionalBlockOptions[i].label}}}` + after;
+
+    this.notificationMessageForm.get('message')?.setValue(newMessage);
   }
 
-  onClickAddTemplateVariableToMessage(i: number) {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + templateVariableOptions[i].value + '}}');
+  onClickAddTemplateVariableToMessage(i: number) 
+  {
+    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
+    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
+
+    let newMessage = before + `{{${templateVariableOptions[i].value}}}` + after;
+
+    this.notificationMessageForm.get('message')?.setValue(newMessage);
   }
 
-  onClickAddTagTemplateVariableToMessage(i: number) {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + this.groupByForm.get('groupBy')?.value[i] + '}}');
+  onClickAddTagTemplateVariableToMessage(i: number) 
+  {
+    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
+    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
+
+    let newMessage = before + `{{${this.groupByForm.get('groupBy')?.value[i]}}}` + after;
+
+    this.notificationMessageForm.get('message')?.setValue(newMessage);
   }
 
-  onClickAddConditionalBlockToDetails(i: number) {
-    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' + conditionalBlockOptions[i].value + '}}');
+  onClickAddConditionalBlockToDetails(i: number) 
+  {
+    const before = this.notificationMessageForm.get('details')?.value.slice(0, this.messageTokenIndex);
+    const after = this.notificationMessageForm.get('details')?.value.slice(this.messageTokenIndex + 2);
+
+    let newDetails = before + `{{${conditionalBlockOptions[i].label}}\n\n{{/${conditionalBlockOptions[i].value}}}` + after;
+
+    this.notificationMessageForm.get('details')?.setValue(newDetails);
   }
 
-  onClickAddTemplateVariableToDetails(i: number) {
-    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
+  onClickAddTemplateVariableToDetails(i: number) 
+  {
+    const before = this.notificationMessageForm.get('details')?.value.slice(0, this.messageTokenIndex);
+    const after = this.notificationMessageForm.get('details')?.value.slice(this.messageTokenIndex + 2);
+
+    let newDetails = before + `{{${templateVariableOptions[i].value}}}` + after;
+
+    this.notificationMessageForm.get('details')?.setValue(newDetails);
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {
