@@ -788,9 +788,9 @@
     </div>
 </app-page-wrapper>
 
-<!-- <app-floating-graph *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" [graphSeries]="graphSeries" [disabled]="countMetrics() == 0"
+<app-floating-graph *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" [graphSeries]="graphSeries" [disabled]="countMetrics() == 0"
     [conditionGraphList]="conditionGraphList" (hoursEvent)="hours = $event;"
-    (groupByEvent)="groupByChartSelectedMap = $event; getChartData();"></app-floating-graph> -->
+    (groupByEvent)="groupByChartSelectedMap = $event;" (hoursEvent)="getGraphSeries();"></app-floating-graph>
 
 <app-modal [title]="mode == 'create' ? 'Crear alerta' : 'Actualizar alerta'" [visible]="modalVisible">
     <div class="modal-container">
@@ -811,6 +811,13 @@
             <div *ngIf="mode == 'create'" class="font-12 text-gray">Puedes volver a crear otra alerta, ver las alertas
                 creadas o volver al
                 inicio.</div>
+        </div>
+        <div *ngIf="dbError && dolphinError" class="modal-icon-container">
+            <i class="pi pi-times c-red" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' :
+                'actualizar'}} la
+                alerta en BBDD y en el Dolphin</div>
+            <div class="font-12 text-gray"></div>
         </div>
         <div *ngIf="dbError" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
@@ -1041,9 +1048,13 @@
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
         <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
+    <div *ngIf="dbError && dolphinError" class="modal-actions">
+        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+    </div>
     <div *ngIf="dbError" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Reintentar" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
     </div>
     <div *ngIf="dolphinError" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
