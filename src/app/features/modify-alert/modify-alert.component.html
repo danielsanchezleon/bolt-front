@@ -74,11 +74,11 @@
                         {{alert.alertId}}
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' ? alert.alertDefinition : alert.name" (click)="onClickGoToEditAlert(alert);">
-                            {{alert.name}}
+                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name" (click)="alert.alertType != 'baseline' ? onClickGoToEditAlert(alert) : ''">
+                            {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
-                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' ? alert.alertDefinition : alert.name">
-                            {{alert.name}}
+                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name">
+                            {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
                         <div class="owner-container">
                             <div class="owner text-gray font-w-600">

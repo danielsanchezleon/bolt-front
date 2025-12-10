@@ -75,6 +75,7 @@ import { BaselineResponse } from '../../responses/baselines/BaselineResponse';
 import { GraphSerieResponse } from '../../responses/plotting/GraphSerieResponse';
 import { PlottingService } from '../../services/plotting.service';
 import { GraphRequest } from '../../requests/GraphRequest';
+import { DimensionValuesRequest } from '../../requests/baseline/DimensionValuesRequest';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -385,6 +386,9 @@ export class AlertManagerComponent implements OnInit{
   baselinesListError: boolean = false;
   baselineResponseList: BaselineResponse[] = [];
   selectedBaseline: any = null;
+
+  baselineGroupByOptionsLoading: boolean = false;
+  baselineGroupByOptionsError: boolean = false;
 
   //Step 2
   severityOptions: any[] = [];
@@ -1059,16 +1063,14 @@ export class AlertManagerComponent implements OnInit{
 
     this.conditionFiltersMap.set(group.get('id')?.value!, new Map());
 
-    this.groupByForm.get('groupBy')?.value.forEach( (dimension: any) => {
-      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
-      {
-        this.resetConditionFilters(group);
-      }
-      else
-      {
-        this.resetLogsConditionFilters(group);
-      }
-    });
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
+    {
+      this.resetConditionFilters(group);
+    }
+    else
+    {
+      this.resetLogsConditionFilters(group);
+    }
   }
 
   createClause(conditionIndex: number)
@@ -1748,8 +1750,15 @@ export class AlertManagerComponent implements OnInit{
                     this.alertService.getDimensionValues(metric.dbName!, metric.tableName!, metric.metricName!, dimension).subscribe(
                       (response) => {
                         let selected: string[] = [];
+                        let created: string[] = [];
 
                         condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((conditionFilter) => {
+
+                          if (conditionFilter.isCreated)
+                          {
+                            created.push(conditionFilter.filterValue!);
+                          }
+
                           selected.push(conditionFilter.filterValue!);
                         });
 
@@ -1764,12 +1773,12 @@ export class AlertManagerComponent implements OnInit{
                           }
                           else
                           {
-                            this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response).set('selected', selected).set('merge', response));
+                            this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response)));
                           }
                         }
                         else
                         {
-                          this.conditionFiltersMap.set((i+1).toString(), new Map().set(dimension, new Map().set('values', response).set('selected', selected).set('merge', response)))
+                          this.conditionFiltersMap.set((i+1).toString(), new Map().set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response))))
                         }
                       },
                       (error) => {
@@ -1823,7 +1832,6 @@ export class AlertManagerComponent implements OnInit{
             this.alertOcurrencesService.getDistinctValuesForDimension(alertViewDto.logsCatalog!, dimension, null).subscribe(
               (response) => 
               {
-                let values: string[] = [];
                 let selected: string[] = [];
                 let created: string[] = [];
 
@@ -1837,7 +1845,7 @@ export class AlertManagerComponent implements OnInit{
                   selected.push(cf.filterValue!);
                 });
 
-                filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected.length == 0 ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response)));
+                filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response)));
 
                 this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
               },
@@ -2224,7 +2232,7 @@ export class AlertManagerComponent implements OnInit{
     //BASELINE
     if (this.isBaselineAlert)
     {
-      let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', 'inventory_baselines', this.selectedBaseline, 'SUM', '');
+      let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', 'inventory_baselines', this.selectedBaseline.name, 'SUM', '');
       alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
     }
 
@@ -2560,7 +2568,7 @@ export class AlertManagerComponent implements OnInit{
                 }
                 else
                 {
-                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', response).set('merge', response))
+                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', response).set('created', []).set('merge', response))
                 }
               },
               (error) => {
@@ -2594,38 +2602,57 @@ export class AlertManagerComponent implements OnInit{
     });
   }
 
+  resetBaselineConditionFilters(condition: ConditionFormGroup)
+  {
+    this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
+    
+    let baselineType: string = this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'CDN' : 'QOE';
+    this.inventoryBaselinesService.getDimensionValues(new DimensionValuesRequest(baselineType, this.selectedBaseline.id, this.groupByForm.get('groupBy')?.value!)).subscribe(
+      (response) => 
+      {
+        for (const dimension in response) {
+          if (response.hasOwnProperty(dimension)) {
+            const filterValues: string[] = response[dimension];
+             this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));   
+          }
+        }
+      },
+      (error) => 
+      {
+
+      }
+    );
+  }
+
   onChangeGroupBy()
   { 
     this.groupByChartMap = new Map<string, string[]>();
 
     this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
       this.indicatorArray.controls.forEach((indicator, i) => {
-        if (this.isSimpleConditionAlert || this.isCompositeConditionAlert || (this.isBaselineAlert && i > 0))
-        {
-          indicator.controls.metrics.controls.forEach(metric => {
-            const metricField = metric.get('metric')?.value;
-            if (metricField) {
-              this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
-                (response) => {
-                  if (this.groupByChartMap.has(dimension))
-                  {
-                    let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
-                    this.groupByChartMap.set(dimension, dimensionValuesIntersection);
-                    this.groupByChartMap = new Map(this.groupByChartMap);
-                  }
-                  else
-                  {
-                    this.groupByChartMap.set(dimension, response);
-                    this.groupByChartMap = new Map(this.groupByChartMap);
-                  }
-                },
-                (error) => {
-
+        indicator.controls.metrics.controls.forEach(metric => {
+          const metricField = metric.get('metric')?.value;
+          if (metricField) {
+            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
+              (response) => {
+                if (this.groupByChartMap.has(dimension))
+                {
+                  let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
+                  this.groupByChartMap.set(dimension, dimensionValuesIntersection);
+                  this.groupByChartMap = new Map(this.groupByChartMap);
                 }
-              )
-            }
-          });
-        }
+                else
+                {
+                  this.groupByChartMap.set(dimension, response);
+                  this.groupByChartMap = new Map(this.groupByChartMap);
+                }
+              },
+              (error) => {
+
+              }
+            )
+          }
+        });
       });
     });
 
@@ -2636,7 +2663,15 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    this.getGraphSeries();
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
+      this.getGraphSeries();
+  }
+
+  onChangeBaselineGroupBy()
+  {
+    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
+      this.resetBaselineConditionFilters(condition);
+    });
   }
 
   onChangeLogsGroupBy()
@@ -2659,6 +2694,8 @@ export class AlertManagerComponent implements OnInit{
     if (!term) return;
 
     let map = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!;
+
+    console.log('map: ', map)
 
     let selected = [...map.get('selected')!]; // copia
     let created  = [...map.get('created')!];  // copia
@@ -2747,6 +2784,8 @@ export class AlertManagerComponent implements OnInit{
 
   onChangeBaselineSelection()
   {
+    this.getBaselineGroupByOptions();
+
     this.indicatorArray.clear();
 
     const newIndicator: IndicatorFormGroup = this._fb.group({
@@ -2756,11 +2795,10 @@ export class AlertManagerComponent implements OnInit{
           finalExpression: this._fb.control({value: this.selectedBaseline.alertIndicatorViewDto.finalExpression, disabled: true})
         }) as IndicatorFormGroup;
 
-    this.selectedBaseline.alertIndicatorViewDto.alertMetrics.forEach((metric: any, j: number) => {
-      console.log(metric)
+    this.selectedBaseline.alertIndicatorViewDto.alertMetrics.forEach((metric: any, j: number) => 
+    {
       let metricList: TableMetricInfo[] = [];
       metricList.push(new TableMetricInfo(metric.dbName, metric.tableName, metric.metricName, []));
-      console.log(metricList)
       newIndicator.controls.metrics.push(this._fb.group({
               metricId: this._fb.control(metric.metricId),
               id: this._fb.control((j + 1).toString()),
@@ -2768,7 +2806,8 @@ export class AlertManagerComponent implements OnInit{
               metric: this._fb.control({value: metricList[0], disabled: true}),
               operation: this._fb.control({value: matOperationOptions.find((opt) => opt.value == metric.operation), disabled: true}),
               options: this._fb.control(metricList)
-            }) as MetricFormGroup)});
+            }) as MetricFormGroup)
+    });
 
     this.indicatorArray.push(newIndicator);
 
@@ -2805,6 +2844,32 @@ export class AlertManagerComponent implements OnInit{
       (error) => {
         this.graphSeriesLoading = false;
         this.graphSeriesError = true;
+      }
+    )
+  }
+
+  get status(): 'success' | 'db+dolphin' | 'db' | 'dolphin' | 'main' {
+    if (this.isSuccess) return 'success';
+    if (this.dbError && this.dolphinError) return 'db+dolphin';
+    if (this.dbError) return 'db';
+    if (this.dolphinError) return 'dolphin';
+    return 'main';
+  }
+
+  getBaselineGroupByOptions()
+  {
+    this.baselineGroupByOptionsLoading = true;
+    this.baselineGroupByOptionsError = false;
+
+    this.inventoryBaselinesService.getBaselineGroupByOptions(this.isBaselinePastAverageAlert ? 'past_average' : this.isBaselinePastAveragePonderedAlert ? 'past_average_pondered' : 'ksigma').subscribe(
+      (response) => {
+        this.baselineGroupByOptionsLoading = false;
+        this.baselineGroupByOptionsError = false;
+        this.dimensionIntersectionOptions = response;
+      },
+      (error) => {
+        this.baselineGroupByOptionsLoading = false;
+        this.baselineGroupByOptionsError = true;
       }
     )
   }

@@ -120,7 +120,7 @@
                     </div>
                 </div>
 
-                <div *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null"
+                <div *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null && !isBaselineAlert"
                     class="titled-container">
                     <div class="font-16 font-w-600">Agrupaciones</div>
                     <form class="group-by-options" [formGroup]="groupByForm">
@@ -128,6 +128,19 @@
                             <p-multiselect [options]="dimensionIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
                                 (onChange)="onChangeGroupBy();" emptyMessage="No hay dimensiones que mostrar" />
+                            <label for="over_label1">Agrupar por</label>
+                        </p-floatlabel>
+                    </form>
+                </div>
+
+                <div *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null && isBaselineAlert"
+                    class="titled-container">
+                    <div class="font-16 font-w-600">Agrupaciones</div>
+                    <form class="group-by-options" [formGroup]="groupByForm">
+                        <p-floatlabel class="full-width-selector" variant="on">
+                            <p-multiselect [options]="dimensionIntersectionOptions" class="full-width-selector"
+                                [filter]="true" appendTo="body" formControlName="groupBy"
+                                (onChange)="onChangeBaselineGroupBy();" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                     </form>
@@ -437,7 +450,7 @@
                                     </ng-template>
 
                                     <!-- Mensaje cuando el filtro no encuentra nada -->
-                                    <ng-template *ngIf="isLogsAlert" pTemplate="emptyfilter">
+                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="emptyfilter">
                                         <div
                                             style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px;">
                                             <span>No hay resultados.</span>
@@ -804,7 +817,7 @@
                 datos introducidos son correctos <span class="font-w-600 text-black" style="cursor: pointer;"
                     (click)="isDetails = true;">aquí</span>.</div>
         </div>
-        <div *ngIf="isSuccess" class="modal-icon-container">
+        <div *ngIf="status === 'success'" class="modal-icon-container">
             <i class="pi pi-check-circle c-green" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Se ha {{mode == 'create' ? 'creado' : 'actualizado'}} la alerta con éxito
             </div>
@@ -812,21 +825,21 @@
                 creadas o volver al
                 inicio.</div>
         </div>
-        <div *ngIf="dbError && dolphinError" class="modal-icon-container">
+        <div *ngIf="status === 'db+dolphin'" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' :
                 'actualizar'}} la
                 alerta en BBDD y en el Dolphin</div>
             <div class="font-12 text-gray"></div>
         </div>
-        <div *ngIf="dbError" class="modal-icon-container">
+        <div *ngIf="status === 'db'" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' :
                 'actualizar'}} la
                 alerta en BBDD</div>
             <div class="font-12 text-gray"></div>
         </div>
-        <div *ngIf="dolphinError" class="modal-icon-container">
+        <div *ngIf="status === 'dolphin'" class="modal-icon-container">
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Ha habido un error al {{mode == 'create' ? 'crear' : 'actualizar'}} la
                 alerta en Dolphin</div>
@@ -1044,19 +1057,19 @@
         <p-button label="Confirmar" severity="primary" (onClick)="isDetails = false; onClickConfirmCrupdateAlert();"
             [loading]="isLoading" />
     </div>
-    <div *ngIf="isSuccess" class="modal-actions">
+    <div *ngIf="status === 'success'" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
         <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
-    <div *ngIf="dbError && dolphinError" class="modal-actions">
+    <div *ngIf="status === 'db+dolphin'" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
-    <div *ngIf="dbError" class="modal-actions">
+    <div *ngIf="status === 'db'" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickConfirmCrupdateAlert();" />
+        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
-    <div *ngIf="dolphinError" class="modal-actions">
+    <div *ngIf="status === 'dolphin'" class="modal-actions">
         <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
         <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
     </div>
