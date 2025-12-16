@@ -123,20 +123,26 @@
                         <p-popover #op1>
                             <div class="popover-container">
                                 <div class="font-w-600">Severidades</div>
-                                <div class="severities-container">
-                                    <div class="severity-container" *ngFor="let condition of alert.conditions; let i = index;">
-                                        <div class="id-container font-w-600">{{i+1}}</div>
-                                        <p-select class="select" size="small" [(ngModel)]="condition.severity"
-                                            [options]="severityOptions" optionLabel="label" optionValue="value"
-                                            appendTo="body" />
-                                        <p-select class="select-2" size="small" [(ngModel)]="condition.alertClauses[0].compOperation"
-                                            [options]="comparationOptions" optionLabel="label" optionValue="value"
-                                            appendTo="body" />
-                                        <p-inputnumber size="small" [(ngModel)]="condition.alertClauses[0].threshold" mode="decimal"
-                                            [minFractionDigits]="0" [maxFractionDigits]="6" />
-                                            <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
-                                            severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
-                                        <p-toggleswitch [(ngModel)]="condition.status" />
+                                <div class="conditions-container">
+                                    <div class="condition-container" *ngFor="let condition of alert.conditions; let i = index;">
+                                        <div class="condition-body">
+                                            <div class="id-container font-w-600">{{i+1}}</div>
+                                            <p-select class="select" size="small" [(ngModel)]="condition.severity"
+                                                [options]="severityOptions" optionLabel="label" optionValue="value"
+                                                appendTo="body" />
+                                            <p-toggleswitch [(ngModel)]="condition.status" />
+                                        </div>
+                                        <div *ngIf="condition.alertClauses.length > 0" class="clauses-container">
+                                            <div class="clause-container" *ngFor="let clause of condition.alertClauses; let j = index;">
+                                                <p-select class="select-2" size="small" [(ngModel)]="clause.compOperation"
+                                                    [options]="comparationOptions" optionLabel="label" optionValue="value"
+                                                    appendTo="body" />
+                                                <p-inputnumber size="small" [(ngModel)]="clause.threshold" mode="decimal"
+                                                    [minFractionDigits]="0" [maxFractionDigits]="6" />
+                                                    <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
+                                                    severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <!-- <p-button label="Añadir severidad" icon="pi pi-plus" (onClick)="onClickAddSeverity(alert);" severity="secondary" [disabled]="alert.conditions.length == 4" /> -->

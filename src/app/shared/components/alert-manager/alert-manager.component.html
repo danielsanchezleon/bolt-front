@@ -301,7 +301,7 @@
                 </div>
 
                 <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;"
-                    [ngStyle]="{'border': ( (condition.controls.clauses.at(0).get('comparation')?.value.value == 'MORE_THAN' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'LESS_THAN') && condition.controls.clauses.at(0).get('value')?.value == undefined) || ((condition.controls.clauses.at(0).get('comparation')?.value.value == 'WITHIN_RANGE' || condition.controls.clauses.at(0).get('comparation')?.value.value == 'OUT_OF_RANGE') && (condition.controls.clauses.at(0).get('min')?.value == undefined || condition.controls.clauses.at(0).get('max')?.value == undefined)) ? '2px solid red' : '1px solid lightgray'}">
+                    [ngStyle]="{'border': checkAllClausesCompleted() ? '1px solid lightgray' : '2px solid red'}">
                     <div class="condition-content">
                         <div class="condition-top">
                             <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
@@ -319,7 +319,7 @@
                                     [ngClass]="{'warning': condition.get('severity')?.value == severityOptions[3]}"
                                     (click)="onClickSetConditionType(condition, severityOptions[3]);">Warning</div>
                             </div>
-                            <input type="text" pInputText [pSize]="'small'" [ngModel]="conditionTextMap.get(i)"
+                            <input *ngIf="!isBaselineAlert" type="text" pInputText [pSize]="'small'" [ngModel]="conditionTextMap.get(i)"
                                 style="width: 100%;" [readOnly]="true" />
                             <div class="condition-status-container" [formGroup]="condition">
                                 <p-toggleswitch formControlName="status" />
@@ -335,21 +335,26 @@
                         </div>
                         <div *ngIf="isBaselineAlert" class="condition-baseline-variables"
                             [formGroup]="condition.controls.baselineVariables">
-                            <p-select *ngIf="isBaselinePastAverageAlert" formControlName="type" class="select"
+                            <div class="fields">
+                                <p-select *ngIf="isBaselinePastAverageAlert" formControlName="type" class="select"
                                 [options]="baselinesVariablesConditionTypes" optionLabel="label" appendTo="body"
                                 size="small" (onChange)="onChangeBaselinesVariablesConditionType(condition);" />
-                            <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
-                                *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'LESS_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
-                                formControlName="auxVar1" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
-                                size="small" placeholder="Factor inferior" [min]="0" [max]="1" />
-                            <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
-                                *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'MORE_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
-                                formControlName="auxVar2" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
-                                size="small" placeholder="Factor superior" [min]="0" [max]="1" />
-                            <p-inputnumber class="threshold-value" [ngStyle]="{'width': '64px'}"
-                                *ngIf="isBaselinePastAveragePonderedAlert || isBaselineKSigmaAlert"
-                                formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="0"
-                                size="small" placeholder="K" />
+                                <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
+                                    *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'LESS_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
+                                    formControlName="auxVar1" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                                    size="small" placeholder="Factor inferior" [min]="0" [max]="1" />
+                                <p-inputnumber class="threshold-value" [ngStyle]="{'width': '256px'}"
+                                    *ngIf="(isBaselinePastAverageAlert && (condition.controls.baselineVariables.get('type')?.value.value == 'MORE_THAN' || condition.controls.baselineVariables.get('type')?.value.value == 'OUT_OF_RANGE')) || isBaselinePastAveragePonderedAlert"
+                                    formControlName="auxVar2" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="2"
+                                    size="small" placeholder="Factor superior" [min]="0" [max]="1" />
+                                <p-inputnumber class="threshold-value" [ngStyle]="{'width': '64px'}"
+                                    *ngIf="isBaselinePastAveragePonderedAlert || isBaselineKSigmaAlert"
+                                    formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="0"
+                                    size="small" placeholder="K" />
+                            </div>
+                            <div *ngIf="isCompositeConditionAlert || isBaselineAlert" class="buttons">
+                                <p-button icon="pi pi-plus" severity="primary" (onClick)="createClause(i);" />
+                            </div>
                         </div>
                         <div class="condition-clause"
                             *ngFor="let clause of condition.controls.clauses.controls; let j = index; let first = first;"
@@ -370,7 +375,7 @@
                                         <div class="font-w-600" style="height: 24px; color: red;">x</div>
                                     </div>
                                 </div>
-                                <p-select *ngIf="!first" [options]="externalOperationOptions"
+                                <p-select *ngIf="(!isBaselineAlert && !first) || (isBaselineAlert)" [options]="externalOperationOptions"
                                     formControlName="externalOperation" [size]="'small'" />
                                 <p-select *ngIf="isCompositeConditionAlert || isBaselineAlert" [options]="indicatorNames"
                                     formControlName="indicatorName" [size]="'small'" />
@@ -420,7 +425,7 @@
                             </div>
                             <div *ngIf="isCompositeConditionAlert || isBaselineAlert" class="buttons">
                                 <p-button icon="pi pi-plus" severity="primary" (onClick)="createClause(i);" />
-                                <p-button *ngIf="condition.controls.clauses.length > 1" icon="pi pi-minus"
+                                <p-button *ngIf="(!isBaselineAlert && condition.controls.clauses.length > 1) || isBaselineAlert" icon="pi pi-minus"
                                     severity="secondary" (onClick)="removeClause(i, j);" />
                             </div>
                         </div>
@@ -440,7 +445,7 @@
                                     [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true">
 
                                     <!-- Ítem del desplegable -->
-                                    <ng-template *ngIf="isLogsAlert" pTemplate="item" let-option>
+                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="item" let-option>
                                         <div
                                             style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 16px;">
                                             <span class="truncate">{{ option }}</span>

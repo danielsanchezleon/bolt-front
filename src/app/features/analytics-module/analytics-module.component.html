@@ -1,0 +1,83 @@
+<app-page-wrapper>
+    <p-button icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary"
+        (onClick)="onClickNavigateToHome()" />
+
+    <div class="page-title">
+        <div class="font-32 font-w-700">Módulo de analítica</div>
+        <div></div>
+    </div>
+
+    <div class="accordions">
+        <app-accordion [title]="'Filtros'" [icon]="'pi pi-filter'" [description]="'Aplica filtros personalizados para analizar tus datos'" [isOpen]="true">
+            <div class="quick-filters">
+                <p class="text-14 text-gray">Filtros rápidos</p>
+                <div class="filters">
+                    <p-button label="Limpiar filtros" severity="secondary" (onClick)="onClickClearFilters();" [disabled]="!selectedCityFilterOption && !selectedSeverityFilterOption && !selectedPlatformFilterOption"/>
+                    <p-selectbutton [options]="cityFilterOptions" [(ngModel)]="selectedCityFilterOption" optionLabel="label" [size]="'small'" (onChange)="onCityFilterChange()"/>
+                    <p-selectbutton [options]="severityFilterOptions" [(ngModel)]="selectedSeverityFilterOption" optionLabel="label" [size]="'small'" (onChange)="onSeverityFilterChange()"/>
+                    <p-selectbutton [options]="platformFilterOptions" [(ngModel)]="selectedPlatformFilterOption" optionLabel="label" [size]="'small'" (onChange)="onPlatformFilterChange()"/>
+                </div>
+            </div>
+            <div class="individual-filters">
+                <div class="titled-select">
+                    <p class="text-14 text-gray">Tiempo</p>
+                    <p-select class="full-width" [options]="timeFilterOptions" [(ngModel)]="selectedTimeFilterOption" optionLabel="label" placeholder="Selecciona un tiempo" appendTo="body" />
+                </div>
+                <div class="titled-select">
+                    <p class="text-14 text-gray">Filtros individuales</p>
+                    <p-multiselect class="full-width" [options]="groupedFilters" [group]="true" [(ngModel)]="selectedElements" placeholder="Seleciona" display="chip" optionLabel="label" appendTo="body" />
+                </div>
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Métricas generales'" [icon]="'pi pi-bullseye'" class="acc2" [isOpen]="true" [description]="'Resumen de alertas y tiempos de recuperación'">
+            <div class="content">
+                <div class="card">
+                    <i class="pi pi-bullseye" style="color: #2563eb; font-size: 1.5rem;"></i>
+                    <div class="font-14 font-w-600">Total de alertas</div>
+                    <div class="font-20 font-w-700">1765</div>
+                    <div class="font-12">Configuradas en el sistema</div>
+                </div>
+                <div class="card">
+                    <i class="pi pi-chart-line" style="color: #2563eb; font-size: 1.5rem;"></i>
+                    <div class="font-14 font-w-600">Alertas con disparos</div>
+                    <div class="font-20 font-w-700">61%</div>
+                    <div class="font-12">Porcentaje de alertas configuradas que dispararon al menos una vez</div>
+                </div>
+                <div class="card">
+                    <i class="pi pi-clock" style="color: #2563eb; font-size: 1.5rem;"></i>
+                    <div class="font-14 font-w-600">Tiempo de recuperación</div>
+                    <div class="times">
+                        <div class="time">
+                            <div class="font-12">Mínimo</div>
+                            <div class="font-20 font-w-600">8.2 min</div>
+                        </div>
+                        <div class="time">
+                            <div class="font-12">Medio</div>
+                            <div class="font-20 font-w-600">11.4 min</div>
+                        </div>
+                        <div class="time">
+                            <div class="font-12">Máximo</div>
+                            <div class="font-20 font-w-600">15,3 min</div>
+                        </div>
+                    </div>
+                    <div class="slider">
+                        <div class="text">
+                            <div class="font-12">Percentil</div>
+                            <div class="font-12">{{selectedPercentile}} - xy.z min</div>
+                        </div>
+                        <p-slider [(ngModel)]="selectedPercentile" />
+                    </div>
+                </div>
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Gráficos y visualizaciones'" [icon]="'pi pi-chart-pie'" [description]="'Distribución por categorías y tendencias temporales'" [isOpen]="true">
+            PRÓXIMAMENTE
+        </app-accordion>
+
+        <app-accordion [title]="'Análisis de Alertas Ruidosas y Oportunidades'" [icon]="'pi pi-exclamation-triangle'" [description]="'Alertas con alto volumen de disparos y sugerencias de mejora'" [isOpen]="true">
+            PRÓXIMAMENTE
+        </app-accordion>
+    </div>
+</app-page-wrapper>

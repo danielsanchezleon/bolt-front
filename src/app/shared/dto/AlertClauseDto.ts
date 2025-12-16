@@ -5,7 +5,7 @@ export class AlertClauseDto
     public indicatorName: string,
     public startBrackets: number | null,
     public compOperation: string,
-    public threshold: number,
+    public threshold: number | null,
     public endBrackets: number | null,
     public order: number | null,
     public externalOperation: string | null,

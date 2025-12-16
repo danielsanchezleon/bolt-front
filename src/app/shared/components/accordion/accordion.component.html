@@ -1,6 +1,7 @@
 <div *ngIf="disabled" class="accordion-disabled">
-  <div class="accordion-header">
+  <div class="accordion-header" [ngClass]="{'padding-24': highlightTitle, 'padding-8': !highlightTitle}">
     <div class="title-wrapper">
+        <i *ngIf="icon" class="{{icon}}"></i>
         <span class="text-gray">{{title}}</span>
     </div>
     <span class="pi pi-chevron-right text-gray" [class.open]="isOpen"></span>
@@ -8,9 +9,11 @@
 </div>
 
 <div *ngIf="!disabled" class="accordion">
-  <div class="accordion-header" (click)="toggle()">
+  <div class="accordion-header" (click)="toggle()" [ngClass]="{'padding-24': highlightTitle, 'padding-8': !highlightTitle}">
     <div class="title-wrapper" [ngClass]="{'bg-blue': highlightTitle}">
-        <span>{{title}}</span>
+        <i class="font-16" *ngIf="icon" class="{{icon}}"></i>
+        <span class="font-16 font-w-600">{{title}}</span>
+        <span *ngIf="description" class="font-14 font-w-500 text-gray">- {{description}}</span>
     </div>
     <span class="pi pi-chevron-right" [class.open]="isOpen"></span>
   </div>

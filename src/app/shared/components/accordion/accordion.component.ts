@@ -9,7 +9,9 @@ import { Component, Input } from '@angular/core';
 })
 export class AccordionComponent 
 {
+  @Input() icon: string = '';
   @Input() title: string = '';
+  @Input() description: string = '';
   @Input() highlightTitle: boolean = false;
   @Input() disabled: boolean = false;
   @Input() isOpen: boolean = false;

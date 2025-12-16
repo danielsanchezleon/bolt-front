@@ -172,40 +172,64 @@ th {
     flex-direction: column;
     gap: 16px;
 
-    .severities-container {
+    .conditions-container {
         display: flex;
         flex-direction: column;
         gap: 8px;
 
-        .severity-container {
+        .condition-container {
             display: flex;
-            flex-direction: row;
-            gap: 8px;
+            flex-direction: column;
+            gap: 16px;
             align-items: center;
 
             border: 1px solid lightgray;
             border-radius: 8px;
             padding: 16px;
 
-            .id-container {
+            .condition-body {
                 display: flex;
                 flex-direction: row;
-                justify-content: center;
                 align-items: center;
+                gap: 8px;
 
-                background-color: #2563eb;
-                color: white;
-                border-radius: 50%;
-                width: 24px;
-                height: 24px;
+                width: 100%;
+                  
+                .id-container {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: center;
+                    align-items: center;
+
+                    background-color: #2563eb;
+                    color: white;
+                    border-radius: 50%;
+                    min-width: 24px;
+                    width: 24px;
+                    min-height: 24px;
+                    height: 24px;
+                }
+
+                .select {
+                    width: 100%;
+                }
+
+                .select-2 {
+                    width: 170px;
+                }
             }
 
-            .select {
-                width: 115px;
-            }
+            .clauses-container {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
 
-            .select-2 {
-                width: 170px;
+                .clause-container {
+                    display: flex;
+                    flex-direction: row;
+                    gap: 8px;
+                    align-items: center;
+                }
             }
         }
     }
@@ -271,8 +295,7 @@ th {
 .title-container {
     white-space: nowrap;
 
-    .name
-    {
+    .name {
         max-width: 256px;
         flex: 0 1 auto;
         min-width: 0;
@@ -295,13 +318,11 @@ th {
         }
     }
 
-    .title
-    {
+    .title {
         cursor: pointer;
     }
 
-    .title:hover
-    {
+    .title:hover {
         text-decoration: underline;
     }
 }

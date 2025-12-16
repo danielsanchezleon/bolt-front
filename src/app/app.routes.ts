@@ -15,6 +15,7 @@ import { CreateUserComponent } from './features/create-user/create-user.componen
 import { SetPasswordComponent } from './features/set-password/set-password.component';
 import { EditUserComponent } from './features/edit-user/edit-user.component';
 import { UserComponent } from './features/user/user.component';
+import { AnalyticsModuleComponent } from './features/analytics-module/analytics-module.component';
 
 export const routes: Routes = [
   {
@@ -94,6 +95,12 @@ export const routes: Routes = [
     path: 'user/:user_id',
     component: UserComponent,
     canActivate: [AuthGuard, RoleGuard]
+  },
+  {
+    path: 'analytics-module',
+    component: AnalyticsModuleComponent,
+    canActivate: [AuthGuard, RoleGuard],
+    data: { roles: ['ADMIN', 'MANAGER'] }
   }
 
 ];

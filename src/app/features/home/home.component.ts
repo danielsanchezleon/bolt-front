@@ -56,4 +56,9 @@ export class HomeComponent {
   {
     this.router.navigate(['alerts']);
   }
+
+  onClickNavigateToAnalyticsModule()
+  {
+    this.router.navigate(['analytics-module']);
+  }
 }

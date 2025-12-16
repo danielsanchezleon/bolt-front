@@ -4,11 +4,8 @@
     overflow: hidden;
 
     .accordion-header {
-        padding: 24px;
         background-color: white;
         cursor: pointer;
-        font-size: 16px;
-        font-weight: bold;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -16,6 +13,11 @@
         .title-wrapper {
             padding: 5px 20px;
             border-radius: 8px;
+
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
         }
 
         .pi-chevron-right {
@@ -58,4 +60,12 @@
             border-radius: 8px;
         }
     }
+}
+
+.padding-24 {
+    padding: 24px;
+}
+
+.padding-8 {
+    padding: 8px;
 }
