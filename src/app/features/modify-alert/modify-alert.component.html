@@ -74,12 +74,16 @@
                         {{alert.alertId}}
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" class="name title font-w-600" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name" (click)="alert.alertType != 'baseline' ? onClickGoToEditAlert(alert) : ''">
+                        <div *ngIf="alert.canEdit" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="alert.alertType != 'baseline' ? onClickGoToEditAlert(alert) : ''">
                             {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
-                        <div *ngIf="!alert.canEdit" class="name font-w-500" [title]="alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name">
+                        <div *ngIf="!alert.canEdit" class="name font-w-500">
                             {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
+                        <ng-template #tooltipContent>
+                            <div class="text-14">{{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}</div>
+                            <div class="text-14">Agrupaciones: {{alert.groupBy}}</div>
+                        </ng-template>
                         <div class="owner-container">
                             <div class="owner text-gray font-w-600">
                                 <i class="pi pi-user font-8"></i>

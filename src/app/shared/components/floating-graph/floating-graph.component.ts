@@ -25,7 +25,8 @@ export class FloatingGraphComponent
   @Input('disabled') disabled: boolean = false;
   @Input('graphSeries') graphSeries: any;
   @Input('conditionGraphList') conditionGraphList: any[] = [];
-  // @Input('groupByChartMap') groupByChartMap!: Map<string, string[]>;
+  @Input('graphGroupBy') graphGroupBy!: Map<string, string[]>;
+  @Input('isGraphLoading') isGraphLoading: boolean = false;
 
   @Output('hoursEvent') hoursEvent: EventEmitter<number> = new EventEmitter<number>();
 
@@ -43,7 +44,7 @@ export class FloatingGraphComponent
   groupByChartSelectedMap: Map<string, string[]> = new Map<string, string[]>();
   selectedGroupBy: string[] = [];
 
-  @Output('groupByEvent') groupByEvent: EventEmitter<Map<string, string[]>> = new EventEmitter<Map<string, string[]>>();
+  @Output('graphGroupByEvent') graphGroupByEvent: EventEmitter<Map<string, string[]>> = new EventEmitter<Map<string, string[]>>();
 
   constructor(private cd: ChangeDetectorRef) { }
 
@@ -67,20 +68,21 @@ export class FloatingGraphComponent
     }
 
     //If group by options change, reset the selected options and emit the new map
-    // if ((changes['groupByChartMap'] && !changes['groupByChartMap'].firstChange && this.groupByChartMap)) 
-    // {
-    //   this.groupBy = [];
-    //   this.selectedGroupBy = [];
-    //   this.groupByChartSelectedMap = new Map();
-    //   for(let key of this.groupByChartMap.keys())
-    //   {
-    //     this.groupBy.push(key);
-    //     this.selectedGroupBy.push(key);
-    //     this.groupByChartSelectedMap.set(key, this.groupByChartMap.get(key)!);
-    //   }
+    if ((changes['graphGroupBy'] && !changes['graphGroupBy'].firstChange && this.graphGroupBy)) 
+    {
+      this.groupBy = [];
+      this.selectedGroupBy = [];
+      this.groupByChartSelectedMap = new Map();
 
-    //   this.groupByEvent.emit(this.groupByChartSelectedMap);
-    // }
+      for(let key of this.graphGroupBy.keys())
+      {
+        this.groupBy.push(key);
+        this.selectedGroupBy.push(key);
+        this.groupByChartSelectedMap.set(key, this.graphGroupBy.get(key)!);
+      }
+
+      this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
+    }
   }
 
   onMouseEnter() {
@@ -221,14 +223,16 @@ export class FloatingGraphComponent
     this.hoursEvent.emit(event.value);
   }
 
-  // onChangeGroupBy(event: any)
-  // {
-  //   this.selectedGroupBy = event.value;
+  onChangeGraphGroupBy(event: any)
+  {
+    this.selectedGroupBy = event.value;
 
-  //   event.value.forEach((dimension: string) => {
-  //     this.groupByChartSelectedMap.set(dimension, this.groupByChartMap.get(dimension)!);
-  //   });
+    this.groupByChartSelectedMap = new Map<string, string[]>();
 
-  //   this.groupByEvent.emit(this.groupByChartSelectedMap);
-  // }
+    event.value.forEach((dimension: string) => {
+      this.groupByChartSelectedMap.set(dimension, this.graphGroupBy.get(dimension)!);
+    });
+
+    this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
+  }
 }

@@ -48,3 +48,15 @@
     opacity: 1;
   }
 }
+
+.loading-blur
+{
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1000px;
+  height: 1000px;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 1002;
+}

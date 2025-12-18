@@ -24,7 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
-import { BehaviorSubject, concatMap, debounceTime, filter, finalize, from, map, Subject, Subscription, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, concatMap, debounceTime, filter, finalize, forkJoin, from, map, Observable, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 import { permissionTypeOptions } from '../../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../../shared/services/metric.service';
@@ -330,12 +330,8 @@ export class AlertManagerComponent implements OnInit{
   graphSeriesLoading: boolean = false;
   graphSeriesError: boolean = false;
   graphSeries: GraphSerieResponse[] = [];
-
-  isChartDataLoading: boolean = false;
-  isChartDataError: boolean = false;
-  chartData!: ChartDataDto;
-  groupByChartMap: Map<string, string[]> = new Map<string, string[]>();
-  groupByChartSelectedMap: Map<string, string[]> = new Map<string, string[]>();
+  graphGroupBy: Map<string, string[]> = new Map<string, string[]>();
+  requestGraphGroupBy: Map<string, string[]> = new Map<string, string[]>();
 
   conditionGraphList: any[] = [];
 
@@ -1733,15 +1729,18 @@ export class AlertManagerComponent implements OnInit{
           );
         }),
 
-        // loading global (una sola vez)
         finalize(() => {
           this.isInitialMetricListLoading = false;
         })
       ).subscribe({
         complete: () => {
-          // ✅ esto ahora se ejecuta SOLO una vez cuando terminen TODOS los indicadores
           this.onChangeMetricSelect();
           this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+
+          this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+            this.generateGraphAgroupations(dimension);
+          });
+
           this.getGraphSeries();
 
           this.conditionFiltersMap = new Map();
@@ -1749,26 +1748,24 @@ export class AlertManagerComponent implements OnInit{
           alertViewDto.conditions!.forEach((condition, i) => {
             this.conditionFiltersMap.set((i + 1).toString(), new Map());
             alertViewDto.groupBy!.forEach((dimension: string) => {
-              // OJO: aquí usabas `indicator` del forEach original.
-              // Ahora si quieres iterar métricas de todos los indicadores:
               indicators.forEach(indicator => {
                 indicator.alertMetrics!.forEach(metric => {
                   this.alertService.getDimensionValues(metric.dbName!, metric.tableName!, metric.metricName!, dimension).subscribe(
                     (response) => {
                       let selected: string[] = [];
                       let created: string[] = [];
+                      let merge: string[] = [];
 
-                      condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((conditionFilter) => {
+                      condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
 
-                        if (conditionFilter.isCreated)
-                        {
-                          created.push(conditionFilter.filterValue!);
-                        }
-
-                        selected.push(conditionFilter.filterValue!);
+                        if (cf.isCreated)
+                          created.push(cf.filterValue!);
+                        else
+                          selected.push(cf.filterValue!);
                       });
 
-                      selected = selected.length == 0 ? response : selected;
+                      selected = selected.length == 0 && created.length == 0 ? response : selected.length > 0 && created.length > 0 ? created.concat(selected) : selected.length == 0 ? created : selected;
+                      merge = created.concat(response);
 
                       if (this.conditionFiltersMap.has((i+1).toString()))
                       {
@@ -1779,12 +1776,12 @@ export class AlertManagerComponent implements OnInit{
                         }
                         else
                         {
-                          this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response)));
+                          this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', created.concat(response)));
                         }
                       }
                       else
                       {
-                        this.conditionFiltersMap.set((i+1).toString(), new Map().set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response))))
+                        this.conditionFiltersMap.set((i+1).toString(), new Map().set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge)))
                       }
                     },
                     (error) => {
@@ -1842,18 +1839,20 @@ export class AlertManagerComponent implements OnInit{
               {
                 let selected: string[] = [];
                 let created: string[] = [];
+                let merge: string[] = [];
 
                 condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
 
                   if (cf.isCreated)
-                  {
                     created.push(cf.filterValue!);
-                  }
-
-                  selected.push(cf.filterValue!);
+                  else
+                    selected.push(cf.filterValue!);
                 });
 
-                filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected.length == 0 || (selected.every(s => created.includes(s))) ? created.concat(response) : selected).set('created', created).set('merge', created.concat(response)));
+                selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
+                merge = created.concat(response);
+
+                filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge));
 
                 this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
               },
@@ -2095,7 +2094,7 @@ export class AlertManagerComponent implements OnInit{
     for (let i = 0; i < alertViewDto.permissions!.length; i++)
     {
       this.permissionList.push(new Permission(alertViewDto.permissions![i].id, this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId), this.permissionTypeOptions.find((permissionType) => alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r')))
-      this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)].disabled = true;
+      this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)]!.disabled = true;
     }
 
     if (this.isLogsAlert)
@@ -2487,42 +2486,6 @@ export class AlertManagerComponent implements OnInit{
     });
   }
 
-  getChartData()
-  {
-    this.isChartDataLoading = true;
-    this.isChartDataError = false;
-    
-    let indicatorDataDtoList: ChartIndicatorDto[] = [];
-
-    this.indicatorArray.controls.forEach((indicator, i) => {
-      let metricDataDtoList: ChartMetricDto[] = [];
-      indicator.get('metrics')?.value.forEach((metric, j) => {
-        if (metric.metric != null)
-          metricDataDtoList.push(new ChartMetricDto(metric.name, metric.metric!.table_name!, metric.metric!.metric!, metric.operation!.value!));
-      });
-      indicatorDataDtoList.push(new ChartIndicatorDto(indicator.get('name')?.value!, indicator.get('finalExpression')?.value!, metricDataDtoList));
-    });
-
-    let dimensions: ChartDimensionDto[] = [];
-    this.groupByChartSelectedMap.forEach((value, key) => {
-      dimensions.push(new ChartDimensionDto(key, value));
-    });
-
-    let chartDataRequestDto: ChartRequestDto = new ChartRequestDto(this.hours, this.advancedOptionsForm.get('timeWindow')?.value.value, dimensions, indicatorDataDtoList);
-
-    this.metricService.getChartData(chartDataRequestDto).subscribe(
-      (response) => {
-        this.isChartDataLoading = false;
-        this.isChartDataError = false;
-        this.chartData = response;
-      },
-      (error) => {
-        this.isChartDataLoading = false;
-        this.isChartDataError = true;
-      }
-    )
-  }
-
   countMetrics()
   {
     let count = 0;
@@ -2640,38 +2603,71 @@ export class AlertManagerComponent implements OnInit{
     );
   }
 
-  onChangeGroupBy()
-  { 
-    this.groupByChartMap = new Map<string, string[]>();
+  intersectArrays(arrays: string[][]): string[] {
+    if (!arrays.length) return [];
 
-    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-      this.indicatorArray.controls.forEach((indicator, i) => {
-        indicator.controls.metrics.controls.forEach(metric => {
-          const metricField = metric.get('metric')?.value;
-          if (metricField) {
-            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
-              (response) => {
-                if (this.groupByChartMap.has(dimension))
-                {
-                  let dimensionValuesIntersection: string[] = this.groupByChartMap.get(dimension)!.filter((value) => response.includes(value))!;
-                  this.groupByChartMap.set(dimension, dimensionValuesIntersection);
-                  this.groupByChartMap = new Map(this.groupByChartMap);
-                }
-                else
-                {
-                  this.groupByChartMap.set(dimension, response);
-                  this.groupByChartMap = new Map(this.groupByChartMap);
-                }
-              },
-              (error) => {
+    return arrays.reduce((acc, curr) => {
+      const set = new Set(curr);
+      return acc.filter(v => set.has(v));
+    });
+  }
 
-              }
-            )
-          }
-        });
+  generateGraphAgroupations(dimension: string) 
+  {
+    // Copia (nueva referencia)
+    const nextMap = new Map(this.graphGroupBy);
+
+    if (nextMap.has(dimension)) {
+      nextMap.delete(dimension);
+      this.graphGroupBy = nextMap;   // <-- cambia referencia
+      return;
+    }
+
+    const observables: Observable<string[]>[] = [];
+
+    this.indicatorArray.controls.forEach(indicator => {
+      indicator.controls.metrics.controls.forEach(metric => {
+        const metricField = metric.get('metric')?.value;
+        if (!metricField) return;
+
+        observables.push(
+          this.alertService.getDimensionValues(
+            metricField.bbdd!,
+            metricField.table_name!,
+            metricField.metric!,
+            dimension
+          )
+        );
       });
     });
 
+    if (!observables.length) {
+      this.graphGroupBy = nextMap; // opcional
+      return;
+    }
+
+    forkJoin(observables).subscribe({
+      next: (responses: string[][]) => {
+        const intersection = this.intersectArrays(responses);
+
+        const updated = new Map(this.graphGroupBy);  // por si cambió mientras tanto
+        updated.set(dimension, intersection);
+
+        this.graphGroupBy = updated; // <-- NUEVA referencia => ngOnChanges salta
+        this.requestGraphGroupBy = new Map(JSON.parse(JSON.stringify(Array.from(this.graphGroupBy))));
+      },
+      error: _err => {
+        const updated = new Map(this.graphGroupBy);
+        updated.set(dimension, []);
+        this.graphGroupBy = updated; // <-- NUEVA referencia
+        this.requestGraphGroupBy = new Map(JSON.parse(JSON.stringify(Array.from(this.graphGroupBy))));
+      }
+    });
+  }
+
+
+  onChangeGroupBy(event: MultiSelectChangeEvent)
+  { 
     this.generateInternalNameAndName();
 
     this.conditionFiltersMap = new Map();
@@ -2679,8 +2675,9 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
-      this.getGraphSeries();
+    this.generateGraphAgroupations(event.itemValue);
+
+    this.getGraphSeries();
   }
 
   onChangeBaselineGroupBy()
@@ -2708,28 +2705,24 @@ export class AlertManagerComponent implements OnInit{
 
   onClickCreateFilter(condition: ConditionFormGroup, dimension: string, ms: MultiSelect)
   {
-    let term = this.lastFilter?.trim();
-    if (!term) return;
+    let createdFilter = this.lastFilter?.trim();
+    if (!createdFilter) return;
 
     let map = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!;
 
-    console.log('map: ', map)
+    let values = [...map.get('values')!];
+    let selected = [...map.get('selected')!];
+    let created  = [...map.get('created')!];
 
-    let selected = [...map.get('selected')!]; // copia
-    let created  = [...map.get('created')!];  // copia
+    // If it does not exist in created, is added at the beginning
+    let newCreated = created.includes(createdFilter) ? created : [createdFilter].concat(created);
 
-    let yaExiste = selected.includes(term) || created.includes(term);
+    // If it does not exist in selected, is added at the beginning
+    let newSelected = [createdFilter].concat(selected);
 
-    // si no existe, lo añadimos a 'created'
-    let newCreated = yaExiste ? created : [...created, term];
+    // Merge is the union of both
+    let newMerge = Array.from(new Set([...newCreated, ...values]));
 
-    // lo seleccionamos siempre
-    let newSelected = [term, ...selected];
-
-    // recomponemos las opciones (merge) sin duplicados
-    let newMerge = Array.from(new Set([...newCreated, ...newSelected]));
-
-    // set en el map con **nuevas referencias**
     map.set('created', newCreated);
     map.set('selected', newSelected);
     map.set('merge', newMerge);
@@ -2852,7 +2845,13 @@ export class AlertManagerComponent implements OnInit{
         indicatorDataDtoList.push(new AlertIndicatorDto(null, indicator.get('name')?.value!, metricDataDtoList, indicator.get('finalExpression')?.value!, this.isBaselineAlert));
     });
 
-    let graphRequest: GraphRequest = new GraphRequest(this.hours, this.groupByForm.get('groupBy')?.value, indicatorDataDtoList);
+    let groupBy: string[] = [];
+    for(let key of this.requestGraphGroupBy.keys())
+    {
+      groupBy.push(key);
+    }
+
+    let graphRequest: GraphRequest = new GraphRequest(this.hours, groupBy, indicatorDataDtoList, this.requestGraphGroupBy);
 
     this.plottingService.getGraphSeries(graphRequest).subscribe(
       (response) => {
@@ -2909,5 +2908,12 @@ export class AlertManagerComponent implements OnInit{
     });
 
     return allCompleted;
+  }
+
+  graphGroupByEvent(event: Map<string, string[]>)
+  {
+    this.requestGraphGroupBy = event;
+
+    this.getGraphSeries();
   }
 }

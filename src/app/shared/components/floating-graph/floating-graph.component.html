@@ -11,10 +11,8 @@
   <p-button icon="pi pi-chart-line" [rounded]="true" size="large" [severity]="'secondary'" (mouseenter)="onMouseEnter()" (mouseleave)="onMouseLeave()" (onClick)="onClickButton = !onClickButton;"/>
 </div>
 
-<div
-  class="animated-modal"
-  [class.show]="isHovering || onClickButton"
->
+<div class="animated-modal" [class.show]="isHovering || onClickButton">
+
   <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
     <h2>Gráfico Interactivo</h2>
     <p-selectbutton [options]="hoursOptions" [(ngModel)]="selectedHoursOption" optionLabel="label" optionValue="value" aria-labelledby="basic" (onChange)="onChangeHoursSelectButton($event)"/>
@@ -22,22 +20,25 @@
   </div>
 
   <p-chart #chart type="line" [data]="data" [options]="options" />
+  <!-- <div *ngIf="isGraphLoading" class="loading-blur">
+    <p>Cargando...</p>
+  </div> -->
 
-  <!-- <div *ngIf="false && groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
+  <div *ngIf="groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
 
-  <div *ngIf="false && groupBy.length > 0" style="display: flex; flex-direction: column; gap: 8px;">
+  <div *ngIf="groupBy.length > 0" style="display: flex; flex-direction: column; gap: 8px;">
     <div class="font-20 font-w-600">Agrupaciones</div>
-    <p-multiselect [options]="groupBy" [ngModel]="selectedGroupBy" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" [ngStyle]="{'width': '250px'}" (onChange)="onChangeGroupBy($event)" />
+    <p-multiselect [options]="groupBy" [ngModel]="selectedGroupBy" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" [ngStyle]="{'width': '250px'}" (onChange)="onChangeGraphGroupBy($event)" />
   </div>
 
-  <div *ngIf="false && groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
+  <div *ngIf="groupBy.length > 0" style="width: 100%; height: 1px; background-color: gray; opacity: 0.5; margin: 16px 0px;"></div>
 
-  <div *ngIf="false && groupBy.length > 0" style="display: flex; flex-direction: row; align-items: center; gap: 16px;">
+  <div *ngIf="groupBy.length > 0" style="display: flex; flex-direction: row; align-items: center; gap: 16px;">
     <div *ngFor="let selectedDimension of selectedGroupBy;" style="display: flex; flex-direction: column; gap: 4px;">
       <div class="font-16 font-w-600">{{selectedDimension}}</div>
-      <p-multiselect [options]="groupByChartMap.get(selectedDimension)" [ngModel]="groupByChartSelectedMap.get(selectedDimension)" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" [ngStyle]="{'width': '250px'}" />
+      <p-multiselect [options]="graphGroupBy.get(selectedDimension)" [ngModel]="groupByChartSelectedMap.get(selectedDimension)" placeholder="Sin agrupar" [maxSelectedLabels]="2" appendTo="body" [ngStyle]="{'width': '250px'}" />
     </div>
-  </div> -->
+  </div>
 </div>
 
 <div *ngIf="isHovering || onClickButton" class="blur" (click)="onClickButton = false;"></div>

@@ -41,10 +41,11 @@ import { AlertClauseDto } from '../../shared/dto/AlertClauseDto';
 import { BaselinesVariablesDto } from '../../shared/dto/BaselinesVariablesDto';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule, TooltipModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
