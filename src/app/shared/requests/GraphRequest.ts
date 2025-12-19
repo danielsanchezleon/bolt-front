@@ -5,13 +5,13 @@ export class GraphRequest
     timeRangeInHours: number;
     groupBy: string[];
     alertIndicators: AlertIndicatorDto[];
-    agroupations: Map<string, string[]> = new Map<string, string[]>();
+    filters: Map<string, string[]> = new Map<string, string[]>();
 
-    constructor (timeRangeInHours: number, groupBy: string[], alertIndicators: AlertIndicatorDto[], agroupations: Map<string, string[]>)
+    constructor (timeRangeInHours: number, groupBy: string[], alertIndicators: AlertIndicatorDto[], filters: Map<string, string[]>)
     {
         this.timeRangeInHours = timeRangeInHours;
         this.groupBy = groupBy;
         this.alertIndicators = alertIndicators;
-        this.agroupations = agroupations;
+        this.filters = filters;
     }
 }

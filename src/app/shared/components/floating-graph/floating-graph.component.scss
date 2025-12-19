@@ -52,11 +52,15 @@
 .loading-blur
 {
   position: fixed;
-  top: 0;
+  top: 80px;
   left: 0;
-  width: 1000px;
-  height: 1000px;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
+  width: 100%;
+  height: 515px;
+  backdrop-filter: blur(10px);
   z-index: 1002;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }

@@ -7,12 +7,13 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 Chart.register(annotationPlugin);
 
 @Component({
   selector: 'app-floating-graph',
-  imports: [ButtonModule, ChartModule, CommonModule, SelectButtonModule, FormsModule, MultiSelectModule],
+  imports: [ButtonModule, ChartModule, CommonModule, SelectButtonModule, FormsModule, MultiSelectModule, ProgressSpinnerModule],
   templateUrl: './floating-graph.component.html',
   styleUrls: ['./floating-graph.component.scss']
 })
@@ -232,6 +233,13 @@ export class FloatingGraphComponent
     event.value.forEach((dimension: string) => {
       this.groupByChartSelectedMap.set(dimension, this.graphGroupBy.get(dimension)!);
     });
+
+    this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
+  }
+
+  onChangeGraphFilters(event: any, dimension: string)
+  {
+    this.groupByChartSelectedMap.set(dimension, event.value);
 
     this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
   }

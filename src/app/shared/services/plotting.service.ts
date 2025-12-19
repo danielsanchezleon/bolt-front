@@ -17,6 +17,10 @@ export class PlottingService {
 
   getGraphSeries(graphRequest: GraphRequest): Observable<GraphSerieResponse[]>
   {
-    return this.http.post<GraphSerieResponse[]>(this.apiUrl + '/getGraphSeries', graphRequest);
+    const payload = {
+      ...graphRequest,
+      filters: Object.fromEntries(graphRequest.filters)
+    };
+    return this.http.post<GraphSerieResponse[]>(this.apiUrl + '/getGraphSeries', payload);
   }
 }

@@ -442,7 +442,8 @@
                                     [ngModel]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!"
                                     (onChange)="onChangeConditionFiltersSelection(condition, dimension, $event);"
                                     appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"
-                                    [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true">
+                                    [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true"
+                                    [title]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == 0 || conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!.length ? 'Todas las opciones seleccionadas' : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!">
 
                                     <!-- Ítem del desplegable -->
                                     <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="item" let-option>
@@ -726,9 +727,9 @@
                                             (ngModelChange)="verifyDetailsText(details.value, details)"
                                             placeholder="Escribe aquí los detalles adicionales de la alerta. Usa doble llave para ver sugerencias de bloques condicionales y variables..." [maxlength]="1024"></textarea>
 
-                                        <label class="font-w-600" for="proccedure">Procedimiento (OPI)</label>
-                                        <input class="full-w-field" pInputText id="proccedure"
-                                            formControlName="proccedure"
+                                        <label class="font-w-600" for="opiUrl">Procedimiento (OPI)</label>
+                                        <input class="full-w-field" pInputText id="opiUrl"
+                                            formControlName="opiUrl"
                                             placeholder="URL del Procedimiento Operativo (OPI)" />
                                     </div>
                                 </form>
@@ -747,7 +748,7 @@
 
                                     <label class="font-w-600">Procedimiento (OPI):</label>
                                     <input class="full-w-field" pInputText readonly="readonly"
-                                        [ngModel]="notificationMessageForm.get('proccedure')?.value"
+                                        [ngModel]="notificationMessageForm.get('opiUrl')?.value"
                                         style="pointer-events: none;" />
                                 </div>
                             </p-tabpanel>
@@ -1037,10 +1038,10 @@
                 </div>
                 <div class="title-description-block-1" style="max-width: 1000px;">
                     <div class="title">Procedimiento</div>
-                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length > 0" class="description">
-                        {{notificationMessageForm.get('proccedure')?.value}}</div>
-                    <div *ngIf="notificationMessageForm.get('proccedure')?.value.length == 0" class="description">No se
-                        ha especificado procedimiento</div>
+                    <div *ngIf="notificationMessageForm.get('opiUrl')?.value.length > 0" class="description">
+                        {{notificationMessageForm.get('opiUrl')?.value}}</div>
+                    <div *ngIf="notificationMessageForm.get('opiUrl')?.value.length == 0" class="description">No se
+                        ha especificado procedimiento OPI</div>
                 </div>
             </div>
         </div>

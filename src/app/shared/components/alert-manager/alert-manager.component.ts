@@ -578,7 +578,7 @@ export class AlertManagerComponent implements OnInit{
     this.notificationMessageForm = this._fb.group({
       message: ['', [Validators.required]],
       details: ['', []],
-      proccedure: ['', []]
+      opiUrl: ['', []]
     });
   }
 
@@ -2088,7 +2088,7 @@ export class AlertManagerComponent implements OnInit{
     //NOTIFICATIONS
     this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText ? alertViewDto.alertText : '');
     this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail ? alertViewDto.alertDetail : '');
-    this.notificationMessageForm.get('proccedure')?.setValue(alertViewDto.opiUrl ? alertViewDto.opiUrl : '');
+    this.notificationMessageForm.get('opiUrl')?.setValue(alertViewDto.opiUrl ? alertViewDto.opiUrl : '');
 
     //PERMISSIONS
     for (let i = 0; i < alertViewDto.permissions!.length; i++)
@@ -2263,7 +2263,7 @@ export class AlertManagerComponent implements OnInit{
       this.isSimpleConditionAlert ? 0 : this.isCompositeConditionAlert ? 1 : this.isLogsAlert ? 2 : 3,
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
-      null,
+      this.notificationMessageForm.get('opiUrl')?.value,
       this.activationRecoverForm.get('activation1')?.value.value,
       this.activationRecoverForm.get('activation2')?.value.value,
       this.activationRecoverForm.get('recover1')?.value.value,
@@ -2850,7 +2850,7 @@ export class AlertManagerComponent implements OnInit{
     {
       groupBy.push(key);
     }
-
+    
     let graphRequest: GraphRequest = new GraphRequest(this.hours, groupBy, indicatorDataDtoList, this.requestGraphGroupBy);
 
     this.plottingService.getGraphSeries(graphRequest).subscribe(
