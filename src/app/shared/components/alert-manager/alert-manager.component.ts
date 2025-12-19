@@ -1434,6 +1434,9 @@ export class AlertManagerComponent implements OnInit{
   onChangeConditionFiltersSelection(condition: any, dimension: string, event: MultiSelectChangeEvent) 
   {
     this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.set('selected', event.value);
+    this.graphGroupBy.set(dimension, event.value);
+    this.requestGraphGroupBy.set(dimension, event.value);
+    this.getGraphSeries();
 
     if (this.isLogsAlert)
     { 
@@ -2850,7 +2853,7 @@ export class AlertManagerComponent implements OnInit{
     {
       groupBy.push(key);
     }
-    
+
     let graphRequest: GraphRequest = new GraphRequest(this.hours, groupBy, indicatorDataDtoList, this.requestGraphGroupBy);
 
     this.plottingService.getGraphSeries(graphRequest).subscribe(
