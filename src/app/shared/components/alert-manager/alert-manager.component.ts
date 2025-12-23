@@ -46,6 +46,7 @@ import { EndpointViewDto } from '../../../shared/dto/endpoint/EndpointViewDto';
 import { TeamViewDto } from '../../../shared/dto/TeamViewDto';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AlertViewDto } from '../../dto/alert/AlertViewDto';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 import {matOperationOptions, 
         timeWindowOptions, 
@@ -307,7 +308,7 @@ type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
 @Component({
   selector: 'app-alert-manager',
-  imports: [FloatingGraphComponent, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [FloatingGraphComponent, ProgressSpinnerModule, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
   templateUrl: './alert-manager.component.html',
   styleUrl: './alert-manager.component.scss'
 })
@@ -1694,6 +1695,8 @@ export class AlertManagerComponent implements OnInit{
 
       this.onChangeBaselineSelection();
 
+      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+
       this.conditionFiltersMap = new Map();
 
       alertViewDto.conditions!.forEach((condition, i) => 
@@ -1704,11 +1707,24 @@ export class AlertManagerComponent implements OnInit{
         this.inventoryBaselinesService.getDimensionValues(new DimensionValuesRequest(baselineType, this.selectedBaseline.id, this.groupByForm.get('groupBy')?.value!)).subscribe(
           (response) => 
           {
-            for (const dimension in response) {
-              if (response.hasOwnProperty(dimension)) {
-                const filterValues: string[] = response[dimension];
-                this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));   
-              }
+            for (const dimension in response) 
+            {
+              let selected: string[] = [];
+              let created: string[] = [];
+              let merge: string[] = [];
+
+              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
+
+                if (cf.isCreated)
+                  created.push(cf.filterValue!);
+                else
+                  selected.push(cf.filterValue!);
+              });
+
+              selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
+              merge = created.concat(response[dimension]);
+
+              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('merge', merge));
             }
           },
           (error) => 
@@ -2184,7 +2200,6 @@ export class AlertManagerComponent implements OnInit{
     //BASELINE
     if (this.isBaselineAlert)
     {
-      console.log(this.selectedBaseline)
       let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
       alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
     }
