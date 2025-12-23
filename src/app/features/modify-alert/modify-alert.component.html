@@ -74,7 +74,7 @@
                         {{alert.alertId}}
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="alert.alertType != 'baseline' ? onClickGoToEditAlert(alert) : ''">
+                        <div *ngIf="alert.canEdit" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="onClickGoToEditAlert(alert)">
                             {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
                         <div *ngIf="!alert.canEdit" class="name font-w-500">

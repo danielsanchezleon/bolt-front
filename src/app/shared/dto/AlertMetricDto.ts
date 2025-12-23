@@ -6,6 +6,7 @@ export class AlertMetricDto
     public tableName: string,
     public metricName: string,
     public operation: string,
-    public dimensions: string
+    public dimensions: string,
+    public idInventory: number | null
   ) {}
 }

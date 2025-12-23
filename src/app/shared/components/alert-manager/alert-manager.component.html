@@ -15,7 +15,7 @@
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <span class="font-14 font-w-600">Baseline</span>
-                            <p-select class="select" [options]="baselineResponseList" optionLabel="name" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" (onChange)="onChangeBaselineSelection();" />
+                            <p-select class="select" [options]="baselineResponseList" optionLabel="name" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" (onChange)="onChangeBaselineSelection();" [disabled]="baselinesListLoading || baselineSelectDisabled " />
                         </div>
                     </div>
                 </div>
@@ -349,7 +349,7 @@
                                     size="small" placeholder="Factor superior" [min]="0" [max]="1" />
                                 <p-inputnumber class="threshold-value" [ngStyle]="{'width': '64px'}"
                                     *ngIf="isBaselinePastAveragePonderedAlert || isBaselineKSigmaAlert"
-                                    formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="0"
+                                    formControlName="auxVar3" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="1"
                                     size="small" placeholder="K" />
                             </div>
                             <div *ngIf="isCompositeConditionAlert || isBaselineAlert" class="buttons">

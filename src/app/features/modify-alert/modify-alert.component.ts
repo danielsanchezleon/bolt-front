@@ -347,7 +347,7 @@ export class ModifyAlertComponent implements OnInit
 
       for (let metric of alert.indicators![i].alertMetrics!) 
       {
-        alertMetrics.push(new AlertMetricDto(metric.metricId!, metric.dbName!, metric.tableName!, metric.metricName!, metric.operation!, metric.dimensions!));
+        alertMetrics.push(new AlertMetricDto(metric.metricId!, metric.dbName!, metric.tableName!, metric.metricName!, metric.operation!, metric.dimensions!, null));
       }
 
       alertIndicators.push(new AlertIndicatorDto(alert.indicators![i].id!, alert.indicators![i].name!, alertMetrics, alert.indicators![i].finalExpression!, alert.indicators![i].isBaseline!));

@@ -5,4 +5,5 @@ export class AlertMetricViewDto {
   metricName?: string;
   operation?: string;
   dimensions?: string;
+  idInventory?: number | null;
 }
