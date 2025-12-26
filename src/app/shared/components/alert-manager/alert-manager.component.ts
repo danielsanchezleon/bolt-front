@@ -1971,21 +1971,24 @@ export class AlertManagerComponent implements OnInit{
       if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! > 1))
       {
         condition.alertClauses?.forEach((clause) => {
-          this.conditionArray.at(i).controls.clauses.push(this._fb.group({
-            clauseId: this._fb.control(clause.id),
-            indicatorName: this._fb.control(clause.indicatorName),
-            id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
-            comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
-            order: this._fb.control(this.conditionArray.length + 1),
-            value: this._fb.control(clause.threshold),
-            minIncluded: this._fb.control(clause.thresholdInclude),
-            min: this._fb.control(clause.threshold),
-            maxIncluded: this._fb.control(clause.thresholdIncludeUp),
-            max: this._fb.control(clause.thresholdUp),
-            startBrackets: this._fb.control(clause.startBrackets),
-            endBrackets: this._fb.control(clause.endBrackets),
-            externalOperation: this._fb.control(clause.externalOperation)
-          }) as ClauseFormGroup);
+          if (clause.threshold != null)
+          {
+            this.conditionArray.at(i).controls.clauses.push(this._fb.group({
+              clauseId: this._fb.control(clause.id),
+              indicatorName: this._fb.control(clause.indicatorName),
+              id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
+              comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
+              order: this._fb.control(this.conditionArray.length + 1),
+              value: this._fb.control(clause.threshold),
+              minIncluded: this._fb.control(clause.thresholdInclude),
+              min: this._fb.control(clause.threshold),
+              maxIncluded: this._fb.control(clause.thresholdIncludeUp),
+              max: this._fb.control(clause.thresholdUp),
+              startBrackets: this._fb.control(clause.startBrackets),
+              endBrackets: this._fb.control(clause.endBrackets),
+              externalOperation: this._fb.control(clause.externalOperation)
+            }) as ClauseFormGroup);
+          }
         });
       }
 
