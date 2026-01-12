@@ -8,7 +8,7 @@
     </div>
 
     <div class="accordions">
-        <app-accordion [title]="'Filtros'" [icon]="'pi pi-filter'" [description]="'Aplica filtros personalizados para analizar tus datos'" [isOpen]="true">
+        <app-accordion *ngIf="false" [title]="'Filtros'" [icon]="'pi pi-filter'" [description]="'Aplica filtros personalizados para analizar tus datos'" [isOpen]="true">
             <div class="quick-filters">
                 <p class="text-14 text-gray">Filtros rápidos</p>
                 <div class="filters">
@@ -31,53 +31,96 @@
         </app-accordion>
 
         <app-accordion [title]="'Métricas generales'" [icon]="'pi pi-bullseye'" class="acc2" [isOpen]="true" [description]="'Resumen de alertas y tiempos de recuperación'">
-            <div class="content">
-                <div class="card">
-                    <i class="pi pi-bullseye" style="color: #2563eb; font-size: 1.5rem;"></i>
-                    <div class="font-14 font-w-600">Total de alertas</div>
-                    <div class="font-20 font-w-700">1765</div>
-                    <div class="font-12">Configuradas en el sistema</div>
+            <div *ngIf="!generalMetricsResponseLoading" class="content">
+                <div *ngFor="let metric of generalMetricsResponse" class="card">
+                    <i class="{{metric.icon}}" style="color: #2563eb; font-size: 1.5rem;"></i>
+                    <div class="font-14 font-w-600">{{metric.label}}</div>
+                    <div class="font-20 font-w-700">{{metric.count}}</div>
                 </div>
-                <div class="card">
-                    <i class="pi pi-chart-line" style="color: #2563eb; font-size: 1.5rem;"></i>
-                    <div class="font-14 font-w-600">Alertas con disparos</div>
-                    <div class="font-20 font-w-700">61%</div>
-                    <div class="font-12">Porcentaje de alertas configuradas que dispararon al menos una vez</div>
+            </div>
+            <div *ngIf="generalMetricsResponseLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
+                <p-progress-spinner />
+            </div>
+        </app-accordion>
+
+        <app-accordion [title]="'Gráficos y visualizaciones'" [icon]="'pi pi-chart-pie'" [description]="'Distribución por categorías y tendencias temporales'" [isOpen]="true" class="accordion">
+            <div class="charts-carousel">
+                <p-button icon="pi pi-chevron-left" severity="secondary" [rounded]="true" [text]="true" (onClick)="onClickPreviousChart();" />
+                <div *ngIf="!obDistResponseLoading" class="charts">
+                    <p-chart *ngIf="selectedChartId == 0" type="doughnut" [data]="obDistData" width="500px" />
+                    <p-chart *ngIf="selectedChartId == 1" type="doughnut" [data]="severityDistData" width="500px" />
+                    <p-chart *ngIf="selectedChartId == 2" type="doughnut" [data]="channelDistData" width="500px" />
+                    <p-chart *ngIf="selectedChartId == 3" type="doughnut" [data]="serviceDistData" width="500px" />
+                    <p-chart *ngIf="selectedChartId == 4" type="doughnut" [data]="sourceDistData" width="500px" />
                 </div>
-                <div class="card">
-                    <i class="pi pi-clock" style="color: #2563eb; font-size: 1.5rem;"></i>
-                    <div class="font-14 font-w-600">Tiempo de recuperación</div>
-                    <div class="times">
-                        <div class="time">
-                            <div class="font-12">Mínimo</div>
-                            <div class="font-20 font-w-600">8.2 min</div>
-                        </div>
-                        <div class="time">
-                            <div class="font-12">Medio</div>
-                            <div class="font-20 font-w-600">11.4 min</div>
-                        </div>
-                        <div class="time">
-                            <div class="font-12">Máximo</div>
-                            <div class="font-20 font-w-600">15,3 min</div>
-                        </div>
-                    </div>
-                    <div class="slider">
-                        <div class="text">
-                            <div class="font-12">Percentil</div>
-                            <div class="font-12">{{selectedPercentile}} - xy.z min</div>
-                        </div>
-                        <p-slider [(ngModel)]="selectedPercentile" />
-                    </div>
+                <p-button icon="pi pi-chevron-right" severity="secondary" [rounded]="true" [text]="true" (onClick)="onClickNextChart();" />
+
+                <div *ngIf="obDistResponseLoading" style="height: 500px;"></div>
+
+                <div *ngIf="obDistResponseLoading" class="loading-blur">
+                    <p-progress-spinner />
                 </div>
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Gráficos y visualizaciones'" [icon]="'pi pi-chart-pie'" [description]="'Distribución por categorías y tendencias temporales'" [isOpen]="true">
-            PRÓXIMAMENTE
-        </app-accordion>
-
         <app-accordion [title]="'Análisis de Alertas Ruidosas y Oportunidades'" [icon]="'pi pi-exclamation-triangle'" [description]="'Alertas con alto volumen de disparos y sugerencias de mejora'" [isOpen]="true">
-            PRÓXIMAMENTE
+            <p-table [value]="alerts" dataKey="name" class="step4-table">
+                <ng-template #header>
+                    <tr>
+                        <th style="width: 5rem"></th>
+                        <th>Alerta</th>
+                        <th>Saltos totales</th>
+                        <th>Duración promedio</th>
+                        <th>Mediana</th>
+                        <th>P95</th>
+                        <th>Acciones</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-alert let-expanded="expanded">
+                    <tr>
+                        <td>
+                            <p-button type="button" pRipple [pRowToggler]="alert" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+                        </td>
+                        <td class="name-column">
+                            <div class="name">
+                                <div>{{alert.name}}</div>
+                                <div class="instances font-12">{{alert.instances.length}} instancias</div>
+                            </div>
+                        </td>
+                        <td>{{ alert.totalExec }}</td>
+                        <td>{{ alert.avgDuration }}</td>
+                        <td>{{ alert.median }}</td>
+                        <td>{{ alert.p95 }}</td>
+                        <td>
+                            
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template #expandedrow let-alert>
+                    <tr *ngFor="let instance of alert.instances">
+                        <td>
+                            
+                        </td>
+                        <td>
+                            <div class="instance-name">
+                                <div>{{ alert.name }} {{instance.compOperation}} {{instance.value}}%</div>
+                                <div class="tags">
+                                    <div class="tag" *ngFor="let tag of instance.tags">
+                                        {{tag.label}}:{{tag.value}}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ instance.totalExec }}</td>
+                        <td>{{ instance.avgDuration }}</td>
+                        <td>{{ instance.median }}</td>
+                        <td>{{ instance.p95 }}</td>
+                        <td>
+                            
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </app-accordion>
     </div>
 </app-page-wrapper>

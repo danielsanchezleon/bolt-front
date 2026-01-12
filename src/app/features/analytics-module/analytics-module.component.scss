@@ -44,9 +44,9 @@
         .content
         {
             display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 16px;
+            flex-wrap: wrap;
+            gap: 16px;              /* 16px horizontal y vertical */
+            align-items: stretch;
 
             .card
             {
@@ -59,8 +59,8 @@
                 align-items: center;
                 gap: 8px;
 
-                width: 33%;
-                height: 175px;
+                flex: 1 1 calc((100% - 32px) / 3); /* 3 columnas + 2 gaps */
+                width: 100%;
                 padding: 16px;
 
                 transition: all 0.3s ease;
@@ -106,5 +106,81 @@
                 transform: translateY(-5px);
             }
         }
+    }
+
+    .step4-table
+    {
+        .name-column
+        {
+            .name
+            {
+                display: flex;
+                flex-direction: row;
+                gap: 16px;
+
+                .instances
+                {
+                    border-radius: 200px;
+                    border: 2px solid black;
+                    padding: 2px 8px;
+                }
+            }
+        }
+
+        .instance-name
+        {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            .tags
+            {
+                display: flex;
+                flex-direction: row;
+                gap: 8px;
+
+                .tag
+                {
+                    background-color: #e0e0e0;
+                    border-radius: 200px;
+                    padding: 2px 8px;
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+}
+
+.charts-carousel
+{
+    position: relative;
+    width: 100%;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    .charts
+    {
+        width: 100%; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center;
+    }
+
+    .loading-blur
+    {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 515px;
+        backdrop-filter: blur(10px);
+        z-index: 1002;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
     }
 }
