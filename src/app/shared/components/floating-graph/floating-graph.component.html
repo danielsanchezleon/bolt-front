@@ -19,6 +19,10 @@
     <i class="pi pi-times" style="cursor: pointer" [ngStyle]="{'visibility': onClickButton ? 'visible' : 'hidden'}" (click)="onClickButton = false;"></i>
   </div>
 
+  <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%;">
+    <p-button label="Resetear curvas" icon="pi pi-times" [rounded]="true" size="small" [severity]="'secondary'" (onClick)="resetLabelStates();" [disabled]="selectedCurves.size == 0"/>
+  </div>
+
   <p-chart #chart type="line" [data]="data" [options]="options" />
   <div *ngIf="isGraphLoading && (isHovering || onClickButton)" class="loading-blur">
     <p-progress-spinner *ngIf="isGraphLoading" />

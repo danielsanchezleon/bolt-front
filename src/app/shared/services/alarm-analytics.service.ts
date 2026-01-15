@@ -68,4 +68,11 @@ export class AlarmAnalyticsService {
   {
     return this.http.get<any>(this.apiUrl + '/general');
   }
+
+  getAlertsTable(alertsLimit: number, dimensionsLimit: number): Observable<any>
+  {
+    let params = new HttpParams().set('alertsLimit', alertsLimit).set('dimensionsLimit', dimensionsLimit);
+
+    return this.http.get<any>(this.apiUrl + '/ranking/noise-alerts', { params });
+  }
 }

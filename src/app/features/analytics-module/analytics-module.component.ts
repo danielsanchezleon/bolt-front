@@ -14,10 +14,11 @@ import { AlarmAnalyticsService } from '../../shared/services/alarm-analytics.ser
 import { CarouselModule } from 'primeng/carousel';
 import { ChartModule } from 'primeng/chart';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { PopoverModule } from 'primeng/popover';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
@@ -101,17 +102,6 @@ export class AnalyticsModuleComponent
   //Accordion 2
   selectedPercentile: number = 50;
 
-  //Accordion 4
-  alerts: any[] = [
-    {"name":"CPU Usage","totalExec":83,"avgDuration":3.5,"median":3.1,"p95":7.3,"instances":[{"compOperation":">","value":80,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"PE"}],"totalExec":14,"avgDuration":3.2,"median":2.6,"p95":5.4},{"compOperation":">","value":80,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"AR"}],"totalExec":13,"avgDuration":3.8,"median":3.9,"p95":7.5},{"compOperation":">","value":70,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Encoding"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"BR"}],"totalExec":11,"avgDuration":4.1,"median":3.8,"p95":9.8},{"compOperation":">","value":90,"tags":[{"label":"severidad","value":"Disaster"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Transcoding"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"CO"}],"totalExec":11,"avgDuration":3.5,"median":2.9,"p95":6.2},{"compOperation":">","value":60,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"EC"}],"totalExec":8,"avgDuration":2.8,"median":3.1,"p95":4.2},{"compOperation":">","value":85,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Cache"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"DE"}],"totalExec":10,"avgDuration":4.2,"median":4.0,"p95":8.9},{"compOperation":">","value":75,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"SP"}],"totalExec":9,"avgDuration":3.6,"median":3.9,"p95":5.5},{"compOperation":">","value":65,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"Video"},{"label":"subservicio","value":"Analytics"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"GL"}],"totalExec":7,"avgDuration":2.5,"median":2.6,"p95":4.6}]},
-    {"name":"Memory Usage","totalExec":25,"avgDuration":7.4,"median":6.6,"p95":15.5,"instances":[{"compOperation":">","value":85,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"Kernel"},{"label":"subservicio","value":"Infrastructure"},{"label":"plataforma","value":"GVP"},{"label":"OB","value":"PE"}],"totalExec":8,"avgDuration":7.2,"median":7.5,"p95":16.0},{"compOperation":">","value":85,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"Kernel"},{"label":"subservicio","value":"Infrastructure"},{"label":"plataforma","value":"GVP"},{"label":"OB","value":"SP"}],"totalExec":8,"avgDuration":6.8,"median":5.9,"p95":16.8},{"compOperation":">","value":85,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"Kernel"},{"label":"subservicio","value":"Infrastructure"},{"label":"plataforma","value":"GVP"},{"label":"OB","value":"EC"}],"totalExec":9,"avgDuration":8.1,"median":7.2,"p95":18.5}]},
-    {"name":"Disk Space","totalExec":10,"avgDuration":12.0,"median":10.8,"p95":25.2,"instances":[{"compOperation":">","value":90,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"IA"},{"label":"subservicio","value":"Infrastructure"},{"label":"plataforma","value":"PPGG"},{"label":"OB","value":"DE"}],"totalExec":5,"avgDuration":12.3,"median":12.6,"p95":21.9},{"compOperation":">","value":90,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"IA"},{"label":"subservicio","value":"Infrastructure"},{"label":"plataforma","value":"PPGG"},{"label":"OB","value":"GL"}],"totalExec":5,"avgDuration":11.7,"median":13.6,"p95":22.6}]},
-    {"name":"Response Time","totalExec":56,"avgDuration":4.1,"median":3.7,"p95":8.6,"instances":[{"compOperation":">","value":2,"tags":[{"label":"severidad","value":"Disaster"},{"label":"servicio","value":"Live"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"PE"}],"totalExec":16,"avgDuration":4.2,"median":3.7,"p95":10.0},{"compOperation":">","value":2,"tags":[{"label":"severidad","value":"Disaster"},{"label":"servicio","value":"Live"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"AR"}],"totalExec":14,"avgDuration":3.9,"median":4.2,"p95":9.3},{"compOperation":">","value":2,"tags":[{"label":"severidad","value":"Disaster"},{"label":"servicio","value":"Live"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"BR"}],"totalExec":14,"avgDuration":4.5,"median":3.8,"p95":7.9},{"compOperation":">","value":2,"tags":[{"label":"severidad","value":"Disaster"},{"label":"servicio","value":"Live"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"CO"}],"totalExec":12,"avgDuration":3.7,"median":4.3,"p95":7.4}]},
-    {"name":"Error Rate","totalExec":27,"avgDuration":5.8,"median":5.3,"p95":12.3,"instances":[{"compOperation":">","value":5,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"VOD"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"PE"}],"totalExec":10,"avgDuration":5.8,"median":5.8,"p95":12.2},{"compOperation":">","value":5,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"VOD"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"SP"}],"totalExec":9,"avgDuration":6.2,"median":5.5,"p95":12.4},{"compOperation":">","value":5,"tags":[{"label":"severidad","value":"Major"},{"label":"servicio","value":"VOD"},{"label":"subservicio","value":"Transcoding"},{"label":"plataforma","value":"CDN"},{"label":"OB","value":"EC"}],"totalExec":8,"avgDuration":5.5,"median":4.8,"p95":10.1}]},
-    {"name":"Network Latency","totalExec":22,"avgDuration":3.1,"median":2.8,"p95":6.4,"instances":[{"compOperation":">","value":100,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"IPTV"},{"label":"subservicio","value":"Network"},{"label":"plataforma","value":"IT"},{"label":"OB","value":"PE"}],"totalExec":7,"avgDuration":3.1,"median":2.7,"p95":7.4},{"compOperation":">","value":100,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"IPTV"},{"label":"subservicio","value":"Network"},{"label":"plataforma","value":"IT"},{"label":"OB","value":"AR"}],"totalExec":8,"avgDuration":2.8,"median":2.5,"p95":4.3},{"compOperation":">","value":100,"tags":[{"label":"severidad","value":"Warning"},{"label":"servicio","value":"IPTV"},{"label":"subservicio","value":"Network"},{"label":"plataforma","value":"IT"},{"label":"OB","value":"BR"}],"totalExec":7,"avgDuration":3.3,"median":2.7,"p95":8.0}]},
-    {"name":"Buffering","totalExec":41,"avgDuration":6.8,"median":6.1,"p95":14.2,"instances":[{"compOperation":">","value":3,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"OTT"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"PE"}],"totalExec":11,"avgDuration":6.7,"median":6.5,"p95":13.4},{"compOperation":">","value":3,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"OTT"},{"label":"subservicio","value":"Streaming"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"SP"}],"totalExec":10,"avgDuration":7.1,"median":6.1,"p95":17.4},{"compOperation":">","value":3,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"OTT"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"CO"}],"totalExec":9,"avgDuration":6.3,"median":6.2,"p95":10.3},{"compOperation":">","value":3,"tags":[{"label":"severidad","value":"Critical"},{"label":"servicio","value":"OTT"},{"label":"subservicio","value":"Delivery"},{"label":"plataforma","value":"QoE"},{"label":"OB","value":"EC"}],"totalExec":11,"avgDuration":6.9,"median":7.5,"p95":16.7}]}
-  ];
-
   totalResponse: any;
   totalResponseLoading: boolean = false;
   totalResponseError: boolean = false;
@@ -150,6 +140,10 @@ export class AnalyticsModuleComponent
   generalMetricsResponseLoading: boolean = false;
   generalMetricsResponseError: boolean = false;
 
+  alertDrilldownTable: any;
+  alertDrilldownTableLoading: boolean = false;
+  alertDrilldownTableError: boolean = false;
+
   constructor (private router: Router, private alarmAnalyticsService: AlarmAnalyticsService) {}
 
   ngOnInit()
@@ -165,6 +159,7 @@ export class AnalyticsModuleComponent
     this.getServiceDist();
     this.getSourceDist();
     this.getGeneralMetrics();
+    this.getAlertDrilldownTable();
   }
 
   onClickNavigateToHome() {
@@ -411,7 +406,6 @@ export class AnalyticsModuleComponent
 
     this.alarmAnalyticsService.getGeneralMetrics().subscribe(
       (response) => {
-        console.log(response)
         this.generalMetricsResponse = response;
         this.generalMetricsResponseLoading = false;
       },
@@ -421,4 +415,37 @@ export class AnalyticsModuleComponent
       }
     );
   }
+
+  getAlertDrilldownTable()
+  {
+    this.alertDrilldownTableLoading = true;
+    this.alertDrilldownTableError = false;
+
+    this.alarmAnalyticsService.getAlertsTable(10, 10).subscribe(
+      (response) => {
+        this.alertDrilldownTable = response;
+        this.alertDrilldownTableLoading = false;
+      },
+      (error) => {
+        this.alertDrilldownTableLoading = false;
+        this.alertDrilldownTableError = true;
+      }
+    );
+  }
+
+  getKeysCount(obj: any): number {
+    return obj ? Object.keys(obj).length : 0;
+  }
+
+  buildKeyValueArray(obj: Record<string, any>): string[] 
+  {
+  if (!obj || typeof obj !== 'object') {
+    return [];
+  }
+
+  return Object.entries(obj).map(
+    ([key, value]) => `${key}: ${String(value)}`
+  );
+}
+
 }

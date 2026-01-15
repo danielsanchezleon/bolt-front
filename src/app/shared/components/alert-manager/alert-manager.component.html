@@ -460,12 +460,16 @@
                                         <div
                                             style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px;">
                                             <span>No hay resultados.</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" #footer>
+                                        <div *ngIf="lastFilter" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 0px; border-top: 1px solid lightgray; width: 100%;">
                                             <p-button type="button" icon="pi pi-plus" label="Añadir '{{ lastFilter }}'"
                                                 [disabled]="!lastFilter.trim()"
                                                 (onClick)="onClickCreateFilter(condition, dimension, ms);" />
                                         </div>
                                     </ng-template>
-
                                 </p-multiselect>
                             </ng-container>
                         </div>

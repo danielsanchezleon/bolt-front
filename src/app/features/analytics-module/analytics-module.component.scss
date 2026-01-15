@@ -121,8 +121,10 @@
                 .instances
                 {
                     border-radius: 200px;
-                    border: 2px solid black;
+                    background-color: #2563eb;
                     padding: 2px 8px;
+                    color: white;
+                    word-break: keep-all;
                 }
             }
         }
@@ -157,16 +159,27 @@
     width: 100%;
 
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
+    gap: 32px;
 
-    .charts
+    .carousel
     {
-        width: 100%; 
-        display: flex; 
-        justify-content: center; 
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
         align-items: center;
+
+        width: 100%;
+
+        .charts
+        {
+            width: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+        }
     }
 
     .loading-blur
@@ -182,5 +195,73 @@
         flex-direction: row;
         justify-content: center;
         align-items: center;
+    }
+
+    .carousel-footer
+    {
+        bottom: 8px;
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+
+        .points
+        {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+
+            .point
+            {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: lightgray;
+
+                &.active
+                {
+                    background-color: blue;
+                }
+            }
+
+            .point:hover
+            {
+                cursor: pointer;
+            }
+        }
+    }
+}
+
+.ellipsis {
+  max-width: 512px; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popover-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px;
+
+    .tags-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .tag-item {
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 12px;
+
+            border-radius: 200px;
+        }
     }
 }

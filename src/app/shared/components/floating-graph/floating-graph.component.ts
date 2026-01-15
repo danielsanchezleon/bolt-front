@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output, PLATFORM_ID, SimpleChanges, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, NgZone, Output, PLATFORM_ID, SimpleChanges, ViewChild } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { ChartModule, UIChart } from 'primeng/chart';
 import { Chart, ChartDataset } from 'chart.js';
@@ -19,6 +19,9 @@ Chart.register(annotationPlugin);
 })
 export class FloatingGraphComponent 
 {
+  datasetsCount = 0;
+  selectedCurves = new Set<number>();
+
   isHovering = false;
   options: any;
   data: any;
@@ -47,7 +50,7 @@ export class FloatingGraphComponent
 
   @Output('graphGroupByEvent') graphGroupByEvent: EventEmitter<Map<string, string[]>> = new EventEmitter<Map<string, string[]>>();
 
-  constructor(private cd: ChangeDetectorRef) { }
+  constructor(private ngZone: NgZone, private cdr: ChangeDetectorRef) { }
 
   ngOnInit() 
   {
@@ -97,6 +100,8 @@ export class FloatingGraphComponent
   //This method is called once to initialize the chart options with theme colors
   initChart() 
   {
+    this.datasetsCount = this.data?.datasets?.length ?? 0;
+
     if (isPlatformBrowser(this.platformId)) 
     {
       const documentStyle = getComputedStyle(document.documentElement);
@@ -109,6 +114,52 @@ export class FloatingGraphComponent
         aspectRatio: 0.6,
         plugins: {
           legend: {
+            onClick: (_e: any, legendItem: any, legend: any) => {
+
+              this.ngZone.run(() => {
+                const chart = legend.chart;
+                const idx = legendItem.datasetIndex as number;
+                const total = chart.data.datasets.length;
+
+                this.datasetsCount = total; // por si cambia dinámicamente
+
+                // ESTADOS:
+                // selected.size === 0 -> modo "sin filtro" (se ven todas)
+                // 1..total-1 -> modo filtro (solo selected)
+                // selected.size === total -> modo "todas seleccionadas" (y el siguiente click reinicia a solo idx)
+
+                if (this.selectedCurves.size === 0) {
+                  // De "sin filtro" a "solo la clicada"
+                  this.selectedCurves = new Set([idx]);
+                } else if (this.selectedCurves.size === total) {
+                  // Estabas en "todas seleccionadas": reinicia a solo la clicada
+                  this.selectedCurves = new Set([idx]);
+                } else {
+                  // Modo filtro normal: toggle
+                  if (this.selectedCurves.has(idx)) this.selectedCurves.delete(idx);
+                  else this.selectedCurves.add(idx);
+
+                  // Si te quedas sin ninguna => vuelve a "sin filtro" (todas visibles)
+                  if (this.selectedCurves.size === 0) {
+                    for (let i = 0; i < total; i++) chart.setDatasetVisibility(i, true);
+                    chart.update();
+                    return;
+                  }
+                }
+
+                // Aplicar visibilidad según estado
+                if (this.selectedCurves.size === 0) {
+                  for (let i = 0; i < total; i++) chart.setDatasetVisibility(i, true);
+                } else {
+                  for (let i = 0; i < total; i++) {
+                    chart.setDatasetVisibility(i, this.selectedCurves.has(i));
+                  }
+                }
+
+                chart.update();
+                this.cdr.markForCheck();
+              });
+            },
             labels: {
               color: textColor
             }
@@ -136,7 +187,7 @@ export class FloatingGraphComponent
           }
         }
       };
-      this.cd.markForCheck();
+      this.cdr.markForCheck();
     }
   }
 
@@ -180,7 +231,7 @@ export class FloatingGraphComponent
         datasets: datasets
       };
 
-      this.cd.markForCheck();
+      this.cdr.markForCheck();
     }
   }
 
@@ -190,7 +241,7 @@ export class FloatingGraphComponent
       this.options.plugins.annotation.annotations = this.buildAnnotations();
 
       this.chart?.refresh();
-      this.cd.markForCheck();
+      this.cdr.markForCheck();
     }
   }
 
@@ -242,5 +293,17 @@ export class FloatingGraphComponent
     this.groupByChartSelectedMap.set(dimension, event.value);
 
     this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
+  }
+
+  resetLabelStates() 
+  {
+    this.selectedCurves.clear();
+
+    const chart = this.chart?.chart;
+    if (!chart) return;
+
+    const total = chart.data.datasets.length;
+    for (let i = 0; i < total; i++) chart.setDatasetVisibility(i, true);
+    chart.update();
   }
 }
