@@ -15,6 +15,7 @@ import { CarouselModule } from 'primeng/carousel';
 import { ChartModule } from 'primeng/chart';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PopoverModule } from 'primeng/popover';
+import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
 
 @Component({
   selector: 'app-analytics-module',
@@ -140,9 +141,27 @@ export class AnalyticsModuleComponent
   generalMetricsResponseLoading: boolean = false;
   generalMetricsResponseError: boolean = false;
 
+  generalMetricsFirstGroup: any[] = [];
+  generalMetricsSecondGroup: any[] = [];
+  generalMetricsThirdGroup: any[] = [];
+
   alertDrilldownTable: any;
   alertDrilldownTableLoading: boolean = false;
   alertDrilldownTableError: boolean = false;
+
+  pastelChips: string[] = [
+  '#F2B6BC', // rosa
+  '#F6C98B', // melocotón
+  '#F3E08A', // amarillo
+  '#BFE6D3', // verde menta
+  '#CDE3A8', // verde pastel
+  '#B8E0E8', // turquesa
+  '#C9B8F2', // lavanda
+  '#BFD6F6', // azul pastel
+  '#D9D9D9', // gris claro
+  '#D8AFCF'  // lila rosado
+];
+
 
   constructor (private router: Router, private alarmAnalyticsService: AlarmAnalyticsService) {}
 
@@ -407,6 +426,12 @@ export class AnalyticsModuleComponent
     this.alarmAnalyticsService.getGeneralMetrics().subscribe(
       (response) => {
         this.generalMetricsResponse = response;
+
+        // Split 8 elements response into three groups
+        this.generalMetricsFirstGroup = response.slice(0, 3);
+        this.generalMetricsSecondGroup = response.slice(3, 6);
+        this.generalMetricsThirdGroup = response.slice(6, 8);
+
         this.generalMetricsResponseLoading = false;
       },
       (error) => {
@@ -444,8 +469,12 @@ export class AnalyticsModuleComponent
   }
 
   return Object.entries(obj).map(
-    ([key, value]) => `${key}: ${String(value)}`
-  );
-}
+      ([key, value]) => `${key}: ${String(value)}`
+    );
+  }
 
+  onClickGoToEditAlert(alert: any)
+  {
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
+  }
 }

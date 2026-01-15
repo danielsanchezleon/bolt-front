@@ -32,10 +32,26 @@
 
         <app-accordion [title]="'Métricas generales'" [icon]="'pi pi-bullseye'" class="acc2" [isOpen]="true" [description]="'Resumen de alertas y tiempos de recuperación'">
             <div *ngIf="!generalMetricsResponseLoading" class="content">
-                <div *ngFor="let metric of generalMetricsResponse" class="card">
-                    <i class="{{metric.icon}}" style="color: #2563eb; font-size: 1.5rem;"></i>
-                    <div class="font-14 font-w-600">{{metric.label}}</div>
-                    <div class="font-20 font-w-700">{{metric.formattedValue != null ? metric.formattedValue : metric.count}}</div>
+                <div class="card-group">
+                    <div *ngFor="let metric of generalMetricsFirstGroup" class="card">
+                        <i class="{{metric.icon}}" style="color: #2563eb; font-size: 1.2rem;"></i>
+                        <div class="font-12 font-w-600 text">{{metric.label}}</div>
+                        <div class="font-20 font-w-700">{{metric.formattedValue != null ? metric.formattedValue : metric.count}}</div>
+                    </div>
+                </div>
+                <div class="card-group">
+                    <div *ngFor="let metric of generalMetricsSecondGroup" class="card">
+                        <i class="{{metric.icon}}" style="color: #16a34a; font-size: 1.2rem;"></i>
+                        <div class="font-12 font-w-600 text">{{metric.label}}</div>
+                        <div class="font-20 font-w-700">{{metric.formattedValue != null ? metric.formattedValue : metric.count}}</div>
+                    </div>
+                </div>
+                <div class="card-group">
+                    <div *ngFor="let metric of generalMetricsThirdGroup" class="card">
+                        <i class="{{metric.icon}}" style="color: #f59e0b; font-size: 1.2rem;"></i>
+                        <div class="font-12 font-w-600 text">{{metric.label}}</div>
+                        <div class="font-20 font-w-700">{{metric.formattedValue != null ? metric.formattedValue : metric.count}}</div>
+                    </div>
                 </div>
             </div>
             <div *ngIf="generalMetricsResponseLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
@@ -48,11 +64,26 @@
                 <div class="carousel">
                     <p-button icon="pi pi-chevron-left" severity="secondary" [rounded]="true" [text]="true" (onClick)="onClickPreviousChart();" />
                     <div *ngIf="!obDistResponseLoading" class="charts">
-                        <p-chart *ngIf="selectedChartId == 0" type="doughnut" [data]="obDistData" width="500px" />
-                        <p-chart *ngIf="selectedChartId == 1" type="doughnut" [data]="severityDistData" width="500px" />
-                        <p-chart *ngIf="selectedChartId == 2" type="doughnut" [data]="channelDistData" width="500px" />
-                        <p-chart *ngIf="selectedChartId == 3" type="doughnut" [data]="serviceDistData" width="500px" />
-                        <p-chart *ngIf="selectedChartId == 4" type="doughnut" [data]="sourceDistData" width="500px" />
+                        <div *ngIf="selectedChartId == 0" class="chart-container">
+                            <div class="font-w-600">Distribución por OB</div>
+                            <p-chart type="doughnut" [data]="obDistData" width="500px" />
+                        </div>
+                        <div *ngIf="selectedChartId == 1" class="chart-container">
+                            <div class="font-w-600">Distribución por Severidad</div>
+                            <p-chart type="doughnut" [data]="severityDistData" width="500px" />
+                        </div>
+                        <div *ngIf="selectedChartId == 2" class="chart-container">
+                            <div class="font-w-600">Distribución por Canal</div>
+                            <p-chart type="doughnut" [data]="channelDistData" width="500px" />
+                        </div>
+                        <div *ngIf="selectedChartId == 3" class="chart-container">
+                            <div class="font-w-600">Distribución por Servicio</div>
+                            <p-chart type="doughnut" [data]="serviceDistData" width="500px" />
+                        </div>
+                        <div *ngIf="selectedChartId == 4" class="chart-container">
+                            <div class="font-w-600">Distribución por Fuente</div>
+                            <p-chart type="doughnut" [data]="sourceDistData" width="500px" />
+                        </div>
                     </div>
                     <p-button icon="pi pi-chevron-right" severity="secondary" [rounded]="true" [text]="true" (onClick)="onClickNextChart();" />
                 </div>
@@ -81,6 +112,7 @@
                 <ng-template #header>
                     <tr>
                         <th style="width: 5rem"></th>
+                        <th>Id.</th>
                         <th>Alerta</th>
                         <th>Saltos totales</th>
                         <th>Agrupaciones</th>
@@ -88,10 +120,11 @@
                     </tr>
                 </ng-template>
                 <ng-template #body let-alert let-expanded="expanded">
-                    <tr>
+                    <tr class="alert-row" [pRowToggler]="alert">
                         <td>
-                            <p-button type="button" pRipple [pRowToggler]="alert" [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+                            <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
                         </td>
+                        <td><strong>{{ alert.label }}</strong></td>
                         <td class="name-column">
                             <div class="name" title="{{alert.alertText}}">
                                 <div class="ellipsis">{{alert.alertText}}</div>
@@ -99,22 +132,55 @@
                             </div>
                         </td>
                         <td>{{ alert.count }}</td>
-                        <td>{{ alert.groupBy }}</td>
+                        <td style="max-width: 250px;">
+                            <div class="chips">
+                                <div class="chip" *ngFor="let agroupation of alert.groupBy; let i = index;" [ngStyle]="{'background-color': pastelChips[i % pastelChips.length]}">
+                                    {{ agroupation }}
+                                </div>
+                            </div>
+                        </td>
                         <td>
-                            <p-button label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}" size="small" severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true" (onClick)="op1.toggle($event)" [disabled]="!alert.tags || alert.tags.length == 0"/>
+                            <p-button *ngIf="!alert.tags || alert.tags.length == 0"
+                                    label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
+                                    size="small"
+                                    severity="secondary"
+                                    class="font-12 font-w-600"
+                                    [rounded]="true"
+                                    [text]="true"
+                                    [disabled]="!alert.tags || alert.tags.length == 0"
+                                />
+
+                            <span *ngIf="alert.tags && alert.tags.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
+                                <p-button
+                                    label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
+                                    size="small"
+                                    severity="secondary"
+                                    class="font-12 font-w-600"
+                                    [rounded]="true"
+                                    [text]="true"
+                                    [disabled]="!alert.tags || alert.tags.length == 0"
+                                />
+                            </span>
+
                             <p-popover #op1>
                                 <div class="popover-container">
                                     <div class="font-w-600">Tags</div>
                                     <div class="tags-list">
-                                        <div *ngFor="let tag of alert.tags" class="tag-item"><strong>{{ tag.name }}</strong>: {{ tag.value }}</div>
+                                        <div *ngFor="let tag of alert.tags" class="tag-item">
+                                            <strong>{{ tag.name }}</strong>: {{ tag.value }}
+                                        </div>
                                     </div>
                                 </div>
                             </p-popover>
+                        </td>
+                        <td>
+                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" (onClick)="onClickGoToEditAlert(alert);" />
                         </td>
                     </tr>
                 </ng-template>
                 <ng-template #expandedrow let-alert>
                     <tr *ngFor="let child of alert.children">
+                        <td></td>
                         <td></td>
                         <td>
                             <div class="ellipsis" title="{{child.label}}">{{child.label}}</div>
@@ -124,16 +190,41 @@
                             <div *ngIf="!child.groupBy">-</div>
                         </td>
                         <td>
-                            <p-button label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 tags' : getKeysCount(child.tags) == 1 ? '1 tag' : getKeysCount(child.tags) + ' tags'}}" size="small" severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true" (onClick)="op2.toggle($event)" [disabled]="!child.tags || getKeysCount(child.tags) == 0"/>
+
+                            <p-button *ngIf="!child.tags || (child.tags && getKeysCount(child.tags) == 0)"
+                                    label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
+                                    size="small"
+                                    severity="secondary"
+                                    class="font-12 font-w-600"
+                                    [rounded]="true"
+                                    [text]="true"
+                                    [disabled]="!child.tags || getKeysCount(child.tags) == 0"
+                                />
+
+                            <span *ngIf="child.tags && getKeysCount(child.tags) > 0" (mouseenter)="op2.show($event)" (mouseleave)="op2.hide()" style="display: inline-block;">
+                                <p-button
+                                    label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
+                                    size="small"
+                                    severity="secondary"
+                                    class="font-12 font-w-600"
+                                    [rounded]="true"
+                                    [text]="true"
+                                    [disabled]="!child.tags || getKeysCount(child.tags) == 0"
+                                />
+                            </span>
+
                             <p-popover #op2>
                                 <div class="popover-container">
-                                    <div class="font-w-600">Tags</div>
+                                    <div class="font-w-600">Filtros</div>
                                     <div class="tags-list">
-                                        <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">{{ tagString }}</div>
+                                    <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">
+                                        {{ tagString }}
+                                    </div>
                                     </div>
                                 </div>
                             </p-popover>
                         </td>
+                        <td></td>
                     </tr>
                 </ng-template>
             </p-table>
