@@ -5,7 +5,12 @@
     <p-button *ngIf="mode == 'edit'" icon="pi pi-arrow-left" label="Volver" variant="text" severity="secondary"
         (onClick)="onClickNavigateToAlerts()" />
 
-    <div class="steps-container">
+    <div *ngIf="mode == 'edit' && alertResponseError" class="error-message-container">
+        <i class="pi pi-info-circle" style="color: #2563eb;"></i>
+        <span class="font-16 font-w-600">No existe ninguna alerta creada con el identificador {{alertId}}</span>
+    </div>
+
+    <div *ngIf="(mode == 'edit' && !alertResponseError) || mode == 'create'" class="steps-container">
         <div class="font-32 font-w-600">{{isSimpleConditionAlert ? 'Condición simple' : isCompositeConditionAlert ? 'Condición compuesta' : isLogsAlert ? 'Conteo de patrones' : isBaselinePastAverageAlert ? 'Baseline - Valores del pasado' : isBaselinePastAveragePonderedAlert ? 'Baseline - Valores del pasado ponderados' : 'Baseline - Valores atípicos'}}</div>
         <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 1: Configura la consulta'"
             [highlightTitle]="true" [isOpen]="true">

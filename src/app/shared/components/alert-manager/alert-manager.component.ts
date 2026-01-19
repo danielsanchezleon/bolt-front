@@ -319,6 +319,9 @@ export class AlertManagerComponent implements OnInit{
   mode: string = 'create';
   subscriptions: Subscription[] = [];
 
+  alertResponseLoading: boolean = false;
+  alertResponseError: boolean = false;
+
   isSimpleConditionAlert: boolean = false;
   isCompositeConditionAlert: boolean = false;
   isLogsAlert: boolean = false;
@@ -673,12 +676,18 @@ export class AlertManagerComponent implements OnInit{
 
   getAlert()
   {
+    this.alertResponseLoading = true;
+    this.alertResponseError = false;
+
     this.alertService.getAlert(this.alertId).subscribe(
       (response) => {
         this.fromDtoToForm(response);
+        this.alertResponseLoading = false;
       },
       (error) => 
       {
+        this.alertResponseLoading = false;
+        this.alertResponseError = true;
       }
     )
   }
@@ -1301,7 +1310,7 @@ export class AlertManagerComponent implements OnInit{
   }
 
   verifyDetailsText(value: string, detailsInput: HTMLTextAreaElement) {
-    const prev = this.previousMessageValue || '';
+    const prev = this.previousDetailsValue || '';
 
     // Posición actual del cursor
     const caretPos = detailsInput.selectionStart ?? value.length;
@@ -1331,7 +1340,7 @@ export class AlertManagerComponent implements OnInit{
       this.detailsModalVisible = false;
     }
 
-    this.previousMessageValue = value;
+    this.previousDetailsValue = value;
   }
 
   onClickAddConditionalBlockToMessage(i: number) 
@@ -1721,7 +1730,7 @@ export class AlertManagerComponent implements OnInit{
                   selected.push(cf.filterValue!);
               });
 
-              selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
+              selected = selected.length == 0 && created.length == 0 ? response[dimension] : selected.length == 0 ? created : selected;
               merge = created.concat(response[dimension]);
 
               this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('merge', merge));
@@ -2147,6 +2156,10 @@ export class AlertManagerComponent implements OnInit{
         let created: string[]  = filterMap.get('created')  || [];
         let merge: string[]    = filterMap.get('merge')    || [];
 
+        console.log(selected)
+        console.log(created)
+        console.log(merge)
+
         let createdSet = new Set(created);
         let selectedSet = new Set(selected);
 
@@ -2432,15 +2445,17 @@ export class AlertManagerComponent implements OnInit{
     );
   }
 
-  getLogsDimensionsIntersection()
-  {
+  getLogsDimensionsIntersection() {
     this.logsConditionArray.controls.forEach((group, ind) => {
-      if (ind == 0) 
-        this.logsDimensionsIntersectionOptions = [...group.get('dimensions')?.value!];
-      else
-        this.logsDimensionsIntersectionOptions = this.logsDimensionsIntersectionOptions.filter(item => group.get('dimensions')?.value!.includes(item));
+      const dims = group.get('dimensions')?.value;
+      const arr = Array.isArray(dims) ? dims : [];
+
+      if (ind === 0) this.logsDimensionsIntersectionOptions = [...arr];
+      else this.logsDimensionsIntersectionOptions =
+        this.logsDimensionsIntersectionOptions.filter(item => arr.includes(item));
     });
   }
+
 
   countMetrics()
   {
@@ -2661,31 +2676,30 @@ export class AlertManagerComponent implements OnInit{
 
   onClickCreateFilter(condition: ConditionFormGroup, dimension: string, ms: MultiSelect)
   {
-    let createdFilter = this.lastFilter?.trim();
+    const createdFilter = (this.lastFilter ?? '').trim();
     if (!createdFilter) return;
 
-    let map = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!;
+    const condId = condition.get('id')?.value!;
+    const dimMap = this.conditionFiltersMap.get(condId)?.get(dimension);
+    if (!dimMap) return; // <- evita el crash
 
-    let values = [...map.get('values')!];
-    let selected = [...map.get('selected')!];
-    let created  = [...map.get('created')!];
+    const rawValues = dimMap.get('values');
+    const rawSelected = dimMap.get('selected');
+    const rawCreated = dimMap.get('created');
 
-    // If it does not exist in created, is added at the beginning
-    let newCreated = created.includes(createdFilter) ? created : [createdFilter].concat(created);
+    const values   = Array.isArray(rawValues)   ? rawValues   : [];
+    const selected = Array.isArray(rawSelected) ? rawSelected : [];
+    const created  = Array.isArray(rawCreated)  ? rawCreated  : [];
 
-    // If it does not exist in selected, is added at the beginning
-    let newSelected = [createdFilter].concat(selected);
+    const newCreated = created.includes(createdFilter) ? created : [createdFilter, ...created];
+    const newSelected = selected.includes(createdFilter) ? selected : [createdFilter, ...selected];
+    const newMerge = Array.from(new Set([...newCreated, ...values]));
 
-    // Merge is the union of both
-    let newMerge = Array.from(new Set([...newCreated, ...values]));
+    dimMap.set('created', newCreated);
+    dimMap.set('selected', newSelected);
+    dimMap.set('merge', newMerge);
 
-    map.set('created', newCreated);
-    map.set('selected', newSelected);
-    map.set('merge', newMerge);
-
-    // limpia filtro y cierra SOLO ese multiselect
     ms.resetFilter();
-
     this.lastFilter = '';
   }
 

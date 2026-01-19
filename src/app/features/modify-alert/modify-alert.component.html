@@ -104,11 +104,11 @@
                     <td class="message-column">
                         <div class="content">
                             <div *ngIf="alert.canEdit" class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
-                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
+                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [pTooltip]="alert.alertText" tooltipPosition="top">{{alert.alertText}}</span>
                                 <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil cell-icon"></i>
                             </div>
                             <div *ngIf="!alert.canEdit" class="cell-flex">
-                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [title]="alert.alertText">{{alert.alertText}}</span>
+                                <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [pTooltip]="alert.alertText" tooltipPosition="top">{{alert.alertText}}</span>
                             </div>
                             <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
                             <div class="save-buttons">

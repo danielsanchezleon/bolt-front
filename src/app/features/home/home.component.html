@@ -23,30 +23,6 @@
 
     <div *ngIf="!isLoading && !isError" class="card-container">
       <div class="card-title-description">
-        <div class="font-16">Alertas deshabilitadas</div>
-        <div class="font-12 text-gray">(Alertas desactivadas que no se dispararán)</div>
-      </div>
-      <div class="card-container-information">
-        <div class="information-number">
-          <div class="font-32 font-w-700">{{homePanels?.disabledAlerts}}</div>
-          <div class="font-16">({{homePanels?.disabledAlertsPercent}}&nbsp;%)</div>
-        </div>
-        <div class="icon-wrapper bg-orange">
-          <i class="pi pi-bell-slash font-20 c-orange"></i>
-        </div>
-      </div>
-    </div>
-
-    <p-skeleton *ngIf="isLoading" width="347px" height="146px" borderRadius="8px" />
-
-    <div *ngIf="isError" class="card-container-error">
-      <div class="card-title-description">
-        <div class="font-16"><i class="pi pi-info-circle">&nbsp;</i>Error al obtener la información</div>
-      </div>
-    </div>
-
-    <div *ngIf="!isLoading && !isError" class="card-container">
-      <div class="card-title-description">
         <div class="font-16">Alertas sin destino</div>
         <div class="font-12 text-gray">(Alertas sin canal de notificación configurado)</div>
       </div>
@@ -70,12 +46,26 @@
     </div>
 
     <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas deshabilitadas</div>
+      <div class="font-12 text-white">(Alertas desactivadas que no se dispararán)</div>
+      <div class="card-container-information">
+        <div class="information-number">
+          <div class="font-32 font-w-700 text-white">-</div>
+          <!-- <div class="font-16 text-white">(-&nbsp;%)</div> -->
+        </div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-database font-20 text-white"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-container-disabled">
       <div class="font-16 text-white">Alertas sin datos</div>
       <div class="font-12 text-white">(Alertas con errores en la query o fuentes rotas)</div>
       <div class="card-container-information">
         <div class="information-number">
-          <div class="font-32 font-w-700 text-white">3</div>
-          <div class="font-16 text-white">(7.5%)</div>
+          <div class="font-32 font-w-700 text-white">-</div>
+          <!-- <div class="font-16 text-white">(-&nbsp;%)</div> -->
         </div>
         <div class="icon-wrapper bg-gray">
           <i class="pi pi-database font-20 text-white"></i>

@@ -58,17 +58,17 @@ export const timeWindowOptions = [
 ];
 
 export const modifyAlertTimeWindowOptions = [
-    {value: "1m", label: '1 minuto'},
-    {value: "5m", label: '5 minutos'},
-    {value: "10m", label: '10 minutos'},
-    {value: "15m", label: '15 minutos'},
-    {value: "30m", label: '30 minutos'},
-    {value: "1h", label: '1 hora'},
-    {value: "2h", label: '2 horas'},
-    {value: "3h", label: '3 horas'},
-    {value: "6h", label: '6 horas'},
-    {value: "12h", label: '12 horas'},
-    {value: "24h", label: '24 horas'}
+    {value: "1m", label: '1 m'},
+    {value: "5m", label: '5 m'},
+    {value: "10m", label: '10 m'},
+    {value: "15m", label: '15 m'},
+    {value: "30m", label: '30 m'},
+    {value: "1h", label: '1 h'},
+    {value: "2h", label: '2 h'},
+    {value: "3h", label: '3 h'},
+    {value: "6h", label: '6 h'},
+    {value: "12h", label: '12 h'},
+    {value: "24h", label: '24 h'}
 ];
 
 export const discardTimeOptions = [
@@ -80,10 +80,10 @@ export const discardTimeOptions = [
 ];
 
 export const periodicityOptions = [
-    {value: "1m", label: '1 minuto'},
-    {value: "5m", label: '5 minutos'},
-    {value: "10m", label: '10 minutos'},
-    {value: "15m", label: '15 minutos'},
-    {value: "30m", label: '30 minutos'},
-    {value: "1h", label: '1 hora'}
+    {value: "1m", label: '1 m'},
+    {value: "5m", label: '5 m'},
+    {value: "10m", label: '10 m'},
+    {value: "15m", label: '15 m'},
+    {value: "30m", label: '30 m'},
+    {value: "1h", label: '1 h'}
 ];
