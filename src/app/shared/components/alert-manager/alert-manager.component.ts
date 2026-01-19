@@ -2156,10 +2156,6 @@ export class AlertManagerComponent implements OnInit{
         let created: string[]  = filterMap.get('created')  || [];
         let merge: string[]    = filterMap.get('merge')    || [];
 
-        console.log(selected)
-        console.log(created)
-        console.log(merge)
-
         let createdSet = new Set(created);
         let selectedSet = new Set(selected);
 
