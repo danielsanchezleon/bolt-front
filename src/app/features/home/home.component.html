@@ -118,29 +118,156 @@
   <div class="last-24h-container">
     <div class="font-20 font-w-600">Alertas lanzadas en las últimas 24h</div>
 
-    <div class="last-24h">
-      <p-table [value]="alerts" class="my-table">
-        <ng-template #header>
-          <tr>
-            <th>Nombre</th>
-            <th>Combinaciones (saltos/posibles)</th>
-            <th>Total</th>
-            <th>% recuperado en &lt;5 min.</th>
-            <th>Endpoint</th>
-            <th>Metadatos</th>
-            <th>Acciones</th>
-          </tr>
-        </ng-template>
-        <ng-template #body let-alert>
-          <!-- <tr>
-            <td>{{ alert.name }}</td>
-          </tr> -->
-        </ng-template>
-      </p-table>
-      <div style="background-color: white; display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 8px;">
-        <i class="pi pi-info-circle font-16 c-blue"></i>
-        <div>No hay alertas que mostrar</div>
-      </div>
+    <div *ngIf="!isLoading && !isError" class="table-container">
+        <p-table *ngIf="last24HoursAlertsList.length > 0" class="table" id="dt" #dt [value]="last24HoursAlertsList" [size]="'small'" [showGridlines]="true" [stripedRows]="true">
+            <ng-template #header>
+                <tr>
+                    <th class="th-blue">Id.</th>
+                    <th class="th-blue">Nombre</th>
+                    <th class="th-blue">Mensaje</th>
+                    <th class="th-blue">Creación</th>
+                    <th class="th-blue">Severidades</th>
+                    <th class="th-blue">Metadatos</th>
+                    <th class="th-blue">Endpoints</th>
+                    <th class="th-blue">Ventana de tiempo</th>
+                    <th class="th-blue">Periodicidad</th>
+                    <th class="th-blue text" style="text-align: center;" >Estado</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-alert>
+                <tr>
+                     <td style="text-align: center;">
+                        {{alert.alertId}}
+                    </td>
+                    <td class="title-container">
+                        <div *ngIf="alert.canEdit" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="onClickGoToEditAlert(alert)">
+                            {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
+                        </div>
+                        <div *ngIf="!alert.canEdit" class="name font-w-500">
+                            {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
+                        </div>
+                        <ng-template #tooltipContent>
+                            <div class="text-14">{{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}</div>
+                            <div class="text-14">Agrupaciones: {{alert.groupBy}}</div>
+                        </ng-template>
+                        <div class="owner-container">
+                            <div class="owner text-gray font-w-600">
+                                <i class="pi pi-user font-8"></i>
+                                <span class="font-12">{{alert.creatorUsername}}</span>
+                            </div>
+
+                            <div *ngIf="alert.isOwner" class="owner c-yellow font-w-600">
+                                <i class="pi pi-crown font-8"></i>
+                                <span class="font-12">propietario</span>
+                            </div>
+
+                            <div *ngIf="alert.isTeam" class="owner c-purple font-w-600">
+                                <i class="pi pi-users font-8"></i>
+                                <span class="font-12">equipo</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="message-column">
+                        <div class="content">
+                            <span class="cell-text" [pTooltip]="alert.alertText" tooltipPosition="top">{{alert.alertText}}</span>
+                        </div>
+                    </td>
+                    <td class="font-12 text-gray">
+                        {{alert.relativeTime}}
+                    </td>
+                    <td>
+                        <div (click)="op1.toggle($event)" class="font-12 threshold-button-container font-w-600">
+                            {{alert.conditions.length
+                            == 1 ? '1 severidad' : alert.conditions.length + ' severidades'}}</div>
+                        <p-popover #op1>
+                            <div class="popover-container">
+                                <div class="font-w-600">Severidades</div>
+                                <div class="conditions-container">
+                                    <div class="condition-container" *ngFor="let condition of alert.conditions; let i = index;">
+                                        <div class="condition-body">
+                                            <div class="id-container font-w-600">{{i+1}}</div>
+                                            <p-select class="select" size="small" [(ngModel)]="condition.severity"
+                                                [options]="severityOptions" optionLabel="label" optionValue="value"
+                                                appendTo="body" [disabled]="true" />
+                                            <p-toggleswitch [(ngModel)]="condition.status" [disabled]="true" />
+                                        </div>
+                                        <div *ngIf="condition.alertClauses.length > 0" class="clauses-container">
+                                            <div class="clause-container" *ngFor="let clause of condition.alertClauses; let j = index;">
+                                                <p-select class="select-2" size="small" [(ngModel)]="clause.compOperation"
+                                                    [options]="comparationOptions" optionLabel="label" optionValue="value"
+                                                    appendTo="body" [disabled]="true" />
+                                                <p-inputnumber size="small" [(ngModel)]="clause.threshold" mode="decimal"
+                                                    [minFractionDigits]="0" [maxFractionDigits]="6" [disabled]="true" />
+                                                    <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
+                                                    severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </p-popover>
+                    </td>
+                    <td>
+                        <div (click)="op2.toggle($event)" class="tag-button-container font-w-600"><i
+                                class="pi pi-tag font-12"></i><span
+                                class="font-12">{{alert.alertTags.length}}</span></div>
+                        <p-popover #op2>
+                            <div class="popover-container">
+                                <div class="font-16 font-w-600">Etiquetas añadidas</div>
+                                <div *ngIf="alert.alertTags.length == 0" class="font-12 text-gray">Ninguna etiqueta añadida aún</div>
+                                <div *ngIf="alert.alertTags.length > 0" class="tags-container">
+                                    <div class="tag-container" *ngFor="let alertTag of alert.alertTags; let i = index;">
+                                        <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
+                                        <div class="font-12">{{alertTag.name + ': ' + alertTag.value}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </p-popover>
+                    </td>
+                    <td>
+                        <div *ngIf="alert.endpoints" class="endpoints-container">
+                            <div class="font-12 font-w-700">{{alert.endpoints.length}}</div>
+                        </div>
+                    </td>
+                    <td>
+                        {{alert.evaluationPeriod}}
+                    </td>
+                    <td>
+                        {{alert.evaluationFrequency}}
+                    </td>
+                    <td style="text-align: center;">
+                        <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta activa'"></i>
+                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-gray" [title]="'Alerta desactivada'"></i>
+                        <i *ngIf="alert.status == 'DOLPHIN_ERROR'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div *ngIf="last24HoursAlertsList.length == 0" class="notice">
+            <i class="pi pi-info-circle c-blue"></i>
+            <div>
+                No hay alertas para mostrar
+            </div>
+        </div>
+
+        <div *ngIf="last24HoursAlertsList.length > 0" style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="size"
+                [totalRecords]="last24HoursAlertsPage.totalElements"
+                [showCurrentPageReport]="true"
+                [showPageLinks]="false"
+                [showJumpToPageDropdown]="false"
+                currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
+                [rowsPerPageOptions]="[5, 10, 20, 50]"
+                [showPageLinks]="true"/>
+        </div>
     </div>
+
+    <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
+
+    <div style="width: 100%; height: 100px;"></div>
   </div>
 </app-page-wrapper>

@@ -50,6 +50,15 @@ export class AlertService {
     return this.http.get<any>(this.apiUrl + '/getAllAlerts', {params: params});
   }
 
+  getLast24HoursAlerts(page: number, size: number): Observable<any>
+  {
+    let params: HttpParams = new HttpParams();
+
+    params = params.append('page', page).append('size', size);
+
+    return this.http.get<any>(this.apiUrl + '/getLast24HoursAlerts', {params: params});
+  }
+
   createSimpleAlert(alertDto: AlertDto): Observable<any>
   {
     return this.http.post<any>(this.apiUrl + '/createSimpleAlert', alertDto);
