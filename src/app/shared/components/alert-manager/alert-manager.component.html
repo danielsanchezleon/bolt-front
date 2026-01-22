@@ -305,8 +305,7 @@
                     </div>
                 </div>
 
-                <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;"
-                    [ngStyle]="{'border': checkAllClausesCompleted() ? '1px solid lightgray' : '2px solid red'}">
+                <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;">
                     <div class="condition-content">
                         <div class="condition-top">
                             <div class="id-wrapper font-12 font-w-600 text-white">{{condition.get('id')?.value}}</div>
@@ -325,7 +324,7 @@
                                     (click)="onClickSetConditionType(condition, severityOptions[3]);">Warning</div>
                             </div>
                             <input *ngIf="!isBaselineAlert" type="text" pInputText [pSize]="'small'" [ngModel]="conditionTextMap.get(i)"
-                                style="width: 100%;" [readOnly]="true" />
+                                style="width: 100%; pointer-events: none;" [readOnly]="true" />
                             <div class="condition-status-container" [formGroup]="condition">
                                 <p-toggleswitch formControlName="status" />
                                 <span class="font-14">Habilitada</span>
@@ -808,10 +807,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
 </app-page-wrapper>
@@ -1165,4 +1164,55 @@
 
 <div *ngIf="isBaselineAlert && baselinesListLoading" class="loading-blur">
     <p-progress-spinner/>
+</div>
+
+<p-button label="Requisitos" class="required-data-panel-button" *ngIf="mode == 'create' && !requiredDataPanelVisible" icon="pi pi-plus" [rounded]="true" [raised]="true" severity="secondary" (click)="requiredDataPanelVisible = true" size="small" />
+
+<div *ngIf="mode == 'create' && requiredDataPanelVisible" class="required-data-panel">
+    <div class="font-14 font-w-700 title">
+        <div>Información requerida para {{isSimpleConditionAlert ? 'alertas simples' : isCompositeConditionAlert ? 'alertas compuestas' : isLogsAlert ? 'alertas de logs' : 'alertas de tipo baseline'}}</div>
+        <p-button icon="pi pi-minus" [rounded]="true" [text]="true" severity="secondary" (click)="requiredDataPanelVisible = false" />
+    </div>
+    <div *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" class="required-data-list">
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric && !isBaselineAlert}">
+            <i *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric && !isBaselineAlert" class="pi pi-check-circle"></i>
+            <div>Al menos una métrica seleccionada</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': checkAllClausesCompleted()}">
+            <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
+            <div>Todas las condiciones creadas configuradas correctamente</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
+            <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
+            <div>Mensaje de la alerta configurado</div>
+        </div>
+    </div>
+    <div *ngIf="isLogsAlert" class="required-data-list">
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': logsStep1Form.valid}">
+            <i *ngIf="logsStep1Form.valid" class="pi pi-check-circle"></i>
+            <div>Debes rellenar Origen y Catálogo</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': checkAllClausesCompleted()}">
+            <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
+            <div>Todas las condiciones creadas configuradas correctamente</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
+            <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
+            <div>Mensaje de la alerta configurado</div>
+        </div>
+    </div>
+    <div *ngIf="isBaselineAlert" class="required-data-list">
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': selectedBaseline}">
+            <i *ngIf="selectedBaseline" class="pi pi-check-circle"></i>
+            <div>Debes seleccionar una baseline</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': checkAllClausesCompleted()}">
+            <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
+            <div>Todas las condiciones creadas configuradas correctamente</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
+            <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
+            <div>Mensaje de la alerta configurado</div>
+        </div>
+    </div>
 </div>

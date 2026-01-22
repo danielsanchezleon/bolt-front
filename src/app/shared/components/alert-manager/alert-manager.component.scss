@@ -1238,3 +1238,55 @@
 
     margin-top: 32px;
 }
+
+.dirty
+{
+    border: 2px solid red !important;
+}
+
+.required-data-panel-button
+{
+    position: fixed;
+    top: 125px;
+    left: 16px;
+}
+
+.required-data-panel
+{
+    position: fixed;
+    top: 125px;
+    left: 16px;
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    border-radius: 8px;
+    padding: 16px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .title
+    {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        gap: 32px;
+    }
+
+    .required-data-list
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        .required-data-element
+        {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+    }
+}

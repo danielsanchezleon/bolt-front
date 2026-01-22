@@ -57,7 +57,7 @@ export class HomeComponent {
   //Pagination
   first: number = 0;
   page: number = 0;
-  size: number = 10;
+  size: number = 1;
 
   constructor(private router: Router, private alertService: AlertService, private _fb: FormBuilder) {
   }
@@ -65,7 +65,7 @@ export class HomeComponent {
   ngOnInit() 
   {
     this.getHomePanels();
-    this.getLast24HoursAlerts(0, 10);
+    this.getLast24HoursAlerts(this.page, this.size);
 
     this.modifyAlertTimeWindowOptions = modifyAlertTimeWindowOptions;
     this.periodicityOptions = periodicityOptions;
@@ -108,7 +108,7 @@ export class HomeComponent {
     this.last24HoursAlertsLoading = true;
     this.last24HoursAlertsError = false;
 
-    this.alertService.getLast24HoursAlerts(0, 5).subscribe(
+    this.alertService.getLast24HoursAlerts(page, size).subscribe(
       (response) => {
         this.last24HoursAlertsLoading = false;
         this.last24HoursAlertsPage = response;

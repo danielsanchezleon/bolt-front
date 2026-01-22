@@ -24,7 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
-import { BehaviorSubject, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, map, Observable, Subject, Subscription, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, map, Observable, startWith, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 import { permissionTypeOptions } from '../../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../../shared/services/metric.service';
@@ -341,6 +341,8 @@ export class AlertManagerComponent implements OnInit{
   conditionGraphList: any[] = [];
 
   hours: number = 24;
+
+  requiredDataPanelVisible: boolean = true;
 
   //Step 1
   matOperationOptions: any[] = [];
@@ -1002,55 +1004,50 @@ export class AlertManagerComponent implements OnInit{
     if (this.isBaselineAlert)
     {
       // Suscripción para ajustar validadores dinámicamente
-      const comparationControl = (group.get('baselineVariables') as FormGroup).get('type');
-      const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
-        const auxVar1 = group.get('auxVar1');
-        const auxVar2 = group.get('auxVar2');
-        const auxVar3 = group.get('auxVar3');
+      const baselineFg = group.get('baselineVariables') as FormGroup;
+      const typeCtrl = baselineFg.get('type');
 
-        if (this.isBaselinePastAverageAlert)
-        {
-          if (comp.value.value == 'LESS_THAN') 
-          {
-            auxVar1?.setValidators(Validators.required);
-            auxVar2?.clearValidators();
-            auxVar3?.clearValidators();
-          } 
-          else if (comp.value.value == 'MORE_THAN') 
-          {
-            auxVar1?.clearValidators();
-            auxVar2?.setValidators(Validators.required);
-            auxVar3?.clearValidators();
-          }
-          else
-          {
-            auxVar1?.setValidators(Validators.required);
-            auxVar2?.setValidators(Validators.required);
-            auxVar3?.clearValidators();
-          }
-        }
-        else if (this.isBaselinePastAveragePonderedAlert)
-        {
-          auxVar1?.setValidators(Validators.required);
-          auxVar2?.setValidators(Validators.required);
-          auxVar3?.setValidators(Validators.required);
-        }
-        else if (this.isBaselineKSigmaAlert)
-        {
+      const sub = typeCtrl!.valueChanges
+        .pipe(startWith(typeCtrl!.value))
+        .subscribe((typeValue: any) => {
+
+          const auxVar1 = baselineFg.get('auxVar1');
+          const auxVar2 = baselineFg.get('auxVar2');
+          const auxVar3 = baselineFg.get('auxVar3');
+
+          // Limpia primero
           auxVar1?.clearValidators();
           auxVar2?.clearValidators();
-          auxVar3?.setValidators(Validators.required);
-        }
+          auxVar3?.clearValidators();
 
-        auxVar1?.updateValueAndValidity();
-        auxVar2?.updateValueAndValidity();
-        auxVar3?.updateValueAndValidity();
-      }) as Subscription;
+          // OJO: aquí depende de cómo sea tu value:
+          // si es string: typeValue === 'LESS_THAN'
+          // si es objeto: typeValue.value === 'LESS_THAN'
+          const comp = typeValue?.value ?? typeValue;
 
-      this.subscriptions.push(dynamicValidationSub);
+          if (this.isBaselinePastAverageAlert) {
+            if (comp === 'LESS_THAN') {
+              auxVar1?.setValidators([Validators.required]);
+            } else if (comp === 'MORE_THAN') {
+              auxVar2?.setValidators([Validators.required]);
+            } else {
+              auxVar1?.setValidators([Validators.required]);
+              auxVar2?.setValidators([Validators.required]);
+            }
+          } else if (this.isBaselinePastAveragePonderedAlert) {
+            auxVar1?.setValidators([Validators.required]);
+            auxVar2?.setValidators([Validators.required]);
+            auxVar3?.setValidators([Validators.required]);
+          } else if (this.isBaselineKSigmaAlert) {
+            auxVar3?.setValidators([Validators.required]);
+          }
 
-      // Ejecutar validación inicial según el valor inicial
-      comparationControl?.updateValueAndValidity();
+          auxVar1?.updateValueAndValidity({ emitEvent: false });
+          auxVar2?.updateValueAndValidity({ emitEvent: false });
+          auxVar3?.updateValueAndValidity({ emitEvent: false });
+        });
+
+      this.subscriptions.push(sub);
     }
 
     if (!this.isBaselineAlert)
@@ -2872,6 +2869,11 @@ export class AlertManagerComponent implements OnInit{
           allCompleted = false;
         }
       });
+
+      if (condition.controls.baselineVariables.invalid)
+      {
+        allCompleted = false;
+      }
     });
 
     return allCompleted;
