@@ -592,6 +592,8 @@ export class AlertManagerComponent implements OnInit{
 
   ngOnInit(): void {
 
+    this.severityOptions = severityOptions;
+
     if (this.route.snapshot.paramMap.has('alert_id'))
     {
       this.getAlert();
@@ -620,6 +622,8 @@ export class AlertManagerComponent implements OnInit{
 
       this.createCondition();
       this.createSilencePeriod();
+
+      this.resetSeverityOptions();
     }
 
     //Step 1
@@ -649,7 +653,6 @@ export class AlertManagerComponent implements OnInit{
     this.advancedSearchOptions = advancedSearchOptions;
 
     //Step 2
-    this.severityOptions = severityOptions;
     this.clauseComparationOptions = clauseComparationOptions;
 
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
@@ -1233,11 +1236,9 @@ export class AlertManagerComponent implements OnInit{
 
   onClickSetConditionType(condition: any, type: any) {
 
-    // this.severityOptions[severityOptions.findIndex((svt) => svt.label == condition.get('severity').value.label)].disabled = true;
-
     condition.get('severity').setValue(type);
 
-    this.severityOptions[severityOptions.findIndex((svt) => svt.label == type.label)].disabled = false;
+    this.resetSeverityOptions();
   }
 
   onClickSetEndpointAlert(endpoint: any, alert: any) {
@@ -1399,8 +1400,6 @@ export class AlertManagerComponent implements OnInit{
 
   removeCondition(index: number) {
 
-    // this.severityOptions[this.severityOptions.findIndex((svt) => svt.label == this.conditionArray.controls.at(index)!.get('severity')?.value.label)].disabled = true;
-
     this.conditionArray.controls.splice(index, 1);
 
     this.conditionArray.controls.forEach((condition, i) => {
@@ -1409,8 +1408,23 @@ export class AlertManagerComponent implements OnInit{
 
     this.buildConditionGraphsList();
 
+    this.resetSeverityOptions();
+
     //WHEN A CONDITION IS REMOVED, CONDITION FILTERS MAP MUST REMOVE ITS ENTRY
     this.conditionFiltersMap.delete((index + 1).toString());
+  }
+
+  resetSeverityOptions()
+  {
+    //DISABLE ALL SEVERITIES
+    this.severityOptions.forEach((svt) => {
+      svt.disabled = true;
+    });
+
+    //ENABLE SELECTED SEVERITIES
+    this.conditionArray.controls.forEach((cond) => {
+      this.severityOptions[severityOptions.findIndex((svt) => svt.label == cond.get('severity')?.value.label)].disabled = false;
+    });
   }
 
   onClickThresholdArrowDown(index: number) {
@@ -1998,7 +2012,7 @@ export class AlertManagerComponent implements OnInit{
         });
       }
 
-      this.severityOptions.find((opt) => opt.value == condition.severity).disabled = false;
+      this.resetSeverityOptions();
       
       this.conditionTextMap.set(i, this.generateConditionText(i));
     });

@@ -807,10 +807,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0) || indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric == null) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0) || indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric == null) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
 </app-page-wrapper>

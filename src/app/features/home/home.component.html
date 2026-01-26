@@ -227,6 +227,9 @@
                     <td>
                         <div *ngIf="alert.endpoints" class="endpoints-container">
                             <div class="font-12 font-w-700">{{alert.endpoints.length}}</div>
+                            <div title="{{endpoint.type}}" class="icon" *ngFor="let endpoint of alert.endpoints;" [ngClass]="{'bg-blue': endpoint.type == 'email', 'bg-red': endpoint.type == 'teams', 'bg-yellow': endpoint.type == 'pagerduty', 'bg-green': endpoint.type == 'webhook'}">
+                                <i class="pi {{endpoint.type == 'email' ? 'pi-envelope' : endpoint.type == 'teams' ? 'pi-users' : endpoint.type == 'webhook' ? 'pi-external-link' : 'pi-bell'}} font-12 c-clue" [ngClass]="{'c-blue': endpoint.type == 'email', 'c-red': endpoint.type == 'teams', 'c-yellow': endpoint.type == 'pagerduty', 'c-green': endpoint.type == 'webhook'}"></i>
+                            </div>
                         </div>
                     </td>
                     <td>
@@ -261,7 +264,7 @@
                 [showPageLinks]="false"
                 [showJumpToPageDropdown]="false"
                 currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
-                [rowsPerPageOptions]="[1, 10, 20, 50]"
+                [rowsPerPageOptions]="[5, 10, 20, 50]"
                 [showPageLinks]="true"/>
         </div>
     </div>

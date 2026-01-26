@@ -57,7 +57,7 @@ export class HomeComponent {
   //Pagination
   first: number = 0;
   page: number = 0;
-  size: number = 1;
+  size: number = 5;
 
   constructor(private router: Router, private alertService: AlertService, private _fb: FormBuilder) {
   }
