@@ -807,10 +807,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0" />
         </div>
     </div>
 </app-page-wrapper>
@@ -1198,6 +1198,10 @@
             <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
             <div>Todas las condiciones creadas configuradas correctamente</div>
         </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': endpointList.length > 0}">
+            <i *ngIf="endpointList.length > 0" class="pi pi-check-circle"></i>
+            <div>Has configurado al menos un destinatario</div>
+        </div>
         <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
             <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
             <div>Mensaje de la alerta configurado</div>
@@ -1212,6 +1216,10 @@
             <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
             <div>Todas las condiciones creadas configuradas correctamente</div>
         </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': endpointList.length > 0}">
+            <i *ngIf="endpointList.length > 0" class="pi pi-check-circle"></i>
+            <div>Has configurado al menos un destinatario</div>
+        </div>
         <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
             <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
             <div>Mensaje de la alerta configurado</div>
@@ -1225,6 +1233,10 @@
         <div class="font-14 required-data-element" [ngClass]="{'c-green': checkAllClausesCompleted()}">
             <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
             <div>Todas las condiciones creadas configuradas correctamente</div>
+        </div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': endpointList.length > 0}">
+            <i *ngIf="endpointList.length > 0" class="pi pi-check-circle"></i>
+            <div>Has configurado al menos un destinatario</div>
         </div>
         <div class="font-14 required-data-element" [ngClass]="{'c-green': notificationMessageForm.valid}">
             <i *ngIf="notificationMessageForm.valid" class="pi pi-check-circle"></i>
