@@ -24,7 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
-import { BehaviorSubject, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, map, Observable, startWith, Subject, Subscription, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, catchError, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, lastValueFrom, map, mapTo, mergeMap, Observable, of, startWith, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 import { permissionTypeOptions } from '../../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../../shared/services/metric.service';
@@ -822,10 +822,6 @@ export class AlertManagerComponent implements OnInit{
     this.rebindExprValidator(indicatorIndex);
 
     this.generateFinalExpression(indicatorIndex);
-
-    // this.resultMetricMap.set(indicatorIndex, this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? this.letters[indicatorIndex] + '.1' : '');
-    // this.resultMetricEditionMap.set(indicatorIndex,  this.indicatorArray.at(indicatorIndex).controls.metrics.length == 1 ? false : true);
-    // this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(this.resultMetricMap.get(indicatorIndex)!);
   }
 
   private generateFinalExpression(indicatorIndex: number): string
@@ -849,10 +845,10 @@ export class AlertManagerComponent implements OnInit{
   {
     this.indicatorArray.at(indicatorIndex).controls.metrics.removeAt(metricIndex);
 
-    for (let metric of this.indicatorArray.at(indicatorIndex).controls.metrics.controls)
-    {
-      metric.get('id')?.setValue((this.indicatorArray.at(indicatorIndex).controls.metrics.controls.indexOf(metric) + 1).toString());
-    }
+    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach( (metric, i) => {
+      metric.get('id')?.setValue((i + 1).toString());
+      metric.get('name')?.setValue(this.letters[indicatorIndex] + "." + (i + 1));
+    });
 
     this.generateDimensionIntersection();
 
@@ -871,7 +867,8 @@ export class AlertManagerComponent implements OnInit{
 
     this.generateDimensionIntersection();
 
-    this.getGraphSeries();
+    if (this.mode  == 'create')
+      this.getGraphSeries();
 
     this.conditionFiltersMap = new Map();
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
@@ -1764,325 +1761,405 @@ export class AlertManagerComponent implements OnInit{
     }
   }
 
-  async fromDtoToForm(alertViewDto: AlertViewDto)
-  {
-    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
-    {
-      //INDICATORS
-      const indicators = alertViewDto.indicators ?? [];
+  async fromDtoToForm(alertViewDto: AlertViewDto) {
 
-      from(indicators).pipe(
-        concatMap((indicator, i) => {
-          // --- tu lógica de crear el indicador (sync) ---
-          const newIndicator: IndicatorFormGroup = this._fb.group({
-            id: this._fb.control(indicator.id),
-            name: this._fb.control(indicator.name),
-            metrics: this._fb.array<MetricFormGroup>([]),
-            finalExpression: this._fb.control(indicator.finalExpression)
-          }) as IndicatorFormGroup;
+  // ===========================
+  // SIMPLE / COMPOSITE ALERT
+  // ===========================
+  if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) {
 
-          this.resultMetricMap.set(i, indicator.finalExpression!);
-          this.indicatorArray.push(newIndicator);
-          this.indicatorNames.push(this.letters[i]);
+    this.isInitialMetricListLoading = true;
 
-          const metrics = indicator.alertMetrics ?? [];
+    const indicators = alertViewDto.indicators ?? [];
 
-          // --- devolver el stream que carga métricas para ESTE indicador ---
-          return from(metrics).pipe(
-            concatMap((metric, j) =>
-              this.metricService.getMetrics(metric.metricName!).pipe(
-                tap((response) => {
-                  this.indicatorArray.at(i).controls.metrics.push(
-                    this._fb.group({
-                      metricId: this._fb.control(metric.metricId),
-                      id: this._fb.control((j + 1).toString()),
-                      name: this._fb.control(this.letters[i] + "." + (j + 1)),
-                      metric: this._fb.control(
-                        response.find(met =>
-                          (met.table_name == metric.tableName) &&
-                          (met.dimension!
-                            .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
-                            .join(',') == metric.dimensions)
-                        )
-                      ),
-                      operation: this._fb.control(matOperationOptions.find(opt => opt.value == metric.operation)),
-                      options: this._fb.control(response),
-                      idInventory: this._fb.control(metric.idInventory!)
-                    }) as MetricFormGroup
-                  );
-                })
-              )
+    from(indicators).pipe(
+      // 1) Crea indicadores y carga métricas (secuencial)
+      concatMap((indicator, i) => {
+
+        const newIndicator: IndicatorFormGroup = this._fb.group({
+          id: this._fb.control(indicator.id),
+          name: this._fb.control(indicator.name),
+          metrics: this._fb.array<MetricFormGroup>([]),
+          finalExpression: this._fb.control(indicator.finalExpression)
+        }) as IndicatorFormGroup;
+
+        this.resultMetricMap.set(i, indicator.finalExpression!);
+        this.indicatorArray.push(newIndicator);
+        this.indicatorNames.push(this.letters[i]);
+
+        const metrics = indicator.alertMetrics ?? [];
+
+        return from(metrics).pipe(
+          concatMap((metric, j) =>
+            this.metricService.getMetrics(metric.metricName!).pipe(
+              tap((response) => {
+                this.indicatorArray.at(i).controls.metrics.push(
+                  this._fb.group({
+                    metricId: this._fb.control(metric.metricId),
+                    id: this._fb.control((j + 1).toString()),
+                    name: this._fb.control(this.letters[i] + "." + (j + 1)),
+                    metric: this._fb.control(
+                      response.find(met =>
+                        (met.table_name == metric.tableName) &&
+                        (met.dimension!
+                          .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                          .join(',') == metric.dimensions)
+                      )
+                    ),
+                    operation: this._fb.control(matOperationOptions.find(opt => opt.value == metric.operation)),
+                    options: this._fb.control(response),
+                    idInventory: this._fb.control(metric.idInventory!)
+                  }) as MetricFormGroup
+                );
+              })
             )
-          );
-        }),
+          )
+        );
+      }),
 
-        finalize(() => {
-          this.isInitialMetricListLoading = false;
-        })
-      ).subscribe({
-        complete: () => {
-          this.onChangeMetricSelect();
-          this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+      // 2) Cuando termina indicadores+métricas, ya podemos pintar la alerta
+      finalize(() => {
+        this.isInitialMetricListLoading = false;
+      })
 
-          this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-            this.generateGraphAgroupations(dimension);
-          });
-
-          this.getGraphSeries();
-
-          this.conditionFiltersMap = new Map();
-
-          alertViewDto.conditions!.forEach((condition, i) => {
-            this.conditionFiltersMap.set((i + 1).toString(), new Map());
-            alertViewDto.groupBy!.forEach((dimension: string) => {
-              indicators.forEach(indicator => {
-                indicator.alertMetrics!.forEach(metric => {
-                  this.alertService.getDimensionValues(metric.dbName!, metric.tableName!, metric.metricName!, dimension).subscribe(
-                    (response) => {
-                      let selected: string[] = [];
-                      let created: string[] = [];
-                      let merge: string[] = [];
-
-                      condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
-
-                        if (cf.isCreated)
-                          created.push(cf.filterValue!);
-                        else
-                          selected.push(cf.filterValue!);
-                      });
-
-                      selected = selected.length == 0 && created.length == 0 ? response : selected.length > 0 && created.length > 0 ? created.concat(selected) : selected.length == 0 ? created : selected;
-                      merge = created.concat(response);
-
-                      if (this.conditionFiltersMap.has((i+1).toString()))
-                      {
-                        if (this.conditionFiltersMap.get((i+1).toString())!.has(dimension))
-                        {
-                          let dimensionValuesIntersection: string[] = this.conditionFiltersMap.get((i+1).toString())?.get(dimension)!.get('values')!.filter((value) => response.includes(value))!;
-                          this.conditionFiltersMap.get((i+1).toString())?.get(dimension)!.set('values', dimensionValuesIntersection);
-                        }
-                        else
-                        {
-                          this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', created.concat(response)));
-                        }
-                      }
-                      else
-                      {
-                        this.conditionFiltersMap.set((i+1).toString(), new Map().set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge)))
-                      }
-                    },
-                    (error) => {
-
-                    }
-                  )
-                });
-              });
-            });
-          });
-
-          this.generateInternalNameAndName();
-        }
-      });
-
-      this.isInitialMetricListLoading = true;
-    }
-    else if (this.isLogsAlert)
-    {
-      this.logsStep1Form.get('service')?.setValue(alertViewDto.logsService);
-      this.getDistinctTableNamesByDataType(alertViewDto.logsService!, false);
-      this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
-
-      this.catalogLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
-        this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
-        this.getDistinctMetricsByDataTypeAndTable(alertViewDto.logsService!, alertViewDto.logsCatalog!)
-      });
-
-      this.metricsLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
-        alertViewDto.conditions?.at(0)?.conditionFilters?.filter(conditionFilter => conditionFilter.externalOperation != null).forEach((conditionFilter) => {
-          const group: LogConditionFormGroup = this._fb.group({
-            logConditionId: this._fb.control(conditionFilter.conditionFilterId),
-            externalOperation: this._fb.control(conditionFilter.externalOperation),
-            field: this._fb.control({value: conditionFilter.filterField, disabled: false}, [Validators.required]),
-            comparation: this._fb.control(advancedSearchOptions.find((compOperation) => compOperation.value == conditionFilter.compOperation)),
-            value: this._fb.control(conditionFilter.filterValue),
-            dimensions: this._fb.control([] as string[])
-          }) as LogConditionFormGroup;
-
-          this.logsConditionArray.push(group);
-        });
-
-        this.logsConditionArray.controls.forEach((logCondition, i) => {
-          this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, i);
-        });
+    ).subscribe({
+      complete: () => {
+        // ✅ Esto ya se ejecuta cuando indicadores+métricas han terminado
+        this.onChangeMetricSelect();
 
         this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+        this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+          this.generateGraphAgroupations(dimension);
+        });
 
-        alertViewDto.conditions!.forEach((condition, i) => {
-          this.conditionFiltersMap.set((i + 1).toString(), new Map());
-          let filterDimensionMap: Map<string, Map<string, string[]>> = new Map();
-          alertViewDto.groupBy!.forEach((dimension) => {
-            this.alertOcurrencesService.getDistinctValuesForDimension(alertViewDto.logsCatalog!, dimension, null).subscribe(
-              (response) => 
-              {
-                let selected: string[] = [];
-                let created: string[] = [];
-                let merge: string[] = [];
+        // Prepara map
+        this.conditionFiltersMap = new Map();
 
-                condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
+        // ✅ Ahora: cargar getDimensionValues EN BACKGROUND (sin bloquear render)
+        //  - DEDUPE: evitamos pedir la misma combinación mil veces
+        //  - CONCURRENCIA: limitamos requests simultáneas para evitar cancelaciones/saturación
+        const uniqueCalls = new Map<string, { db: string; table: string; metricName: string; dimension: string }>();
 
-                  if (cf.isCreated)
-                    created.push(cf.filterValue!);
-                  else
-                    selected.push(cf.filterValue!);
+        alertViewDto.groupBy!.forEach((dimension: string) => {
+          indicators.forEach(ind => {
+            (ind.alertMetrics ?? []).forEach(m => {
+              const key = `${m.dbName}|${m.tableName}|${m.metricName}|${dimension}`;
+              if (!uniqueCalls.has(key)) {
+                uniqueCalls.set(key, {
+                  db: m.dbName!,
+                  table: m.tableName!,
+                  metricName: m.metricName!,
+                  dimension
                 });
-
-                selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
-                merge = created.concat(response);
-
-                filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge));
-
-                this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
-              },
-              (error) => 
-              {
               }
-            );
+            });
           });
         });
-      });
-    }
-    else if (this.isBaselineAlert)
-    {
-      this.baselineSelectDisabled = true;
 
-      alertViewDto.baselineType == 'PAST_AVERAGE' ? this.isBaselinePastAverageAlert = true : alertViewDto.baselineType == 'PAST_AVERAGE_PONDERED' ? this.isBaselinePastAveragePonderedAlert = true : this.isBaselineKSigmaAlert = true;
-      
-      this.loadBaselines(alertViewDto);
-
-      this.indicatorNames.push(this.letters[0]);
-    }
-
-    //ADVANCED OPTIONS
-    this.advancedOptionsForm.get('timeWindow')?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
-    this.advancedOptionsForm.get('discardTime')?.setValue(discardTimeOptions.find((dto) => dto.value == alertViewDto.offset));
-    this.advancedOptionsForm.get('periodicity')?.setValue(periodicityOptions.find((po) => po.label.startsWith(alertViewDto.evaluationFrequency!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
-
-    //CONDITIONS
-    alertViewDto.conditions?.forEach((condition, i) => {
-
-      const newCondition: ConditionFormGroup = this._fb.group({
-        conditionId: this._fb.control(condition.id),
-        id: this._fb.control((this.conditionArray.length + 1).toString()),
-        severity: this._fb.control(this.severityOptions.find((opt) => opt.value == condition.severity)),
-        status: this._fb.control(condition.status),
-        clauses:  this._fb.array<ClauseFormGroup>([]),
-        baselineVariables: this._fb.group({
-          baselinesVariablesId: [condition.baselinesVariables?.id],
-          type: [this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar1 && condition.baselinesVariables?.auxVar2 ? this.baselinesVariablesConditionTypes[2] : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar1 ? this.baselinesVariablesConditionTypes[1] : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar2 ? this.baselinesVariablesConditionTypes[0] : this.baselinesVariablesConditionTypes[0]],
-          auxVar1: [condition.baselinesVariables?.auxVar1],
-          auxVar2: [condition.baselinesVariables?.auxVar2],
-          auxVar3: [condition.baselinesVariables?.auxVar3]
-        })
-      }) as ConditionFormGroup;
-
-      this.conditionArray.push(newCondition);
-
-      //CLAUSES
-      if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! > 1))
-      {
-        condition.alertClauses?.forEach((clause) => {
-          if (clause.threshold != null)
-          {
-            this.conditionArray.at(i).controls.clauses.push(this._fb.group({
-              clauseId: this._fb.control(clause.id),
-              indicatorName: this._fb.control(clause.indicatorName),
-              id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
-              comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
-              order: this._fb.control(this.conditionArray.length + 1),
-              value: this._fb.control(clause.threshold),
-              minIncluded: this._fb.control(clause.thresholdInclude),
-              min: this._fb.control(clause.threshold),
-              maxIncluded: this._fb.control(clause.thresholdIncludeUp),
-              max: this._fb.control(clause.thresholdUp),
-              startBrackets: this._fb.control(clause.startBrackets),
-              endBrackets: this._fb.control(clause.endBrackets),
-              externalOperation: this._fb.control(clause.externalOperation)
-            }) as ClauseFormGroup);
-          }
+        // Inicializa estructura por condición
+        alertViewDto.conditions!.forEach((condition, i) => {
+          const condKey = (i + 1).toString();
+          this.conditionFiltersMap.set(condKey, new Map());
         });
-      }
 
-      this.resetSeverityOptions();
-      
-      this.conditionTextMap.set(i, this.generateConditionText(i));
+        from(Array.from(uniqueCalls.values())).pipe(
+          // ✅ límite de concurrencia (ajusta a 4/6/8 según tu backend)
+          mergeMap((req) =>
+            this.alertService.getDimensionValues(req.db, req.table, req.metricName, req.dimension).pipe(
+              tap((response) => {
+
+                // Para cada condición, aplica tu misma lógica de selected/created/intersection
+                alertViewDto.conditions!.forEach((condition, condIndex) => {
+                  const condKey = (condIndex + 1).toString();
+
+                  let selected: string[] = [];
+                  let created: string[] = [];
+                  let merge: string[] = [];
+
+                  condition.conditionFilters
+                    ?.filter((cf) => cf.externalOperation == null && cf.filterField == req.dimension)
+                    .forEach((cf) => {
+                      if (cf.isCreated) created.push(cf.filterValue!);
+                      else selected.push(cf.filterValue!);
+                    });
+
+                  selected =
+                    selected.length === 0 && created.length === 0 ? response
+                      : selected.length > 0 && created.length > 0 ? created.concat(selected)
+                        : selected.length === 0 ? created
+                          : selected;
+
+                  merge = created.concat(response);
+
+                  const condMap = this.conditionFiltersMap.get(condKey)!;
+
+                  if (condMap.has(req.dimension)) {
+                    // Intersección (como hacías tú)
+                    const prevValues = condMap.get(req.dimension)!.get('values') as string[];
+                    const intersection = prevValues.filter(v => response.includes(v));
+                    condMap.get(req.dimension)!.set('values', intersection);
+
+                    // Mantén selected/created/merge (si quieres, podrías recalcular)
+                    condMap.get(req.dimension)!.set('selected', selected);
+                    condMap.get(req.dimension)!.set('created', created);
+                    condMap.get(req.dimension)!.set('merge', merge);
+                  } else {
+                    condMap.set(
+                      req.dimension,
+                      new Map()
+                        .set('values', response)
+                        .set('selected', selected)
+                        .set('created', created)
+                        .set('merge', merge)
+                    );
+                  }
+                });
+
+              }),
+              catchError(() => of(null))
+            ),
+            6 // <-- CONCURRENCIA
+          ),
+          finalize(() => {
+            // ✅ Cuando ya terminaron TODOS los getDimensionValues (sin bloquear UI)
+            // Si necesitas refrescar algo del UI al final, aquí.
+            this.getGraphSeries();
+          })
+        ).subscribe();
+
+        this.generateInternalNameAndName();
+      }
+    });
+  }
+
+  // ===========================
+  // LOGS ALERT (lo dejo igual que tu original salvo el getGraphSeries al final real)
+  // ===========================
+  else if (this.isLogsAlert) {
+
+    this.logsStep1Form.get('service')?.setValue(alertViewDto.logsService);
+    this.getDistinctTableNamesByDataType(alertViewDto.logsService!, false);
+    this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
+
+    this.catalogLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
+      this.logsStep1Form.get('catalog')?.setValue(alertViewDto.logsCatalog);
+      this.getDistinctMetricsByDataTypeAndTable(alertViewDto.logsService!, alertViewDto.logsCatalog!)
     });
 
-    //ACTIVATION AND RECOVERY
-    this.activationRecoverForm.get('activation1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmNumPeriods));
-    this.activationRecoverForm.get('activation2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmTotalPeriods));
-    this.activationRecoverForm.get('recover1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryNumPeriods));
-    this.activationRecoverForm.get('recover2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryTotalPeriods));
+    this.metricsLoaded.pipe(filter((loaded) => loaded === true), take(1)).subscribe(() => {
+      alertViewDto.conditions?.at(0)?.conditionFilters?.filter(conditionFilter => conditionFilter.externalOperation != null).forEach((conditionFilter) => {
+        const group: LogConditionFormGroup = this._fb.group({
+          logConditionId: this._fb.control(conditionFilter.conditionFilterId),
+          externalOperation: this._fb.control(conditionFilter.externalOperation),
+          field: this._fb.control({ value: conditionFilter.filterField, disabled: false }, [Validators.required]),
+          comparation: this._fb.control(advancedSearchOptions.find((compOperation) => compOperation.value == conditionFilter.compOperation)),
+          value: this._fb.control(conditionFilter.filterValue),
+          dimensions: this._fb.control([] as string[])
+        }) as LogConditionFormGroup;
 
-    //SILENCE PERIODS
-    alertViewDto.silencePeriods?.forEach((silencePeriod) => {
-      let splittedStartTime: string[] = silencePeriod.startTime.split(':');
-      let splittedEndTime: string[] = silencePeriod.endTime.split(':');
-      const group: SilencePeriodFormGroup = this._fb.group({
-        id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
-        days: this._fb.control(silencePeriod.days),
-        from: this._fb.control(new Date(2025, 1, 1, Number(splittedStartTime[0]), Number(splittedStartTime[1]), Number(splittedStartTime[2]))),
-        to: this._fb.control(new Date(2025, 1, 1, Number(splittedEndTime[0]), Number(splittedEndTime[1]), Number(splittedEndTime[2]))),
-        stored: this._fb.control(true)
-      },
+        this.logsConditionArray.push(group);
+      });
+
+      this.logsConditionArray.controls.forEach((logCondition, i) => {
+        this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, i);
+      });
+
+      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+
+      this.conditionFiltersMap = new Map();
+
+      alertViewDto.conditions!.forEach((condition, i) => {
+        this.conditionFiltersMap.set((i + 1).toString(), new Map());
+        let filterDimensionMap: Map<string, Map<string, string[]>> = new Map();
+
+        alertViewDto.groupBy!.forEach((dimension) => {
+          this.alertOcurrencesService.getDistinctValuesForDimension(alertViewDto.logsCatalog!, dimension, null).subscribe(
+            (response) => {
+              let selected: string[] = [];
+              let created: string[] = [];
+              let merge: string[] = [];
+
+              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
+                if (cf.isCreated) created.push(cf.filterValue!);
+                else selected.push(cf.filterValue!);
+              });
+
+              selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
+              merge = created.concat(response);
+
+              filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge));
+              this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
+            },
+            () => { }
+          );
+        });
+      });
+
+      this.generateInternalNameAndName();
+    });
+  }
+
+  // ===========================
+  // BASELINE ALERT
+  // ===========================
+  else if (this.isBaselineAlert) {
+    this.baselineSelectDisabled = true;
+
+    alertViewDto.baselineType == 'PAST_AVERAGE'
+      ? this.isBaselinePastAverageAlert = true
+      : alertViewDto.baselineType == 'PAST_AVERAGE_PONDERED'
+        ? this.isBaselinePastAveragePonderedAlert = true
+        : this.isBaselineKSigmaAlert = true;
+
+    this.loadBaselines(alertViewDto);
+    this.indicatorNames.push(this.letters[0]);
+  }
+
+  // ===========================
+  // ADVANCED OPTIONS
+  // ===========================
+  this.advancedOptionsForm.get('timeWindow')
+    ?.setValue(timeWindowOptions.find((two) => two.label.startsWith(alertViewDto.evaluationPeriod!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+  this.advancedOptionsForm.get('discardTime')
+    ?.setValue(discardTimeOptions.find((dto) => dto.value == alertViewDto.offset));
+  this.advancedOptionsForm.get('periodicity')
+    ?.setValue(periodicityOptions.find((po) => po.label.startsWith(alertViewDto.evaluationFrequency!.replace(/(\d+)([a-zA-Z]+)/, "$1 $2"))));
+
+  // ===========================
+  // CONDITIONS
+  // ===========================
+  alertViewDto.conditions?.forEach((condition, i) => {
+
+    const newCondition: ConditionFormGroup = this._fb.group({
+      conditionId: this._fb.control(condition.id),
+      id: this._fb.control((this.conditionArray.length + 1).toString()),
+      severity: this._fb.control(this.severityOptions.find((opt) => opt.value == condition.severity)),
+      status: this._fb.control(condition.status),
+      clauses: this._fb.array<ClauseFormGroup>([]),
+      baselineVariables: this._fb.group({
+        baselinesVariablesId: [condition.baselinesVariables?.id],
+        type: [this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar1 && condition.baselinesVariables?.auxVar2 ? this.baselinesVariablesConditionTypes[2]
+          : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar1 ? this.baselinesVariablesConditionTypes[1]
+            : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar2 ? this.baselinesVariablesConditionTypes[0]
+              : this.baselinesVariablesConditionTypes[0]],
+        auxVar1: [condition.baselinesVariables?.auxVar1],
+        auxVar2: [condition.baselinesVariables?.auxVar2],
+        auxVar3: [condition.baselinesVariables?.auxVar3]
+      })
+    }) as ConditionFormGroup;
+
+    this.conditionArray.push(newCondition);
+
+    if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! > 1)) {
+      condition.alertClauses?.forEach((clause) => {
+        if (clause.threshold != null) {
+          this.conditionArray.at(i).controls.clauses.push(this._fb.group({
+            clauseId: this._fb.control(clause.id),
+            indicatorName: this._fb.control(clause.indicatorName),
+            id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
+            comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
+            order: this._fb.control(this.conditionArray.length + 1),
+            value: this._fb.control(clause.threshold),
+            minIncluded: this._fb.control(clause.thresholdInclude),
+            min: this._fb.control(clause.threshold),
+            maxIncluded: this._fb.control(clause.thresholdIncludeUp),
+            max: this._fb.control(clause.thresholdIncludeUp),
+            startBrackets: this._fb.control(clause.startBrackets),
+            endBrackets: this._fb.control(clause.endBrackets),
+            externalOperation: this._fb.control(clause.externalOperation)
+          }) as ClauseFormGroup);
+        }
+      });
+    }
+
+    this.resetSeverityOptions();
+    this.conditionTextMap.set(i, this.generateConditionText(i));
+  });
+
+  // ===========================
+  // ACTIVATION AND RECOVERY
+  // ===========================
+  this.activationRecoverForm.get('activation1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmNumPeriods));
+  this.activationRecoverForm.get('activation2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmTotalPeriods));
+  this.activationRecoverForm.get('recover1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryNumPeriods));
+  this.activationRecoverForm.get('recover2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryTotalPeriods));
+
+  // ===========================
+  // SILENCE PERIODS
+  // ===========================
+  alertViewDto.silencePeriods?.forEach((silencePeriod) => {
+    let splittedStartTime: string[] = silencePeriod.startTime.split(':');
+    let splittedEndTime: string[] = silencePeriod.endTime.split(':');
+
+    const group: SilencePeriodFormGroup = this._fb.group({
+      id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
+      days: this._fb.control(silencePeriod.days),
+      from: this._fb.control(new Date(2025, 1, 1, Number(splittedStartTime[0]), Number(splittedStartTime[1]), Number(splittedStartTime[2]))),
+      to: this._fb.control(new Date(2025, 1, 1, Number(splittedEndTime[0]), Number(splittedEndTime[1]), Number(splittedEndTime[2]))),
+      stored: this._fb.control(true)
+    },
       {
         validators: this.timeValidator
       }) as SilencePeriodFormGroup;
 
-      group.get('from')?.valueChanges.subscribe(() => group.updateValueAndValidity());
-      group.get('to')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+    group.get('from')?.valueChanges.subscribe(() => group.updateValueAndValidity());
+    group.get('to')?.valueChanges.subscribe(() => group.updateValueAndValidity());
 
-      this.silencePeriodArray.push(group);
-    });
+    this.silencePeriodArray.push(group);
+  });
 
-    //ENDPOINTS
-    alertViewDto.endpoints?.forEach((endpoint) => {
-      
-      this.endpointsByTypeMap[endpoint.type].forEach((ept: any) => {
-        if (ept.id == endpoint.endpointId)
-        {
-          let severityList: any[] = [];
+  // ===========================
+  // ENDPOINTS
+  // ===========================
+  alertViewDto.endpoints?.forEach((endpoint) => {
 
-          endpoint.severities!.forEach((svrt) => {
-            severityList.push(this.severityOptions.find((opt) => opt.value == svrt));
-          });
+    this.endpointsByTypeMap[endpoint.type].forEach((ept: any) => {
+      if (ept.id == endpoint.endpointId) {
+        let severityList: any[] = [];
 
-          this.endpointList.push(new Endpoint(endpoint.id!, this.endpointTypeOptions.find((opt) => opt.value == endpoint.type), ept, severityList));
-        }
-      })
-    });
+        endpoint.severities!.forEach((svrt) => {
+          severityList.push(this.severityOptions.find((opt) => opt.value == svrt));
+        });
 
-    //ALERT TAGS
-    alertViewDto.alertTags?.forEach((tag) => {
-      this.tagList.push(new Tag(tag.name!, tag.value!));
-    });
+        this.endpointList.push(new Endpoint(endpoint.id!, this.endpointTypeOptions.find((opt) => opt.value == endpoint.type), ept, severityList));
+      }
+    })
+  });
 
-    //NOTIFICATIONS
-    this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText ? alertViewDto.alertText : '');
-    this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail ? alertViewDto.alertDetail : '');
-    this.notificationMessageForm.get('opiUrl')?.setValue(alertViewDto.opiUrl ? alertViewDto.opiUrl : '');
+  // ===========================
+  // ALERT TAGS
+  // ===========================
+  alertViewDto.alertTags?.forEach((tag) => {
+    this.tagList.push(new Tag(tag.name!, tag.value!));
+  });
 
-    //PERMISSIONS
-    for (let i = 0; i < alertViewDto.permissions!.length; i++)
-    {
-      this.permissionList.push(new Permission(alertViewDto.permissions![i].id, this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId), this.permissionTypeOptions.find((permissionType) => alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r')))
-      this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)]!.disabled = true;
-    }
+  // ===========================
+  // NOTIFICATIONS
+  // ===========================
+  this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText ? alertViewDto.alertText : '');
+  this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail ? alertViewDto.alertDetail : '');
+  this.notificationMessageForm.get('opiUrl')?.setValue(alertViewDto.opiUrl ? alertViewDto.opiUrl : '');
 
-    if (this.isLogsAlert)
-    {
-      this.generateInternalNameAndName();
-    }
+  // ===========================
+  // PERMISSIONS
+  // ===========================
+  for (let i = 0; i < alertViewDto.permissions!.length; i++) {
+    this.permissionList.push(
+      new Permission(
+        alertViewDto.permissions![i].id,
+        this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId),
+        this.permissionTypeOptions.find((permissionType) =>
+          alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r'
+        )
+      )
+    )
+    this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)]!.disabled = true;
   }
+
+  if (this.isLogsAlert) {
+    this.generateInternalNameAndName();
+  }
+}
 
   onClickConfirmCrupdateAlert() 
   {
@@ -2654,8 +2731,6 @@ export class AlertManagerComponent implements OnInit{
     });
 
     this.generateGraphAgroupations(event.itemValue);
-
-    this.getGraphSeries();
   }
 
   onChangeBaselineGroupBy()
@@ -2831,18 +2906,21 @@ export class AlertManagerComponent implements OnInit{
 
     let graphRequest: GraphRequest = new GraphRequest(this.hours, groupBy, indicatorDataDtoList, this.requestGraphGroupBy);
 
-    this.plottingService.getGraphSeries(graphRequest).subscribe(
-      (response) => {
-        this.graphSeriesLoading = false;
-        this.graphSeriesError = false;
-        
-        this.graphSeries = response;
-      },
-      (error) => {
-        this.graphSeriesLoading = false;
-        this.graphSeriesError = true;
-      }
-    )
+    if (graphRequest.alertIndicators.length != 0)
+    {
+      this.plottingService.getGraphSeries(graphRequest).subscribe(
+        (response) => {
+          this.graphSeriesLoading = false;
+          this.graphSeriesError = false;
+          
+          this.graphSeries = response;
+        },
+        (error) => {
+          this.graphSeriesLoading = false;
+          this.graphSeriesError = true;
+        }
+      )
+    }
   }
 
   get status(): 'success' | 'db+dolphin' | 'db' | 'dolphin' | 'main' {

@@ -132,7 +132,7 @@
                         <p-floatlabel class="full-width-selector" variant="on">
                             <p-multiselect [options]="dimensionIntersectionOptions" class="full-width-selector"
                                 [filter]="true" appendTo="body" formControlName="groupBy"
-                                (onChange)="onChangeGroupBy($event);" emptyMessage="No hay dimensiones que mostrar" />
+                                (onChange)="onChangeGroupBy($event);" (onPanelHide)="this.getGraphSeries();" emptyMessage="No hay dimensiones que mostrar" />
                             <label for="over_label1">Agrupar por</label>
                         </p-floatlabel>
                     </form>
@@ -842,7 +842,7 @@
             <i class="pi pi-times c-red" style="font-size: 128px"></i>
             <div class="font-16 font-w-600">Ha habido algún error al {{mode == 'create' ? 'crear' :
                 'actualizar'}} la
-                alerta en BBDD y en el Dolphin</div>
+                alerta en BBDD y en Dolphin</div>
             <div class="font-12 text-gray"></div>
         </div>
         <div *ngIf="status === 'db'" class="modal-icon-container">
@@ -1066,25 +1066,41 @@
         </div>
     </div>
     <div *ngIf="!isSuccess && !dbError && !dolphinError" class="modal-actions">
-        <p-button label="Volver" severity="secondary" (onClick)="modalVisible = false;" />
-        <p-button label="Confirmar" severity="primary" (onClick)="isDetails = false; onClickConfirmCrupdateAlert();"
-            [loading]="isLoading" />
+        <p-button label="Cerrar" severity="secondary" size="small" (onClick)="modalVisible = false;" [disabled]="isLoading" />
+
+        <div class="right">
+            <p-button label="Confirmar" severity="primary" size="small" (onClick)="isDetails = false; onClickConfirmCrupdateAlert();" [loading]="isLoading" />
+        </div>
     </div>
     <div *ngIf="status === 'success'" class="modal-actions">
-        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
+        <p-button label="Cerrar" severity="secondary" size="small" (onClick)="modalVisible = false;" [disabled]="isLoading" />
+
+        <div class="right">
+            <p-button label="Mis alertas" severity="primary" size="small" (onClick)="onClickGoToMofifyAlert();" />
+        </div>
     </div>
     <div *ngIf="status === 'db+dolphin'" class="modal-actions">
-        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
+        <p-button label="Cerrar" severity="secondary" size="small" (onClick)="modalVisible = false;" [disabled]="isLoading" />
+
+        <div class="right">
+            <p-button label="Reintentar" severity="primary" size="small" (onClick)="isDetails = false; onClickConfirmCrupdateAlert();" [loading]="isLoading" />
+            <p-button label="Mis alertas" severity="primary" size="small" (onClick)="onClickGoToMofifyAlert();" />
+        </div>
     </div>
     <div *ngIf="status === 'db'" class="modal-actions">
-        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
+        <p-button label="Cerrar" severity="secondary" size="small" (onClick)="modalVisible = false;" [disabled]="isLoading" />
+
+        <div class="right">
+            <p-button label="Reintentar" severity="primary" size="small" (onClick)="isDetails = false; onClickConfirmCrupdateAlert();" [loading]="isLoading" />
+            <p-button label="Mis alertas" severity="primary" size="small" (onClick)="onClickGoToMofifyAlert();" />
+        </div>
     </div>
     <div *ngIf="status === 'dolphin'" class="modal-actions">
-        <p-button label="Volver atrás" severity="secondary" (onClick)="onClickGoToCreateAlert();" />
-        <p-button label="Mis alertas" severity="primary" (onClick)="onClickGoToMofifyAlert();" />
+        <p-button label="Cerrar" severity="secondary" size="small" (onClick)="modalVisible = false;" [disabled]="isLoading" />
+
+         <div class="right">
+            <p-button label="Mis alertas" severity="primary" size="small" (onClick)="onClickGoToMofifyAlert();" />
+        </div>
     </div>
 </app-modal>
 

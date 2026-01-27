@@ -1077,6 +1077,14 @@
     align-items: center;
 
     margin-top: 24px;
+
+    .right
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
 }
 
 .notification-modal-content {

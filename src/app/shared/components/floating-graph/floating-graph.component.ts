@@ -84,8 +84,6 @@ export class FloatingGraphComponent
         this.selectedGroupBy.push(key);
         this.groupByChartSelectedMap.set(key, this.graphGroupBy.get(key)!);
       }
-
-      this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
     }
   }
 
@@ -284,14 +282,15 @@ export class FloatingGraphComponent
     event.value.forEach((dimension: string) => {
       this.groupByChartSelectedMap.set(dimension, this.graphGroupBy.get(dimension)!);
     });
-
-    this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
   }
 
   onChangeGraphFilters(event: any, dimension: string)
   {
     this.groupByChartSelectedMap.set(dimension, event.value);
+  }
 
+  emitGraphGroupByEvent()
+  {
     this.graphGroupByEvent.emit(this.groupByChartSelectedMap);
   }
 
