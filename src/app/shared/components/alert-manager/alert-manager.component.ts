@@ -2977,4 +2977,25 @@ export class AlertManagerComponent implements OnInit{
 
     this.getGraphSeries();
   }
+
+  allIndicatorsCorrect()
+  {
+    let allValid = true;
+
+    if (this.indicatorArray.length == 0 || this.indicatorArray.at(0).controls.metrics.length == 0)
+    {
+      allValid = false;
+    }
+
+    this.indicatorArray.controls.forEach((indicator) => {
+      indicator.get('metrics')?.value.forEach((metric: any) => {
+        if (metric.metric == null || metric.metric.metric == null)
+        {
+          allValid = false;
+        }
+      });
+    });
+
+    return allValid;
+  }
 }

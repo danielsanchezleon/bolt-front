@@ -125,7 +125,7 @@
                     </div>
                 </div>
 
-                <div *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value != null && !isBaselineAlert"
+                <div *ngIf="allIndicatorsCorrect() && !isBaselineAlert"
                     class="titled-container">
                     <div class="font-16 font-w-600">Agrupaciones</div>
                     <form class="group-by-options" [formGroup]="groupByForm">
@@ -807,10 +807,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0) || indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric == null) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0) || indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric == null) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted()" />
         </div>
     </div>
 </app-page-wrapper>
@@ -1190,9 +1190,9 @@
         <p-button icon="pi pi-minus" [rounded]="true" [text]="true" severity="secondary" (click)="requiredDataPanelVisible = false" />
     </div>
     <div *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" class="required-data-list">
-        <div class="font-14 required-data-element" [ngClass]="{'c-green': indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric && !isBaselineAlert}">
-            <i *ngIf="indicatorArray.length > 0 && indicatorArray.at(0).controls.metrics.length > 0 && indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value!.metric && !isBaselineAlert" class="pi pi-check-circle"></i>
-            <div>Al menos una métrica seleccionada</div>
+        <div class="font-14 required-data-element" [ngClass]="{'c-green': allIndicatorsCorrect()}">
+            <i *ngIf="allIndicatorsCorrect()" class="pi pi-check-circle"></i>
+            <div>Todas las métricas añadidas han sido seleccionadas</div>
         </div>
         <div class="font-14 required-data-element" [ngClass]="{'c-green': checkAllClausesCompleted()}">
             <i *ngIf="checkAllClausesCompleted()" class="pi pi-check-circle"></i>
