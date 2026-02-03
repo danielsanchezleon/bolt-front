@@ -250,8 +250,8 @@
         <p-button icon="pi pi-times" label="Borrar selección" (onClick)="selectedAlerts = [];" severity="secondary" />
     </div>
     <div style="display: flex; flex-direction: row; gap: 16px;">
-        <p-button *ngIf="allSelectedAlertsHaveDolphinError();" icon="pi pi-replay" label="Recrear alerta" severity="primary" (onClick)="recreateAlertModalVisible = true;" />
-        <p-button icon="pi pi-trash" label="Eliminar alerta" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
+        <p-button *ngIf="allSelectedAlertsHaveDolphinError();" icon="pi pi-replay" label="{{this.selectedAlerts.length == 1 ? 'Recrear alerta' : 'Recrear alertas'}}" severity="primary" (onClick)="recreateAlertModalVisible = true;" />
+        <p-button icon="pi pi-trash" label="{{this.selectedAlerts.length == 1 ? 'Eliminar alerta' : 'Eliminar alertas'}}" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
     </div>
     <div class="buttons">
         <p-floatlabel variant="on">
@@ -291,7 +291,7 @@
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Cerrar" severity="secondary" (onClick)="saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
         <p-button *ngIf="completedUpdates != changedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmSaveChanges();" [disabled]="saveChangesLoading()" />
         <div *ngIf="completedUpdates == changedAlerts.length"></div>
-        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, ''); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
+        <p-button *ngIf="completedUpdates == changedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedUpdates = 0; getAllAlerts(page, size, this.filterForm.value); saveChangesModalVisible = false;" [disabled]="saveChangesLoading()" />
     </div>
 </app-modal>
 
@@ -306,7 +306,7 @@
         <div class="changed-alerts-container">
             <div class="changed-alert-container" *ngFor="let selectedAlert of selectedAlerts; let i = index; let last = last;">
                 <div class="data">
-                    <div class="font-w-600">#{{selectedAlert.alertId}} - {{selectedAlert.name}}</div>
+                    <div class="font-14 font-w-600">#{{selectedAlert.alertId}} - {{selectedAlert.alertText}}</div>
                     <i *ngIf="!this.deleteAlertsMapLoading.get(selectedAlert.alertId!) && !this.deleteAlertsMapSuccess.get(selectedAlert.alertId!) && !this.deleteAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-circle"></i>
                     <i *ngIf="this.deleteAlertsMapLoading.get(selectedAlert.alertId!)" class="pi pi-spinner spin"></i>
                     <i *ngIf="this.deleteAlertsMapSuccess.get(selectedAlert.alertId!)" class="pi pi-check-circle" style="color: green;"></i>
@@ -321,7 +321,7 @@
         <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
         <p-button *ngIf="completedDeletes != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmDeleteAlerts();" [disabled]="deleteAlertsLoading()" />
         <div *ngIf="completedDeletes == selectedAlerts.length"></div>
-        <p-button *ngIf="completedDeletes == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedDeletes = 0; getAllAlerts(page, size, ''); deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
+        <p-button *ngIf="completedDeletes == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedDeletes = 0; getAllAlerts(page, size, this.filterForm.value); deleteAlertsModalVisible = false;" [disabled]="deleteAlertsLoading()" />
     </div>
 </app-modal>
 
@@ -351,7 +351,7 @@
         <p-button *ngIf="completedRecreates != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
         <p-button *ngIf="completedRecreates != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmRecreateAlerts();" [disabled]="recreateAlertsLoading()" />
         <div *ngIf="completedRecreates == selectedAlerts.length"></div>
-        <p-button *ngIf="completedRecreates == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedRecreates = 0; getAllAlerts(page, size, ''); recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
+        <p-button *ngIf="completedRecreates == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedRecreates = 0; getAllAlerts(page, size, this.filterForm.value); recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
     </div>
 </app-modal>
 

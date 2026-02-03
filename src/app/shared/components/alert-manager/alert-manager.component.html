@@ -10,7 +10,12 @@
         <span class="font-16 font-w-600">No existe ninguna alerta creada con el identificador {{alertId}}</span>
     </div>
 
-    <div *ngIf="(mode == 'edit' && !alertResponseError) || mode == 'create'" class="steps-container">
+    <div *ngIf="mode == 'edit' && corruptedAlert" class="error-message-container">
+        <i class="pi pi-info-circle" style="color: #2563eb;"></i>
+        <span class="font-16 font-w-600">Existe algún error en las métricas almacenadas de la alerta. Por favor, revisa la configuración.</span>
+    </div>
+
+    <div *ngIf="(mode == 'edit' && !alertResponseError && !corruptedAlert) || mode == 'create'" class="steps-container">
         <div class="font-32 font-w-600">{{isSimpleConditionAlert ? 'Condición simple' : isCompositeConditionAlert ? 'Condición compuesta' : isLogsAlert ? 'Conteo de patrones' : isBaselinePastAverageAlert ? 'Baseline - Valores del pasado' : isBaselinePastAveragePonderedAlert ? 'Baseline - Valores del pasado ponderados' : 'Baseline - Valores atípicos'}}</div>
         <app-accordion *ngIf="!isInitialMetricListLoading" [title]="'Paso 1: Configura la consulta'"
             [highlightTitle]="true" [isOpen]="true">
@@ -439,42 +444,45 @@
                             class="condition-dimensions">
                             <ng-container
                                 *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;">
-                                <p-multiselect #ms
-                                    *ngIf="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!"
-                                    class="multiselect"
-                                    [options]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!"
-                                    [ngModel]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!"
-                                    (onChange)="onChangeConditionFiltersSelection(condition, dimension, $event);"
-                                    appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"
-                                    [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true"
-                                    [title]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == 0 || conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!.length ? 'Todas las opciones seleccionadas' : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <div class="font-14 font-w-600" style="color: gray;">{{dimension}}</div>
+                                    <p-multiselect #ms
+                                        *ngIf="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!"
+                                        class="multiselect"
+                                        [options]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!"
+                                        [ngModel]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!"
+                                        (onChange)="onChangeConditionFiltersSelection(condition, dimension, $event);"
+                                        appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"
+                                        [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true"
+                                        [title]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == 0 || conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!.length ? 'Todas las opciones seleccionadas' : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!">
 
-                                    <!-- Ítem del desplegable -->
-                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="item" let-option>
-                                        <div
-                                            style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 16px;">
-                                            <span class="truncate">{{ option }}</span>
-                                            <i *ngIf="isCreated(option, condition, dimension)" class="pi pi-minus c-red"
-                                                (click)="onClickDeleteFilter(option, condition, dimension, $event);"></i>
-                                        </div>
-                                    </ng-template>
+                                        <!-- Ítem del desplegable -->
+                                        <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="item" let-option>
+                                            <div
+                                                style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 16px;">
+                                                <span class="truncate">{{ option }}</span>
+                                                <i *ngIf="isCreated(option, condition, dimension)" class="pi pi-minus c-red"
+                                                    (click)="onClickDeleteFilter(option, condition, dimension, $event);"></i>
+                                            </div>
+                                        </ng-template>
 
-                                    <!-- Mensaje cuando el filtro no encuentra nada -->
-                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="emptyfilter">
-                                        <div
-                                            style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px;">
-                                            <span>No hay resultados.</span>
-                                        </div>
-                                    </ng-template>
+                                        <!-- Mensaje cuando el filtro no encuentra nada -->
+                                        <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert || isLogsAlert" pTemplate="emptyfilter">
+                                            <div
+                                                style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px;">
+                                                <span>No hay resultados.</span>
+                                            </div>
+                                        </ng-template>
 
-                                    <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" #footer>
-                                        <div *ngIf="lastFilter" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 0px; border-top: 1px solid lightgray; width: 100%;">
-                                            <p-button type="button" icon="pi pi-plus" label="Añadir '{{ lastFilter }}'"
-                                                [disabled]="!lastFilter.trim()"
-                                                (onClick)="onClickCreateFilter(condition, dimension, ms);" />
-                                        </div>
-                                    </ng-template>
-                                </p-multiselect>
+                                        <ng-template *ngIf="isSimpleConditionAlert || isCompositeConditionAlert" #footer>
+                                            <div *ngIf="lastFilter" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; gap: 16px; padding: 8px 0px; border-top: 1px solid lightgray; width: 100%;">
+                                                <p-button type="button" icon="pi pi-plus" label="Añadir '{{ lastFilter }}'"
+                                                    [disabled]="!lastFilter.trim()"
+                                                    (onClick)="onClickCreateFilter(condition, dimension, ms);" />
+                                            </div>
+                                        </ng-template>
+                                    </p-multiselect>
+                                </div>
                             </ng-container>
                         </div>
                     </div>

@@ -432,7 +432,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedUpdates == this.changedAlerts.length) && this.failedUpdates == 0)
         {
-          this.getAllAlerts(this.page, this.size, '');
+          this.getAllAlerts(this.page, this.size, this.filterForm.value);
           this.saveChangesModalVisible = false;
           this.completedUpdates = 0;
           this.failedUpdates = 0;
@@ -497,7 +497,7 @@ export class ModifyAlertComponent implements OnInit
     this.page = event.page;
     this.size = event.rows;
 
-    this.getAllAlerts(this.page, this.size, null);
+    this.getAllAlerts(this.page, this.size, this.filterForm.value);
   }
 
   onClickConfirmDeleteAlerts()
@@ -522,7 +522,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedDeletes == this.selectedAlerts.length) && this.failedDeletes == 0)
         {
-          this.getAllAlerts(this.page, this.size, '');
+          this.getAllAlerts(this.page, this.size, this.filterForm.value);
           this.deleteAlertsModalVisible = false;
           this.completedDeletes = 0;
           this.failedDeletes = 0;
@@ -599,7 +599,7 @@ export class ModifyAlertComponent implements OnInit
 
         if ((this.completedRecreates == this.selectedAlerts.length) && this.failedRecreates == 0)
         {
-          this.getAllAlerts(this.page, this.size, '');
+          this.getAllAlerts(this.page, this.size, this.filterForm.value);
           this.recreateAlertModalVisible = false;
           this.completedRecreates = 0;
           this.failedRecreates = 0;

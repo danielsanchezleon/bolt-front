@@ -344,6 +344,8 @@ export class AlertManagerComponent implements OnInit{
 
   requiredDataPanelVisible: boolean = true;
 
+  corruptedAlert: boolean = false;
+
   //Step 1
   matOperationOptions: any[] = [];
 
@@ -1063,9 +1065,13 @@ export class AlertManagerComponent implements OnInit{
     {
       this.resetConditionFilters(group);
     }
-    else
+    else if (this.isLogsAlert)
     {
       this.resetLogsConditionFilters(group);
+    }
+    else
+    {
+      this.resetBaselineConditionFilters(group);
     }
   }
 
@@ -1799,12 +1805,45 @@ export class AlertManagerComponent implements OnInit{
                     id: this._fb.control((j + 1).toString()),
                     name: this._fb.control(this.letters[i] + "." + (j + 1)),
                     metric: this._fb.control(
-                      response.find(met =>
-                        (met.table_name == metric.tableName) &&
-                        (met.dimension!
-                          .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
-                          .join(',') == metric.dimensions)
-                      )
+                      (() => {
+                        // 0️⃣ Candidatos por metric + table
+                        const baseCandidates = response.filter(met =>
+                          met.metric === metric.metricName &&
+                          met.table_name === metric.tableName
+                        );
+
+                        // 🚨 Si no hay ninguno → flag
+                        if (!baseCandidates.length) {
+                          this.corruptedAlert = true;
+                          return null;
+                        }
+
+                        // 1️⃣ Match exacto
+                        const exact = baseCandidates.find(met =>
+                          met.dimension!
+                            .slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                            .join(',') === metric.dimensions
+                        );
+
+                        if (exact) return exact;
+
+                        // 2️⃣ Fallback por dimensiones
+                        const metricDims = metric.dimensions!.split(',').map(d => d.trim().toLowerCase());
+
+                        const candidates = baseCandidates
+                          .map(met => ({
+                            met,
+                            dims: met.dimension!.map(d => d.toLowerCase())
+                          }))
+                          .filter(x =>
+                            metricDims.every(d => x.dims.includes(d))
+                          )
+                          .sort((a, b) =>
+                            a.dims.length - b.dims.length
+                          );
+
+                        return candidates.length ? candidates[0].met : null;
+                      })()
                     ),
                     operation: this._fb.control(matOperationOptions.find(opt => opt.value == metric.operation)),
                     options: this._fb.control(response),
@@ -2063,7 +2102,7 @@ export class AlertManagerComponent implements OnInit{
             minIncluded: this._fb.control(clause.thresholdInclude),
             min: this._fb.control(clause.threshold),
             maxIncluded: this._fb.control(clause.thresholdIncludeUp),
-            max: this._fb.control(clause.thresholdIncludeUp),
+            max: this._fb.control(clause.thresholdUp),
             startBrackets: this._fb.control(clause.startBrackets),
             endBrackets: this._fb.control(clause.endBrackets),
             externalOperation: this._fb.control(clause.externalOperation)
@@ -2638,6 +2677,8 @@ export class AlertManagerComponent implements OnInit{
 
   resetBaselineConditionFilters(condition: ConditionFormGroup)
   {
+    if (this.groupByForm.get('groupBy')?.value.length == 0) return;
+    
     this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
     
     let baselineType: string = this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'CDN' : 'QOE';
@@ -2647,7 +2688,7 @@ export class AlertManagerComponent implements OnInit{
         for (const dimension in response) {
           if (response.hasOwnProperty(dimension)) {
             const filterValues: string[] = response[dimension];
-             this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));   
+            this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));   
           }
         }
       },
