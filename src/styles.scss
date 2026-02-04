@@ -158,3 +158,12 @@ p-tabs > p-tabpanels
     background-color: transparent !important;
     padding: 8px 0px;
 }
+
+p-progress-spinner svg circle {
+  stroke: #2563eb !important;
+}
+
+input[type="search"]::-webkit-search-decoration:hover,
+input[type="search"]::-webkit-search-cancel-button:hover { 
+    cursor:pointer; 
+}

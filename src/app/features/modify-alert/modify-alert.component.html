@@ -4,7 +4,7 @@
 
     <div class="modify-alert-container">
         <div class="page-title">
-            <div class="font-32 font-w-700">Gestión de alertas <i class="pi pi-refresh {{isLoading ? 'pi-spin' : ''}}" style="font-size: 1.5rem; cursor: pointer;" (click)="getAllAlerts(page, size, null)"></i></div>
+            <div class="font-32 font-w-700">Gestión de alertas <i class="pi pi-refresh {{isLoading ? 'pi-spin' : ''}}" style="font-size: 1.5rem; cursor: pointer;" (click)="filterTextControl.reset(); clearIndividualFilters(); getAllAlerts(page, size, null)"></i></div>
             <div>Gestiona las alertas que han sido generadas en el sistema. Ten en cuenta que solo podrás modificar las que has creado o las que pertenecen a algún miembro de tu equipo.</div>
         </div>
     </div>
@@ -17,24 +17,24 @@
     </div>
 
     <div class="filter-container">
-        <form [formGroup]="filterForm" style="width: 100%;">
-            <p-iconfield *ngIf="!isLoading && !isError" style="width: 100%;">
-                <p-inputicon class="pi pi-search" />
-                <input style="width: 100%;" formControlName="filterText" type="text" pInputText placeholder="Buscar alertas por nombre o mensaje" />
-                <p-inputicon *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(page, size, null); filterTextControl.reset();"/>
+        <form *ngIf="!firstCall" [formGroup]="filterForm" style="width: 100%;">
+            <p-iconfield style="width: 100%;">
+                <p-inputicon iconPosition="left" class="pi pi-search" />
+                <input style="width: 100%;" formControlName="filterText" type="search" pInputText placeholder="Buscar alertas por nombre o mensaje" />
+                <p-inputicon iconPosition="right" *ngIf="filterTextControl.value && filterTextControl.value != null && filterTextControl.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="getAllAlerts(page, size, null); filterTextControl.reset();"/>
             </p-iconfield>
         </form>
-        <p-skeleton *ngIf="isLoading && !isError" width="1343px" height="39px" borderRadius="8px" />
+        <p-skeleton *ngIf="isLoading && !isError && firstCall" width="1343px" height="39px" borderRadius="8px" />
 
-        <p-button *ngIf="!isLoading && !isError" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
+        <p-button *ngIf="!firstCall" icon="pi {{filterPanelOpen ? 'pi-times' : 'pi-filter'}}"
             label="{{filterPanelOpen ? 'Cerrar' : 'Filtrar'}}" [outlined]="true"
             [severity]="filterPanelOpen ? 'danger' : 'primary'" class="outlined-button"
             (onClick)="filterPanelOpen = !filterPanelOpen;" />
-        <p-skeleton *ngIf="isLoading && !isError" width="92px" height="39px" borderRadius="8px" />
+        <p-skeleton *ngIf="isLoading && !isError && firstCall" width="92px" height="39px" borderRadius="8px" />
     </div>
 
     <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
-        <form *ngIf="filterForm" [formGroup]="filterForm" style="width: 100%;">
+        <form *ngIf="filterForm && !isLoading && !isError" [formGroup]="filterForm" style="width: 100%;">
             <p-select [ngStyle]="{'width': '100%'}" [options]="servicesList" appendTo="body" formControlName="service" placeholder="Service" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="sourcesList" appendTo="body" formControlName="source" placeholder="Source" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="dataTypesList" appendTo="body" formControlName="dataType" placeholder="Data type" />
@@ -46,7 +46,7 @@
         </div>
     </div>
 
-    <div *ngIf="!isLoading && !isError" class="table-container">
+    <div *ngIf="(!isLoading && !isError && firstCall) || !firstCall" class="table-container">
         <p-table *ngIf="alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
             <ng-template #header>
                 <tr>
@@ -237,9 +237,13 @@
 
             <p-button icon="pi pi-save" label="Guardar cambios" severity="primary" [disabled]="!hasChanges()" (onClick)="getChangedAlerts(); saveChangesModalVisible = true;" />
         </div>
+
+        <div *ngIf="isLoading && !isError && !firstCall" class="loading-blur">
+            <p-progress-spinner styleClass="my-blue-spinner" *ngIf="isLoading && !isError" />
+        </div>
     </div>
 
-    <p-skeleton *ngIf="isLoading && !isError" width="1460px" height="800px" borderRadius="8px" />
+    <p-skeleton *ngIf="isLoading && !isError && firstCall" width="1460px" height="800px" borderRadius="8px" />
 
     <div style="width: 100%; height: 100px;"></div>
 </app-page-wrapper>

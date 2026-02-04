@@ -42,10 +42,11 @@ import { BaselinesVariablesDto } from '../../shared/dto/BaselinesVariablesDto';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule, TooltipModule],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule, TooltipModule, ProgressSpinnerModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -101,6 +102,7 @@ export class ModifyAlertComponent implements OnInit
 
   filterTextControl: FormControl = new FormControl('');
 
+  firstCall: boolean = true;
   isLoading: boolean = false;
   isError: boolean = false;
   alertsPage: any = {};
@@ -482,6 +484,9 @@ export class ModifyAlertComponent implements OnInit
         this.alertsPage = response;
         this.alertList = JSON.parse(JSON.stringify(response.content));
         this.currentAlertList = JSON.parse(JSON.stringify(response.content));
+
+        if (this.firstCall)
+          this.firstCall = false;
       },
       (error) => {
         this.isLoading = false;

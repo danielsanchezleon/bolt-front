@@ -7,6 +7,10 @@
 }
 
 .table-container {
+
+    position: relative;
+    width: 100%;
+
     background-color: white;
     padding: 16px;
     border: 1px solid lightgray;
@@ -20,6 +24,23 @@
     .table {
         width: 100%;
     }
+
+    .loading-blur
+    {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        width: 1460px;
+        height: 100%;
+        backdrop-filter: blur(10px);
+        border-radius: 8px;
+
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+    }
 }
 
 .filter-container {
@@ -29,6 +50,8 @@
     align-items: center;
 
     margin-top: 24px;
+
+    width: 100%;
 
     .outlined-button {
         width: fit-content;

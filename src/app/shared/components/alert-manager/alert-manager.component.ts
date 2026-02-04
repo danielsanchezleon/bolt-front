@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { CommonModule } from '@angular/common';
@@ -24,7 +24,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
-import { BehaviorSubject, catchError, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, lastValueFrom, map, mapTo, mergeMap, Observable, of, startWith, Subject, Subscription, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, catchError, concatMap, debounceTime, filter, finalize, firstValueFrom, forkJoin, from, map, mergeMap, Observable, of, startWith, Subject, Subscription, switchMap, take, tap } from 'rxjs';
 import { permissionTypeOptions } from '../../../shared/constants/permission-options';
 import { DialogModule } from 'primeng/dialog';
 import { MetricService } from '../../../shared/services/metric.service';
@@ -62,12 +62,7 @@ import {matOperationOptions,
         baselinesClauseComparationOptions
       } from '../../constants/alert-constants';
 import { AlertOcurrencesService } from '../../services/alert-ocurrences.service';
-import { ChartDataDto } from '../../dto/metric/ChartDataDto';
-import { ChartRequestDto } from '../../dto/metric/ChartRequestDto';
-import { ChartMetricDto } from '../../dto/metric/ChartMetricDto';
 import { ConditionFilterDto } from '../../dto/ConditionFilterDto';
-import { ChartIndicatorDto } from '../../dto/metric/ChartIndicatorDto';
-import { ChartDimensionDto } from '../../dto/metric/ChartDimensionDto';
 import { SelectedDimensionDto } from '../../dto/SelectedDimensionDto';
 import { DistinctValuesRequest } from '../../dto/DistinctValuesRequest';
 import { InventoryBaselinesService } from '../../services/inventory-baselines.service';
@@ -1483,8 +1478,8 @@ export class AlertManagerComponent implements OnInit{
             (response) => {
               let auxSelectedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('selected')!;
               let auxCreatedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('created')!;
-              this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim, new Map().set('values', response).set('selected', auxSelectedFilters).set('created', auxCreatedFilters).set('merge', auxCreatedFilters.concat(auxSelectedFilters)));          
-            },
+              let auxLostFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('lost')!;
+              this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim, new Map().set('values', response).set('selected', auxSelectedFilters).set('created', auxCreatedFilters).set('lost', auxLostFilters).set('merge', [...new Set([...auxCreatedFilters, ...auxLostFilters, ...auxSelectedFilters])]));          },
             (error) => {
 
             }
@@ -1735,6 +1730,7 @@ export class AlertManagerComponent implements OnInit{
               let selected: string[] = [];
               let created: string[] = [];
               let merge: string[] = [];
+              let lost: string[] = [];
 
               condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
 
@@ -1745,9 +1741,14 @@ export class AlertManagerComponent implements OnInit{
               });
 
               selected = selected.length == 0 && created.length == 0 ? response[dimension] : selected.length == 0 ? created : selected;
-              merge = created.concat(response[dimension]);
 
-              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('merge', merge));
+              // Perdidos: selected que ya no existen en values (response)
+              lost = selected.filter(v => !response[dimension].includes(v));
+
+              // 🔥 Merge con orden: created → lost → values
+              merge = [...new Set([...created, ...lost, ...response[dimension]])];
+
+              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('merge', merge).set('lost', lost));
             }
           },
           (error) => 
@@ -1914,6 +1915,7 @@ export class AlertManagerComponent implements OnInit{
                   let selected: string[] = [];
                   let created: string[] = [];
                   let merge: string[] = [];
+                  let lost: string[] = []; // 👈 nueva lista
 
                   condition.conditionFilters
                     ?.filter((cf) => cf.externalOperation == null && cf.filterField == req.dimension)
@@ -1928,20 +1930,23 @@ export class AlertManagerComponent implements OnInit{
                         : selected.length === 0 ? created
                           : selected;
 
-                  merge = created.concat(response);
+                  // 👉 Detectamos los selected que ya no existen en values (response)
+                  lost = selected.filter(v => !response.includes(v));
+
+                  // 👉 El merge ahora incluye: values + created + lost
+                  merge = [...new Set([...created, ...lost, ...response])];
 
                   const condMap = this.conditionFiltersMap.get(condKey)!;
 
                   if (condMap.has(req.dimension)) {
-                    // Intersección (como hacías tú)
                     const prevValues = condMap.get(req.dimension)!.get('values') as string[];
                     const intersection = prevValues.filter(v => response.includes(v));
                     condMap.get(req.dimension)!.set('values', intersection);
 
-                    // Mantén selected/created/merge (si quieres, podrías recalcular)
                     condMap.get(req.dimension)!.set('selected', selected);
                     condMap.get(req.dimension)!.set('created', created);
-                    condMap.get(req.dimension)!.set('merge', merge);
+                    condMap.get(req.dimension)!.set('lost', lost);     // 👈 guardamos lost
+                    condMap.get(req.dimension)!.set('merge', merge);   // 👈 merge actualizado
                   } else {
                     condMap.set(
                       req.dimension,
@@ -1949,11 +1954,11 @@ export class AlertManagerComponent implements OnInit{
                         .set('values', response)
                         .set('selected', selected)
                         .set('created', created)
-                        .set('merge', merge)
+                        .set('lost', lost)       // 👈 nuevo campo
+                        .set('merge', merge)     // 👈 actualizado
                     );
                   }
                 });
-
               }),
               catchError(() => of(null))
             ),
@@ -2017,6 +2022,7 @@ export class AlertManagerComponent implements OnInit{
               let selected: string[] = [];
               let created: string[] = [];
               let merge: string[] = [];
+              let lost: string[] = []; // 👈 nueva lista
 
               condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
                 if (cf.isCreated) created.push(cf.filterValue!);
@@ -2024,9 +2030,14 @@ export class AlertManagerComponent implements OnInit{
               });
 
               selected = selected.length == 0 && created.length == 0 ? response : selected.length == 0 ? created : selected;
-              merge = created.concat(response);
 
-              filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge));
+              // 👉 Detectamos los selected que ya no existen en values (response)
+              lost = selected.filter(v => !response.includes(v));
+
+              // 👉 El merge ahora incluye: values + created + lost
+              merge = [...new Set([...created, ...lost, ...response])];
+
+              filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge).set('lost', lost));
               this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
             },
             () => { }
@@ -2831,6 +2842,13 @@ export class AlertManagerComponent implements OnInit{
     const map = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!;
     const created: string[] = map.get('created') || [];
     return created.includes(option);
+  }
+
+  isLost(option: string, condition: ConditionFormGroup, dimension: string): boolean
+  {
+    const map = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!;
+    const lost: string[] = map.get('lost') || [];
+    return lost.includes(option);
   }
 
   onClickDeleteFilter(option: string, condition: ConditionFormGroup, dimension: string, ev: MouseEvent) 
