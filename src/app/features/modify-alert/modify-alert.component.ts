@@ -163,8 +163,6 @@ export class ModifyAlertComponent implements OnInit
   {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state as { alertId: any };
-    
-    this.getAllAlerts(this.page, this.size, null);
 
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
@@ -182,6 +180,16 @@ export class ModifyAlertComponent implements OnInit
       category: new FormControl('')
     });
 
+    const saved = sessionStorage.getItem('tableFilters');
+    if (saved) {
+      this.filterForm.patchValue(JSON.parse(saved));
+      this.getAllAlerts(this.page, this.size, this.filterForm.value);
+    }
+    else
+    {
+      this.getAllAlerts(this.page, this.size, null);
+    }
+
     this.filterForm.valueChanges
     .pipe(
       debounceTime(1000), // espera 300ms tras dejar de escribir
@@ -189,7 +197,8 @@ export class ModifyAlertComponent implements OnInit
     )
     .subscribe(filters => 
     {
-      this.getAllAlerts(this.page, this.size, filters)
+      sessionStorage.setItem('tableFilters', JSON.stringify(filters));
+      this.getAllAlerts(this.page, this.size, filters);
     });
 
     this.getServices();
@@ -685,5 +694,22 @@ export class ModifyAlertComponent implements OnInit
   showToast(type: string, summary: string, detail: string) 
   {
     this.messageService.add({ severity: type, summary: summary, detail: detail, sticky: true });
+  }
+
+  get activeFilters() {
+    const values = this.filterForm.value;
+
+    return Object.entries(values)
+      .filter(([_, value]) => value !== null && value !== '' && value !== undefined)
+      .map(([key, value]) => ({ key, value }));
+  }
+
+  removeFilter(key: string) {
+    this.filterForm.get(key)?.setValue('');
+    this.filterForm.updateValueAndValidity();
+  }
+
+  trackByKey(index: number, item: { key: string; value: any }) {
+    return item.key;
   }
 }

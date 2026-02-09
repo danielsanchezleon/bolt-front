@@ -522,3 +522,41 @@ th {
 
     margin-top: 24px;
 }
+
+.chips
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 8px;
+
+    .chip
+    {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+
+        background-color: white;
+        border: 1px solid #2563eb;
+        border-radius: 200px;
+        padding: 3px 8px;
+
+        white-space: nowrap;
+
+        .chip-label {
+            max-width: 256px;
+            flex: 0 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .pi-times {
+            cursor: pointer;
+        }
+    }
+}

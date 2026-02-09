@@ -446,7 +446,7 @@ export class AnalyticsModuleComponent
     this.alertDrilldownTableLoading = true;
     this.alertDrilldownTableError = false;
 
-    this.alarmAnalyticsService.getAlertsTable(10, 10).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(10, 10, null).subscribe(
       (response) => {
         this.alertDrilldownTable = response;
         this.alertDrilldownTableLoading = false;

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
@@ -15,14 +15,15 @@ import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { FloatLabelModule } from 'primeng/floatlabel';
-import { modifyAlertTimeWindowOptions, periodicityOptions } from '../../shared/constants/metric-options';
 import { PaginatorModule } from 'primeng/paginator';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AlarmAnalyticsService } from '../../shared/services/alarm-analytics.service';
 
 @Component({
   selector: 'app-home',
-  imports: [PageWrapperComponent, CommonModule, FormsModule, SelectButtonModule, TableModule, SkeletonModule, TooltipModule, PopoverModule, ButtonModule, SelectModule, InputNumberModule, FloatLabelModule, ReactiveFormsModule, PaginatorModule, InputTextModule, ToggleSwitchModule],
+  imports: [PageWrapperComponent, CommonModule, FormsModule, SelectButtonModule, TableModule, SkeletonModule, TooltipModule, PopoverModule, ButtonModule, SelectModule, InputNumberModule, FloatLabelModule, ReactiveFormsModule, PaginatorModule, InputTextModule, ToggleSwitchModule, ProgressSpinnerModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
@@ -32,43 +33,30 @@ export class HomeComponent {
   isError: boolean = false;
   homePanels?: HomePanelsViewDto;
 
-  last24HoursAlertsLoading: boolean = false;
-  last24HoursAlertsError: boolean = false;
-  last24HoursAlertsPage: any = {};
-  last24HoursAlertsList: any[] = [];
+  alertDrilldownTable: any;
+  alertDrilldownTableLoading: boolean = false;
+  alertDrilldownTableError: boolean = false;
 
-  severityOptions: any[] = [
-    {value: 'DISASTER', label: 'Disaster'},
-    {value: 'CRITICAL', label: 'Critical'},
-    {value: 'MAJOR', label: 'Major'},
-    {value: 'WARNING', label: 'Warning'}
+  pastelChips: string[] = [
+    '#F2B6BC', // rosa
+    '#F6C98B', // melocotón
+    '#F3E08A', // amarillo
+    '#BFE6D3', // verde menta
+    '#CDE3A8', // verde pastel
+    '#B8E0E8', // turquesa
+    '#C9B8F2', // lavanda
+    '#BFD6F6', // azul pastel
+    '#D9D9D9', // gris claro
+    '#D8AFCF'  // lila rosado
   ];
 
-  comparationOptions: any[] = [
-    {value: 'MORE_THAN', label: 'Mayor que'},
-    {value: 'LESS_THAN', label: 'Menor que'},
-    {value: 'WITHIN_RANGE', label: 'Dentro del rango'},
-    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'}
-  ];
-
-  modifyAlertTimeWindowOptions: any[] = [];
-  periodicityOptions: any[] = [];
-
-  //Pagination
-  first: number = 0;
-  page: number = 0;
-  size: number = 5;
-
-  constructor(private router: Router, private alertService: AlertService, private _fb: FormBuilder) {
+  constructor(private router: Router, private alertService: AlertService, private _fb: FormBuilder, private alarmAnalyticsService: AlarmAnalyticsService) {
   }
 
   ngOnInit() 
   {
     this.getHomePanels();
-    this.getLast24HoursAlerts(this.page, this.size);
-
-    this.modifyAlertTimeWindowOptions = modifyAlertTimeWindowOptions;
-    this.periodicityOptions = periodicityOptions;
+    this.getAlertDrilldownTable();
   }
 
   getHomePanels()
@@ -103,24 +91,6 @@ export class HomeComponent {
     this.router.navigate(['analytics-module']);
   }
 
-  getLast24HoursAlerts(page: number, size: number)
-  {
-    this.last24HoursAlertsLoading = true;
-    this.last24HoursAlertsError = false;
-
-    this.alertService.getLast24HoursAlerts(page, size).subscribe(
-      (response) => {
-        this.last24HoursAlertsLoading = false;
-        this.last24HoursAlertsPage = response;
-        this.last24HoursAlertsList = response.content;
-      },
-      (error) => {
-        this.last24HoursAlertsLoading = false;
-        this.last24HoursAlertsError = true;
-      }
-    )
-  }
-
   onClickGoToEditAlert(alert: AlertViewDto)
   {
     this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
@@ -131,12 +101,40 @@ export class HomeComponent {
     alert.conditions?.splice(i, 1);
   }
 
-  onPageChange(event: any) 
+  getAlertDrilldownTable()
   {
-    this.first = event.first;
-    this.page = event.page;
-    this.size = event.rows;
+    this.alertDrilldownTableLoading = true;
+    this.alertDrilldownTableError = false;
 
-    this.getLast24HoursAlerts(this.page, this.size);
+    this.alarmAnalyticsService.getAlertsTable(null, null, 24).subscribe(
+      (response) => {
+        this.alertDrilldownTable = response;
+        this.alertDrilldownTableLoading = false;
+      },
+      (error) => {
+        this.alertDrilldownTableLoading = false;
+        this.alertDrilldownTableError = true;
+      }
+    );
+  }
+
+  getKeysCount(obj: any): number {
+    return obj ? Object.keys(obj).length : 0;
+  }
+
+  buildKeyValueArray(obj: Record<string, any>): string[] 
+  {
+  if (!obj || typeof obj !== 'object') {
+    return [];
+  }
+
+  return Object.entries(obj).map(
+      ([key, value]) => `${key}: ${String(value)}`
+    );
+  }
+
+  onClickGoToEditAlert2(alert: any)
+  {
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
   }
 }

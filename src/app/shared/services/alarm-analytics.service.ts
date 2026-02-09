@@ -69,9 +69,21 @@ export class AlarmAnalyticsService {
     return this.http.get<any>(this.apiUrl + '/general');
   }
 
-  getAlertsTable(alertsLimit: number, dimensionsLimit: number): Observable<any>
+  getAlertsTable(alertsLimit: number | null, dimensionsLimit: number | null, lastHours: number | null): Observable<any>
   {
-    let params = new HttpParams().set('alertsLimit', alertsLimit).set('dimensionsLimit', dimensionsLimit);
+    let params = new HttpParams();
+
+    if (alertsLimit !== null) {
+      params = params.set('alertsLimit', alertsLimit);
+    }
+
+    if (dimensionsLimit !== null) {
+      params = params.set('dimensionsLimit', dimensionsLimit);
+    }
+
+    if (lastHours !== null) {
+      params = params.set('lastHours', lastHours);
+    }
 
     return this.http.get<any>(this.apiUrl + '/ranking/noise-alerts', { params });
   }

@@ -14,7 +14,10 @@
   <img class="logo" src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60" />
 
   <div *ngIf="router.url !== '/login'" class="actions-container">
-    <!-- Logout -->
+    <a class="action-container text-white" href="https://confluence.tid.es/spaces/VIDEOTOOLS/pages/643827083/Documentaci%C3%B3n+BOLT+Revolution" style="text-decoration:none;" target="_blank" >
+      <i class="pi pi-question-circle"></i>
+      <div class="font-16 font-w-600">Ayuda</div>
+    </a>
     <div class="action-container text-white" (click)="onClickNavigateToUser();">
       <i class="pi pi-user"></i>
       <div class="font-16 font-w-600">{{authService.getSub()}}</div>

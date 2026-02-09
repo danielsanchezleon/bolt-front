@@ -876,7 +876,7 @@ export class AlertManagerComponent implements OnInit{
     let newGroupBy: string[] = [];
     this.groupByForm.get('groupBy')?.value.forEach( (dimension: string) => {
       if (!this.dimensionIntersectionOptions.includes(dimension))
-        newGroupBy.push(dimension);
+        newGroupBy.push(dimension.toLowerCase());
     });
     this.groupByForm.get('groupBy')?.setValue(newGroupBy);
   }
@@ -923,7 +923,7 @@ export class AlertManagerComponent implements OnInit{
     });
 
     if (intersection && intersection != null && intersection != undefined)
-      this.dimensionIntersectionOptions = Array.from(intersection).map(dim => dim as string);
+      this.dimensionIntersectionOptions = Array.from(intersection).map(dim => (dim as string).toLowerCase());
   }
 
   generateConditionText(conditionIndex: number): string
@@ -1713,7 +1713,7 @@ export class AlertManagerComponent implements OnInit{
 
       this.onChangeBaselineSelection();
 
-      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
       this.conditionFiltersMap = new Map();
 
@@ -1867,7 +1867,7 @@ export class AlertManagerComponent implements OnInit{
         // ✅ Esto ya se ejecuta cuando indicadores+métricas han terminado
         this.onChangeMetricSelect();
 
-        this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+        this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
         this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
           this.generateGraphAgroupations(dimension);
         });
@@ -2008,7 +2008,7 @@ export class AlertManagerComponent implements OnInit{
         this.getDistinctDimensionsByDataTypeTableAndMetric(alertViewDto.logsService!, alertViewDto.logsCatalog!, i);
       });
 
-      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy);
+      this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
       this.conditionFiltersMap = new Map();
 
@@ -2999,7 +2999,7 @@ export class AlertManagerComponent implements OnInit{
       (response) => {
         this.baselineGroupByOptionsLoading = false;
         this.baselineGroupByOptionsError = false;
-        this.dimensionIntersectionOptions = response;
+        this.dimensionIntersectionOptions = response.map((dimension) => dimension.toLowerCase());
       },
       (error) => {
         this.baselineGroupByOptionsLoading = false;
