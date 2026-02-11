@@ -48,7 +48,7 @@
 
     <div class="chips">
         <div class="chip font-12" *ngFor="let activeFilter of activeFilters; trackBy: trackByKey">
-            <span class="chip-label">{{activeFilter.key}}: {{activeFilter.value}}</span>
+            <span class="chip-label">{{activeFilter.key == 'filterText' ? 'Filtro libre' : activeFilter.key}}: {{activeFilter.value}}</span>
             <i class="pi pi-times font-w-600" (click)="removeFilter(activeFilter.key)" style="cursor: pointer; font-size: 0.75rem; color: #2563eb;"></i>
         </div>
         <div *ngIf="activeFilters.length > 0" class="chip font-12" style="cursor: pointer; color: #2563eb;" (click)="clearIndividualFilters()">

@@ -20,7 +20,7 @@
         <div class="font-16"><i class="pi pi-info-circle">&nbsp;</i>Error al obtener la información</div>
       </div>
     </div>
-
+<!-- 
     <div *ngIf="!isLoading && !isError" class="card-container">
       <div class="card-title-description">
         <div class="font-16">Alertas sin destino</div>
@@ -43,6 +43,20 @@
       <div class="card-title-description">
         <div class="font-16"><i class="pi pi-info-circle">&nbsp;</i>Error al obtener la información</div>
       </div>
+    </div> -->
+
+    <div class="card-container-disabled">
+      <div class="font-16 text-white">Alertas sin destino</div>
+      <div class="font-12 text-white">(Alertas sin canal de notificación configurado)</div>
+      <div class="card-container-information">
+        <div class="information-number">
+          <div class="font-32 font-w-700 text-white">-</div>
+          <!-- <div class="font-16 text-white">(-&nbsp;%)</div> -->
+        </div>
+        <div class="icon-wrapper bg-gray">
+          <i class="pi pi-exclamation-triangle font-20 text-white"></i>
+        </div>
+      </div>
     </div>
 
     <div class="card-container-disabled">
@@ -54,7 +68,7 @@
           <!-- <div class="font-16 text-white">(-&nbsp;%)</div> -->
         </div>
         <div class="icon-wrapper bg-gray">
-          <i class="pi pi-database font-20 text-white"></i>
+          <i class="pi pi-ban font-20 text-white"></i>
         </div>
       </div>
     </div>

@@ -310,6 +310,13 @@
                     </div>
                 </div>
 
+                <div class="notice c-blue">
+                    <i class="pi pi-info-circle"></i>
+                    <div>
+                        <span class="font-w-700">Aviso</span>: ten en cuenta que al modificar las severidades, los endpoints mantendrán la severidad asignada inicialmente. Esto implica que si cambias la severidad de una condición después de haberla creado, el endpoint mentendrá la/s severidad/es original/es.
+                    </div>
+                </div>
+
                 <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;">
                     <div class="condition-content">
                         <div class="condition-top">

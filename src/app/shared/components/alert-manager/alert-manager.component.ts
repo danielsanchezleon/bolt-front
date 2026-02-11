@@ -211,10 +211,12 @@ export class Endpoint {
 export class Tag {
   name: string;
   value: string;
+  type: string;
 
-  constructor(name: string, value: string) {
+  constructor(name: string, value: string, type: string) {
     this.name = name;
     this.value = value;
+    this.type = type;
   }
 }
 
@@ -856,6 +858,8 @@ export class AlertManagerComponent implements OnInit{
     this.generateFinalExpression(indicatorIndex);
 
     this.getGraphSeries();
+
+    this.generateMetricTags();
   }
 
   onChangeMetricSelect()
@@ -879,6 +883,8 @@ export class AlertManagerComponent implements OnInit{
         newGroupBy.push(dimension.toLowerCase());
     });
     this.groupByForm.get('groupBy')?.setValue(newGroupBy);
+
+    this.generateMetricTags();
   }
 
   createLogCondition()
@@ -1253,7 +1259,7 @@ export class AlertManagerComponent implements OnInit{
   }
 
   onClickAddTag() {
-    this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value));
+    this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value, 'CUSTOM'));
 
     this.tagForm.reset();
     this.tagForm.updateValueAndValidity();
@@ -1715,6 +1721,8 @@ export class AlertManagerComponent implements OnInit{
 
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
+      this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
+
       this.conditionFiltersMap = new Map();
 
       alertViewDto.conditions!.forEach((condition, i) => 
@@ -1837,7 +1845,7 @@ export class AlertManagerComponent implements OnInit{
                             dims: met.dimension!.map(d => d.toLowerCase())
                           }))
                           .filter(x =>
-                            metricDims.every(d => x.dims.includes(d))
+                            x.dims.every(d => metricDims.includes(d))
                           )
                           .sort((a, b) =>
                             a.dims.length - b.dims.length
@@ -1871,6 +1879,8 @@ export class AlertManagerComponent implements OnInit{
         this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
           this.generateGraphAgroupations(dimension);
         });
+
+        this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
 
         // Prepara map
         this.conditionFiltersMap = new Map();
@@ -1938,18 +1948,18 @@ export class AlertManagerComponent implements OnInit{
 
                   const condMap = this.conditionFiltersMap.get(condKey)!;
 
-                  if (condMap.has(req.dimension)) {
-                    const prevValues = condMap.get(req.dimension)!.get('values') as string[];
+                  if (condMap.has(req.dimension.toLowerCase())) {
+                    const prevValues = condMap.get(req.dimension.toLowerCase())!.get('values') as string[];
                     const intersection = prevValues.filter(v => response.includes(v));
-                    condMap.get(req.dimension)!.set('values', intersection);
+                    condMap.get(req.dimension.toLowerCase())!.set('values', intersection);
 
-                    condMap.get(req.dimension)!.set('selected', selected);
-                    condMap.get(req.dimension)!.set('created', created);
-                    condMap.get(req.dimension)!.set('lost', lost);     // 👈 guardamos lost
-                    condMap.get(req.dimension)!.set('merge', merge);   // 👈 merge actualizado
+                    condMap.get(req.dimension.toLowerCase())!.set('selected', selected);
+                    condMap.get(req.dimension.toLowerCase())!.set('created', created);
+                    condMap.get(req.dimension.toLowerCase())!.set('lost', lost);     // 👈 guardamos lost
+                    condMap.get(req.dimension.toLowerCase())!.set('merge', merge);   // 👈 merge actualizado
                   } else {
                     condMap.set(
-                      req.dimension,
+                      req.dimension.toLowerCase(),
                       new Map()
                         .set('values', response)
                         .set('selected', selected)
@@ -2010,6 +2020,8 @@ export class AlertManagerComponent implements OnInit{
 
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
+      this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
+
       this.conditionFiltersMap = new Map();
 
       alertViewDto.conditions!.forEach((condition, i) => {
@@ -2037,7 +2049,7 @@ export class AlertManagerComponent implements OnInit{
               // 👉 El merge ahora incluye: values + created + lost
               merge = [...new Set([...created, ...lost, ...response])];
 
-              filterDimensionMap.set(dimension, new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge).set('lost', lost));
+              filterDimensionMap.set(dimension.toLowerCase(), new Map().set('values', response).set('selected', selected).set('created', created).set('merge', merge).set('lost', lost));
               this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
             },
             () => { }
@@ -2180,7 +2192,7 @@ export class AlertManagerComponent implements OnInit{
   // ALERT TAGS
   // ===========================
   alertViewDto.alertTags?.forEach((tag) => {
-    this.tagList.push(new Tag(tag.name!, tag.value!));
+    this.tagList.push(new Tag(tag.name!, tag.value!, 'CUSTOM'));
   });
 
   // ===========================
@@ -3056,5 +3068,19 @@ export class AlertManagerComponent implements OnInit{
     });
 
     return allValid;
+  }
+
+  generateMetricTags()
+  {
+    this.tagList = this.tagList.filter(tag => tag.type != 'METRIC');
+
+    this.indicatorArray.controls.forEach(indicator => {
+      indicator.controls.metrics.controls.forEach(metric => {
+        if (metric.get('metric')?.value)
+        {
+          this.tagList.unshift(new Tag('bolt_group', metric.get('metric')?.value?.boltGroup!, 'METRIC'));
+        }
+      });
+    });
   }
 }
