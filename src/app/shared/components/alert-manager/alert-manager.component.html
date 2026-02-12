@@ -681,14 +681,22 @@
                         </div>
                     </div>
                 </div>
-                <div class="add-label-container">
+                <div class="add-tag-container">
                     <div class="font-20 font-w-600">Añadir etiqueta</div>
                     <div class="font-16">Añade etiquetas personalizadas para categorizar y organizar mejor tus alertas.
                         Estas etiquetas pasarán a formar parte de los metadatos de la alerta.</div>
                     <form [formGroup]="tagForm">
-                        <div class="add-label-fields">
+                        <div class="add-tag-fields">
                             <p-floatlabel class="floatlabel" variant="on">
-                                <input class="input" pInputText id="name" formControlName="name" />
+                                <p-autocomplete
+                                    class="autocomplete"
+                                    inputId="name"
+                                    formControlName="name"
+                                    [suggestions]="tagFilteredNames"
+                                    (completeMethod)="searchTagNames($event)"
+                                    [dropdown]="true"
+                                    [completeOnFocus]="true">
+                                </p-autocomplete>
                                 <label for="name">Nombre *</label>
                             </p-floatlabel>
                             <p-floatlabel class="floatlabel" variant="on">
@@ -696,16 +704,22 @@
                                 <label for="value">Valor *</label>
                             </p-floatlabel>
                         </div>
-                        <p-button label="Añadir etiqueta" icon="pi pi-plus" (onClick)="onClickAddTag();"
-                            severity="secondary" [disabled]="!tagForm.valid" />
+                        <div class="add-tag-actions">
+                            <p-button *ngIf="selectedTagIndex == null" label="Añadir etiqueta" icon="pi pi-plus" (onClick)="onClickAddTag();"
+                                severity="secondary" [disabled]="!tagForm.valid" size="small" />
+                            <p-button *ngIf="selectedTagIndex !== null" label="Cancelar" icon="pi pi-times" (onClick)="resetTagSelection();"
+                                severity="secondary" size="small"/>
+                            <p-button *ngIf="selectedTagIndex !== null" label="Guardar cambios" icon="pi pi-save" (onClick)="onClickSaveTagChanges();"
+                                severity="secondary" size="small" />
+                            <p-button *ngIf="selectedTagIndex !== null" label="Eliminar etiqueta" icon="pi pi-trash" (onClick)="onClickRemoveTag();"
+                                severity="secondary" size="small" />
+                        </div>
                     </form>
                     <div *ngIf="tagList.length > 0" class="font-16 font-w-600">Etiquetas añadidas</div>
-                    <div *ngIf="tagList.length > 0" class="labels-container">
-                        <div class="label-container" *ngFor="let tag of tagList; let i = index;">
+                    <div *ngIf="tagList.length > 0" class="tags-container">
+                        <div class="tag-container" *ngFor="let tag of tagList; let i = index;" (click)="selectTag(i);" [ngStyle]="{'outline': selectedTagIndex == i ? '2px solid gray' : 'none'}">
                             <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
                             <div class="font-12">{{tag.name + ': ' + tag.value}}</div>
-                            <i class="pi pi-times remove-icon" style="font-size: 0.75rem;"
-                                (click)="onClickRemoveTag(i);"></i>
                         </div>
                     </div>
                 </div>

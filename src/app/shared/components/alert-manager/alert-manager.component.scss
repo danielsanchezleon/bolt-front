@@ -899,27 +899,37 @@
             }
         }
 
-        .add-label-container {
+        .add-tag-container {
             display: flex;
             flex-direction: column;
             gap: 16px;
+
+            .add-tag-actions
+            {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 16px;
+            }
 
             form {
                 display: flex;
                 flex-direction: column;
                 gap: 24px;
 
-                .add-label-fields {
+                .add-tag-fields {
                     display: flex;
                     flex-direction: row;
                     align-items: center;
                     gap: 16px;
 
                     .floatlabel {
-                        width: 100%;
+                        width: 100% !important;
+
+                        .autocomplete{ width: 100% !important; }
 
                         .input {
-                            width: 100%;
+                            width: 100% !important;
                         }
                     }
                 }
@@ -1139,7 +1149,7 @@
     }
 }
 
-.labels-container {
+.tags-container {
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
@@ -1147,7 +1157,7 @@
     gap: 8px 16px;
     max-width: 1200px;
 
-    .label-container {
+    .tag-container {
         width: fit-content;
         display: flex;
         flex-direction: row;
@@ -1158,10 +1168,14 @@
         border-radius: 24px;
         padding: 4px 8px;
 
+        cursor: pointer;
+
         .remove-icon {
             cursor: pointer;
         }
     }
+
+    .tag-container:hover { background-color: #f0f0f0; }
 }
 
 .notice {
@@ -1297,4 +1311,12 @@
             gap: 8px;
         }
     }
+}
+
+:host ::ng-deep .p-autocomplete {
+  width: 100%;
+}
+
+:host ::ng-deep .p-autocomplete-input {
+  width: 100%;
 }

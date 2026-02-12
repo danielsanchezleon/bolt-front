@@ -47,6 +47,7 @@ import { TeamViewDto } from '../../../shared/dto/TeamViewDto';
 import { AuthService } from '../../../shared/services/auth.service';
 import { AlertViewDto } from '../../dto/alert/AlertViewDto';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 
 import {matOperationOptions, 
         timeWindowOptions, 
@@ -305,7 +306,7 @@ type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
 @Component({
   selector: 'app-alert-manager',
-  imports: [FloatingGraphComponent, ProgressSpinnerModule, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule],
+  imports: [FloatingGraphComponent, ProgressSpinnerModule, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule, AutoCompleteModule],
   templateUrl: './alert-manager.component.html',
   styleUrl: './alert-manager.component.scss'
 })
@@ -427,7 +428,11 @@ export class AlertManagerComponent implements OnInit{
   endpointTypeOptions: any[] = [];
 
   tagForm: FormGroup;
+  selectedTagIndex: number | null = null;
   tagList: Tag[] = [];
+
+  tagNames: string[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
+  tagFilteredNames: any[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
 
   conditionalBlockOptions: any[] = [];
   templateVariableOptions: any[] = [];
@@ -1265,8 +1270,12 @@ export class AlertManagerComponent implements OnInit{
     this.tagForm.updateValueAndValidity();
   }
 
-  onClickRemoveTag(i: number) {
-    this.tagList.splice(i, 1);
+  onClickRemoveTag() {
+    if (this.selectedTagIndex !== null) 
+    {
+      this.tagList.splice(this.selectedTagIndex, 1);
+      this.resetTagSelection();
+    }
   }
 
   onClickCreateAlert() {
@@ -3074,13 +3083,62 @@ export class AlertManagerComponent implements OnInit{
   {
     this.tagList = this.tagList.filter(tag => tag.type != 'METRIC');
 
-    this.indicatorArray.controls.forEach(indicator => {
-      indicator.controls.metrics.controls.forEach(metric => {
-        if (metric.get('metric')?.value)
-        {
-          this.tagList.unshift(new Tag('bolt_group', metric.get('metric')?.value?.boltGroup!, 'METRIC'));
-        }
-      });
+    let boltGroup = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltGroup!;
+    let boltService = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltService!;
+    let boltFunction = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltFunction!;
+
+    this.tagList.unshift(new Tag('source', boltGroup, 'METRIC'));
+    this.tagList.unshift(new Tag('service', boltService, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_funcion', boltFunction, 'METRIC'));
+  }
+
+  selectTag(i: number)
+  {
+    if (this.selectedTagIndex === i)
+    { 
+      this.resetTagSelection();
+      return; 
+    }
+
+    this.tagForm.get('name')?.enable();
+
+    this.selectedTagIndex = i;
+    this.tagForm.patchValue({
+      name: this.tagList[i].name,
+      value: this.tagList[i].value
     });
+
+    if (this.tagList[i].type == 'METRIC')
+    {
+      this.tagForm.get('name')?.disable();
+    }
+  }
+
+  resetTagSelection()
+  {
+    this.selectedTagIndex = null;
+    this.tagForm.get('name')?.enable();
+    this.tagForm.reset();
+    this.tagForm.updateValueAndValidity();
+  }
+
+  onClickSaveTagChanges()
+  {
+    if (this.tagForm.invalid) return;
+
+    const updatedTag = {
+      ...this.tagList[this.selectedTagIndex!],
+      ...this.tagForm.value
+    };
+
+    this.tagList[this.selectedTagIndex!] = updatedTag;
+    this.resetTagSelection();
+  }
+
+  searchTagNames(event: any) {
+    const query = event.query.toLowerCase();
+    this.tagFilteredNames = this.tagNames.filter(n =>
+      n.toLowerCase().includes(query)
+    );
   }
 }
