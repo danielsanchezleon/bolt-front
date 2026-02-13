@@ -159,4 +159,22 @@ export class AlertService {
 
     return this.http.get<AlertViewDto>(this.apiUrl + '/recreateAlert', {params: params});
   }
+
+  disableAlert(alertId: number): Observable<AlertViewDto>
+  {
+    let params = new HttpParams();
+
+    params = params.append('alertId', alertId);
+
+    return this.http.get<AlertViewDto>(this.apiUrl + '/disableAlert', {params: params});
+  }
+
+  enableAlert(alertId: number): Observable<AlertViewDto>
+  {
+    let params = new HttpParams();
+
+    params = params.append('alertId', alertId);
+
+    return this.http.get<AlertViewDto>(this.apiUrl + '/enableAlert', {params: params});
+  }
 }

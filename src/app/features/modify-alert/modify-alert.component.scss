@@ -200,6 +200,9 @@ th {
         flex-direction: column;
         gap: 8px;
 
+        max-height: 175px;
+        overflow-y: auto;
+
         .condition-container {
             display: flex;
             flex-direction: column;
@@ -289,12 +292,11 @@ th {
 
 .tags-container {
     display: flex;
+    flex-wrap: wrap;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
-
-    flex-wrap: wrap;
-    max-width: 512px;
+    gap: 8px 16px;
+    max-width: 1200px;
 
     .tag-container {
         width: fit-content;
@@ -307,12 +309,14 @@ th {
         border-radius: 24px;
         padding: 4px 8px;
 
-        white-space: nowrap;
+        cursor: pointer;
 
         .remove-icon {
             cursor: pointer;
         }
     }
+
+    .tag-container:hover { background-color: #f0f0f0; }
 }
 
 .title-container {
@@ -559,4 +563,26 @@ th {
             cursor: pointer;
         }
     }
+}
+
+.add-tag-actions
+{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+}
+
+.notice {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+
+    border: 1px solid lightgray;
+    border-radius: 8px;
+    background-color: #dbeafe;
+    padding: 8px;
+
+    width: 352px;
 }

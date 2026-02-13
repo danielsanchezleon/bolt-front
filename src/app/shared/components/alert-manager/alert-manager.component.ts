@@ -395,6 +395,9 @@ export class AlertManagerComponent implements OnInit{
   baselineGroupByOptionsError: boolean = false;
 
   //Step 2
+  conditionInformationModalStyle: any = {};
+  conditionInformationModalVisible: boolean = false;
+
   severityOptions: any[] = [];
   clauseComparationOptions: any[] = [];
   conditionArray: ConditionFormArray;
@@ -434,6 +437,9 @@ export class AlertManagerComponent implements OnInit{
   tagNames: string[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
   tagFilteredNames: any[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
 
+  messageInformationModalStyle: any = {};
+  messageInformationModalVisible: boolean = false;
+
   conditionalBlockOptions: any[] = [];
   templateVariableOptions: any[] = [];
 
@@ -449,6 +455,9 @@ export class AlertManagerComponent implements OnInit{
   notificationMessageForm: FormGroup;
 
   //Step 4
+  permissionInformationModalStyle: any = {};
+  permissionInformationModalVisible: boolean = false;
+
   permissionTypeOptions: any[] = [];
   permissionList: Permission[] = [];
   teamList: TeamViewDto[] = [];
@@ -864,7 +873,8 @@ export class AlertManagerComponent implements OnInit{
 
     this.getGraphSeries();
 
-    this.generateMetricTags();
+    if (this.mode == 'create')
+      this.generateMetricTags();
   }
 
   onChangeMetricSelect()
@@ -889,7 +899,8 @@ export class AlertManagerComponent implements OnInit{
     });
     this.groupByForm.get('groupBy')?.setValue(newGroupBy);
 
-    this.generateMetricTags();
+    if (this.mode == 'create')
+      this.generateMetricTags();
   }
 
   createLogCondition()
@@ -2201,7 +2212,7 @@ export class AlertManagerComponent implements OnInit{
   // ALERT TAGS
   // ===========================
   alertViewDto.alertTags?.forEach((tag) => {
-    this.tagList.push(new Tag(tag.name!, tag.value!, 'CUSTOM'));
+    this.tagList.push(new Tag(tag.name!, tag.value!, 'METRIC'));
   });
 
   // ===========================
@@ -3140,5 +3151,47 @@ export class AlertManagerComponent implements OnInit{
     this.tagFilteredNames = this.tagNames.filter(n =>
       n.toLowerCase().includes(query)
     );
+  }
+
+  onHoverConditionInformationIcon(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    this.conditionInformationModalStyle = {
+      position: 'fixed',
+      top: `${rect.bottom + 16}px`,
+      left: `${rect.left}px`,
+      width: '1200px'
+    };
+
+    this.conditionInformationModalVisible = true;
+  }
+
+  onHoverMessageInformationIcon(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    this.messageInformationModalStyle = {
+      position: 'fixed',
+      top: `${rect.bottom + 16}px`,
+      left: `${rect.left}px`,
+      width: '1200px'
+    };
+
+    this.messageInformationModalVisible = true;
+  }
+
+  onHoverPermissionInformationIcon(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    this.permissionInformationModalStyle = {
+      position: 'fixed',
+      top: `${rect.bottom + 16}px`,
+      left: `${rect.left}px`,
+      width: '1200px'
+    };
+
+    this.permissionInformationModalVisible = true;
   }
 }

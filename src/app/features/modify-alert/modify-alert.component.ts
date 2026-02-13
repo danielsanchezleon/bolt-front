@@ -43,10 +43,11 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 
 @Component({
   selector: 'app-modify-alert',
-  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule, TooltipModule, ProgressSpinnerModule],
+  imports: [FormsModule, ToggleSwitchModule, TextareaModule, SelectModule, PopoverModule, ReactiveFormsModule, InputNumberModule, MultiSelectModule, FloatLabelModule, InputTextModule, InputIconModule, IconFieldModule, MenuModule, TableModule, CommonModule, ButtonModule, PageWrapperComponent, SkeletonModule, ModalComponent, PaginatorModule, ToastModule, TooltipModule, ProgressSpinnerModule, AutoCompleteModule],
   templateUrl: './modify-alert.component.html',
   styleUrl: './modify-alert.component.scss',
   animations: [
@@ -151,6 +152,26 @@ export class ModifyAlertComponent implements OnInit
   failedRecreates: number = 0;
   completedRecreates: number = 0;
 
+  //DISABLE ALERTS
+  disableAlertModalVisible: boolean = false;
+
+  disableAlertsMapLoading: Map<number, boolean> = new Map();
+  disableAlertsMapSuccess: Map<number, boolean> = new Map();
+  disableAlertsMapError: Map<number, boolean> = new Map();
+
+  failedDisables: number = 0;
+  completedDisables: number = 0;
+
+  //ENABLE ALERTS
+  enableAlertModalVisible: boolean = false;
+
+  enableAlertsMapLoading: Map<number, boolean> = new Map();
+  enableAlertsMapSuccess: Map<number, boolean> = new Map();
+  enableAlertsMapError: Map<number, boolean> = new Map();
+
+  failedEnables: number = 0;
+  completedEnables: number = 0;
+
   alertMessageEdited: AlertViewDto | null = null;
   newAlertMessage: string = '';
 
@@ -158,6 +179,11 @@ export class ModifyAlertComponent implements OnInit
   first: number = 0;
   page: number = 0;
   size: number = 20;
+
+  //TAGS
+  selectedTagIndex: number | null = null;
+  tagNames: string[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
+  tagFilteredNames: any[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
 
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService) 
   {
@@ -241,9 +267,12 @@ export class ModifyAlertComponent implements OnInit
     this.tagForm.reset();
     this.tagForm.updateValueAndValidity();
   }
-
-  onClickRemoveTag(alert: any, i: number) {
-    alert.alertTags.splice(i, 1);
+  onClickRemoveTag(alert: any) {
+    if (this.selectedTagIndex !== null) 
+    {
+      alert.alertTags.splice(this.selectedTagIndex, 1);
+      this.resetTagSelection();
+    }
   }
 
   clearIndividualFilters() {
@@ -711,5 +740,209 @@ export class ModifyAlertComponent implements OnInit
 
   trackByKey(index: number, item: { key: string; value: any }) {
     return item.key;
+  }
+
+  selectTag(alert: any, i: number)
+  {
+    if (this.selectedTagIndex === i)
+    { 
+      this.resetTagSelection();
+      return; 
+    }
+
+    this.tagForm.get('name')?.enable();
+
+    this.selectedTagIndex = i;
+    this.tagForm.patchValue({
+      name: alert.alertTags[i].name,
+      value: alert.alertTags[i].value
+    });
+
+    if (alert.alertTags[i].type == 'METRIC')
+    {
+      this.tagForm.get('name')?.disable();
+    }
+  }
+
+  resetTagSelection()
+  {
+    this.selectedTagIndex = null;
+    this.tagForm.get('name')?.enable();
+    this.tagForm.reset();
+    this.tagForm.updateValueAndValidity();
+  }
+
+  onClickSaveTagChanges(alert: any)
+  {
+    if (this.tagForm.invalid) return;
+
+    const updatedTag = {
+      ...alert.alertTags[this.selectedTagIndex!],
+      ...this.tagForm.value
+    };
+
+    alert.alertTags[this.selectedTagIndex!] = updatedTag;
+    this.resetTagSelection();
+  }
+
+  searchTagNames(event: any) {
+    const query = event.query.toLowerCase();
+    this.tagFilteredNames = this.tagNames.filter(n =>
+      n.toLowerCase().includes(query)
+    );
+  }
+
+  allSelectedAlertsHaveEnabledStatus(): boolean
+  {
+    for (const alert of this.selectedAlerts)
+    {
+      if (alert.status == 'DISABLED' || alert.status == 'DOLPHIN_ERROR')
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  onClickConfirmDisableAlerts()
+  {
+    this.selectedAlerts.forEach((alert) => {
+      this.disableAlert(alert);
+    });
+  }
+
+  disableAlert(alert: AlertViewDto)
+  {
+    this.disableAlertsMapLoading.set(alert.alertId!, true);
+    this.disableAlertsMapSuccess.set(alert.alertId!, false);
+    this.disableAlertsMapError.set(alert.alertId!, false);
+
+    this.alertService.disableAlert(alert.alertId!).subscribe(
+      (response) => {
+
+        if (response.status == 'DOLPHIN_ERROR')
+        {
+          this.disableAlertsMapLoading.set(alert.alertId!, false);
+          this.disableAlertsMapSuccess.set(alert.alertId!, false);
+          this.disableAlertsMapError.set(alert.alertId!, true);
+          this.failedDisables++;
+        }
+        else
+        {
+          this.disableAlertsMapLoading.set(alert.alertId!, false);
+          this.disableAlertsMapSuccess.set(alert.alertId!, true);
+          this.disableAlertsMapError.set(alert.alertId!, false);
+        }
+
+        this.completedDisables++;
+
+        if ((this.completedDisables == this.selectedAlerts.length) && this.failedDisables == 0)
+        {
+          this.getAllAlerts(this.page, this.size, this.filterForm.value);
+          this.disableAlertModalVisible = false;
+          this.completedDisables = 0;
+          this.failedDisables = 0;
+          this.selectedAlerts = [];
+        }
+      },
+      (error) => {
+        this.disableAlertsMapLoading.set(alert.alertId!, false);
+        this.disableAlertsMapSuccess.set(alert.alertId!, false);
+        this.disableAlertsMapError.set(alert.alertId!, true);
+        this.completedDisables++;
+        this.failedDisables++;
+      }
+    )
+  }
+
+  disableAlertsLoading(): boolean
+  {
+    for (const value of this.disableAlertsMapLoading.values()) 
+    {
+      if (value) 
+      {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  allSelectedAlertsHaveDisabledStatus(): boolean
+  {
+    for (const alert of this.selectedAlerts)
+    {
+      if (alert.status == 'ENABLED' || alert.status == 'DOLPHIN_ERROR')
+      {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  onClickConfirmEnableAlerts()
+  {
+    this.selectedAlerts.forEach((alert) => {
+      this.enableAlert(alert);
+    });
+  }
+
+  enableAlert(alert: AlertViewDto)
+  {
+    this.enableAlertsMapLoading.set(alert.alertId!, true);
+    this.enableAlertsMapSuccess.set(alert.alertId!, false);
+    this.enableAlertsMapError.set(alert.alertId!, false);
+
+    this.alertService.enableAlert(alert.alertId!).subscribe(
+      (response) => {
+
+        if (response.status == 'DOLPHIN_ERROR')
+        {
+          this.enableAlertsMapLoading.set(alert.alertId!, false);
+          this.enableAlertsMapSuccess.set(alert.alertId!, false);
+          this.enableAlertsMapError.set(alert.alertId!, true);
+          this.failedEnables++;
+        }
+        else
+        {
+          this.enableAlertsMapLoading.set(alert.alertId!, false);
+          this.enableAlertsMapSuccess.set(alert.alertId!, true);
+          this.enableAlertsMapError.set(alert.alertId!, false);
+        }
+
+        this.completedEnables++;
+
+        if ((this.completedEnables == this.selectedAlerts.length) && this.failedEnables == 0)
+        {
+          this.getAllAlerts(this.page, this.size, this.filterForm.value);
+          this.enableAlertModalVisible = false;
+          this.completedEnables = 0;
+          this.failedEnables = 0;
+          this.selectedAlerts = [];
+        }
+      },
+      (error) => {
+        this.enableAlertsMapLoading.set(alert.alertId!, false);
+        this.enableAlertsMapSuccess.set(alert.alertId!, false);
+        this.enableAlertsMapError.set(alert.alertId!, true);
+        this.completedEnables++;
+        this.failedEnables++;
+      }
+    )
+  }
+
+  enableAlertsLoading(): boolean
+  {
+    for (const value of this.enableAlertsMapLoading.values()) 
+    {
+      if (value) 
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

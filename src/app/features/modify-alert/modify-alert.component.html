@@ -58,7 +58,7 @@
     </div>
 
     <div *ngIf="(!isLoading && !isError && firstCall) || !firstCall" class="table-container">
-        <p-table *ngIf="alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
+        <p-table *ngIf="alertList && alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
             <ng-template #header>
                 <tr>
                     <th class="th-blue" style="width: 4rem; text-align: center;"><p-tableHeaderCheckbox /></th>
@@ -138,6 +138,14 @@
                         <p-popover #op1>
                             <div class="popover-container">
                                 <div class="font-w-600">Severidades</div>
+
+                                <div class="notice c-blue">
+                                    <i class="pi pi-info-circle"></i>
+                                    <div>
+                                        <span class="font-12 font-w-700">Al modificar la severidad de las condiciones, no se modificarán las severidades de las notificaciones ya existentes.</span>
+                                    </div>
+                                </div>
+                                
                                 <div class="conditions-container">
                                     <div class="condition-container" *ngFor="let condition of alert.conditions; let i = index;">
                                         <div class="condition-body">
@@ -149,13 +157,15 @@
                                         </div>
                                         <div *ngIf="condition.alertClauses.length > 0" class="clauses-container">
                                             <div class="clause-container" *ngFor="let clause of condition.alertClauses; let j = index;">
-                                                <p-select class="select-2" size="small" [(ngModel)]="clause.compOperation"
-                                                    [options]="comparationOptions" optionLabel="label" optionValue="value"
-                                                    appendTo="body" />
-                                                <p-inputnumber size="small" [(ngModel)]="clause.threshold" mode="decimal"
-                                                    [minFractionDigits]="0" [maxFractionDigits]="6" />
-                                                    <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
-                                                    severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
+                                                <ng-container *ngIf="clause.threshold != null">
+                                                    <p-select class="select-2" size="small" [(ngModel)]="clause.compOperation"
+                                                        [options]="comparationOptions" optionLabel="label" optionValue="value"
+                                                        appendTo="body" />
+                                                    <p-inputnumber size="small" [(ngModel)]="clause.threshold" mode="decimal"
+                                                        [minFractionDigits]="0" [maxFractionDigits]="6" />
+                                                        <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
+                                                        severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
+                                                </ng-container>
                                             </div>
                                         </div>
                                     </div>
@@ -172,8 +182,16 @@
                             <div class="popover-container">
                                 <div class="font-w-600">Etiquetas y metadatos</div>
                                 <form [formGroup]="tagForm">
-                                    <p-floatlabel class="floatlabel" variant="on" size="small">
-                                        <input class="input" pInputText id="name" formControlName="name" size="small" />
+                                    <p-floatlabel class="floatlabel" variant="on">
+                                        <p-autocomplete
+                                            class="autocomplete"
+                                            inputId="name"
+                                            formControlName="name"
+                                            [suggestions]="tagFilteredNames"
+                                            (completeMethod)="searchTagNames($event)"
+                                            [dropdown]="true"
+                                            [completeOnFocus]="true">
+                                        </p-autocomplete>
                                         <label for="name">Nombre *</label>
                                     </p-floatlabel>
                                     <p-floatlabel class="floatlabel" variant="on" size="small">
@@ -181,17 +199,23 @@
                                             size="small" />
                                         <label for="value">Valor *</label>
                                     </p-floatlabel>
-                                    <p-button label="Añadir" icon="pi pi-plus" (onClick)="onClickAddTag(alert);"
-                                        severity="secondary" [disabled]="!tagForm.valid" />
                                 </form>
+                                <div class="add-tag-actions">
+                                    <p-button *ngIf="selectedTagIndex == null" label="Añadir etiqueta" icon="pi pi-plus" (onClick)="onClickAddTag(alert);"
+                                        severity="secondary" [disabled]="!tagForm.valid" size="small" />
+                                    <p-button *ngIf="selectedTagIndex !== null" label="Cancelar" icon="pi pi-times" (onClick)="resetTagSelection();"
+                                        severity="secondary" size="small"/>
+                                    <p-button *ngIf="selectedTagIndex !== null" label="Guardar cambios" icon="pi pi-save" (onClick)="onClickSaveTagChanges(alert);"
+                                        severity="secondary" size="small" [disabled]="!tagForm.valid || (tagForm.get('name')?.value! == alert.alertTags?.[selectedTagIndex!]?.name && tagForm.get('value')?.value! == alert.alertTags?.[selectedTagIndex!]?.value)" />
+                                    <p-button *ngIf="selectedTagIndex !== null" label="Eliminar etiqueta" icon="pi pi-trash" (onClick)="onClickRemoveTag(alert);"
+                                        severity="secondary" size="small" />
+                                </div>
                                 <div class="font-16 font-w-600">Etiquetas añadidas</div>
                                 <div *ngIf="alert.alertTags.length == 0" class="font-12 text-gray">Ninguna etiqueta añadida aún</div>
                                 <div *ngIf="alert.alertTags.length > 0" class="tags-container">
-                                    <div class="tag-container" *ngFor="let alertTag of alert.alertTags; let i = index;">
+                                    <div class="tag-container" *ngFor="let tag of alert.alertTags; let i = index;" (click)="selectTag(alert ,i);" [ngStyle]="{'outline': selectedTagIndex == i ? '2px solid gray' : 'none'}">
                                         <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
-                                        <div class="font-12">{{alertTag.name + ': ' + alertTag.value}}</div>
-                                        <i class="pi pi-times remove-icon" style="font-size: 0.75rem;"
-                                            (click)="onClickRemoveTag(alert, i);"></i>
+                                        <div class="font-12">{{tag.name + ': ' + tag.value}}</div>
                                     </div>
                                 </div>
                             </div>
@@ -218,9 +242,10 @@
                         <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
                     </td>
                     <td style="text-align: center;">
-                        <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta activa'"></i>
-                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-gray" [title]="'Alerta desactivada'"></i>
+                        <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta creada activa'"></i>
+                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-gray" [title]="'Alerta creada deshabilitada'"></i>
                         <i *ngIf="alert.status == 'DOLPHIN_ERROR'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
+                        <i *ngIf="alert.status == 'PARTIALLY_ACTIVE'" class="pi pi-verified c-orange" [title]="'Alerta creada parcialmente activa'"></i>
                     </td>
                 </tr>
             </ng-template>
@@ -262,19 +287,21 @@
 <div class="bottom-panel" [@slideUp]="this.selectedAlerts.length > 0 ? 'visible' : 'hidden'">
     <div class="text">
         <div><span class="font-20 font-w-600">{{selectedAlerts.length}}</span> &nbsp; {{selectedAlerts.length == 1 ? 'alerta seleccionada' : 'alertas seleccionadas'}}</div>
-        <p-button icon="pi pi-times" label="Borrar selección" (onClick)="selectedAlerts = [];" severity="secondary" />
+        <p-button icon="pi pi-times" label="Cancelar" (onClick)="selectedAlerts = [];" severity="secondary" />
     </div>
     <div style="display: flex; flex-direction: row; gap: 16px;">
         <p-button *ngIf="allSelectedAlertsHaveDolphinError();" icon="pi pi-replay" label="{{this.selectedAlerts.length == 1 ? 'Recrear alerta' : 'Recrear alertas'}}" severity="primary" (onClick)="recreateAlertModalVisible = true;" />
+        <p-button *ngIf="allSelectedAlertsHaveEnabledStatus();" icon="pi pi-power-off" label="{{this.selectedAlerts.length == 1 ? 'Deshabilitar alerta' : 'Deshabilitar alertas'}}" severity="warn" (onClick)="disableAlertModalVisible = true;" />
+         <p-button *ngIf="allSelectedAlertsHaveDisabledStatus();" icon="pi pi-power-off" label="{{this.selectedAlerts.length == 1 ? 'Activar alerta' : 'Activar alertas'}}" severity="success" (onClick)="enableAlertModalVisible = true;" />
         <p-button icon="pi pi-trash" label="{{this.selectedAlerts.length == 1 ? 'Eliminar alerta' : 'Eliminar alertas'}}" severity="danger" (onClick)="deleteAlertsModalVisible = true;" />
     </div>
     <div class="buttons">
         <p-floatlabel variant="on">
-            <p-select [style]="{'width': '256px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalTimeWindow($event);"/>
+            <p-select [style]="{'width': '128px'}" inputId="timeWindowLabel" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalTimeWindow($event);"/>
             <label for="timeWindowLabel">Ventana de tiempo</label>
         </p-floatlabel>
         <p-floatlabel variant="on">
-            <p-select [style]="{'width': '256px'}" inputId="periodicityLabel" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalPeriodicity($event);"/>
+            <p-select [style]="{'width': '128px'}" inputId="periodicityLabel" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="onChangeGlobalPeriodicity($event);"/>
             <label for="periodicityLabel">Periodicidad</label>
         </p-floatlabel>
     </div>
@@ -285,7 +312,7 @@
         <div class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-save" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Se van a guardar los cambios realizados en {{changedAlerts.length}} {{changedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-16 font-w-600">Se {{selectedAlerts.length == 1 ? 'va' : 'van'}} a guardar los cambios realizados en {{changedAlerts.length}} {{changedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
             <div class="font-12 text-gray">{{changedAlerts.length == 1 ? 'A continuación se muestra la alerta a la que se le va a realizar los cambios' : 'A continuación se muestran las alertas a las que se les van a realizar los cambios'}}</div>
         </div>
         <div class="changed-alerts-container">
@@ -315,7 +342,7 @@
         <div class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-trash" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Se van a eliminar {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-16 font-w-600">Se {{selectedAlerts.length == 1 ? 'va' : 'van'}} a eliminar {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
             <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser eliminada' : 'A continuación se muestran las alertas que van a ser eliminadas'}}</div>
         </div>
         <div class="changed-alerts-container">
@@ -345,7 +372,7 @@
         <div class="modal-icon-container">
             <i *ngIf="!isLoading" class="pi pi-replay" style="font-size: 128px"></i>
             <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
-            <div class="font-16 font-w-600">Se van a recrear {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-16 font-w-600">Se {{selectedAlerts.length == 1 ? 'va' : 'van'}} a recrear {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
             <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser recreada' : 'A continuación se muestran las alertas que van a ser recreadas'}}</div>
         </div>
         <div class="changed-alerts-container">
@@ -367,6 +394,66 @@
         <p-button *ngIf="completedRecreates != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmRecreateAlerts();" [disabled]="recreateAlertsLoading()" />
         <div *ngIf="completedRecreates == selectedAlerts.length"></div>
         <p-button *ngIf="completedRecreates == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedRecreates = 0; getAllAlerts(page, size, this.filterForm.value); recreateAlertModalVisible = false;" [disabled]="recreateAlertsLoading()" />
+    </div>
+</app-modal>
+
+<app-modal [title]="selectedAlerts.length == 1 ? 'Deshabilitar alerta' : 'Deshabilitar alertas'" [visible]="disableAlertModalVisible">
+    <div class="modal-container">
+        <div class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-power-off" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se {{selectedAlerts.length == 1 ? 'va' : 'van'}} a deshabilitar {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser deshabilitada' : 'A continuación se muestran las alertas que van a ser deshabilitadas'}}</div>
+        </div>
+        <div class="changed-alerts-container">
+            <div class="changed-alert-container" *ngFor="let selectedAlert of selectedAlerts; let i = index; let last = last;">
+                <div class="data">
+                    <div class="font-w-600">#{{selectedAlert.alertId}} - {{selectedAlert.name}}</div>
+                    <i *ngIf="!this.disableAlertsMapLoading.get(selectedAlert.alertId!) && !this.disableAlertsMapSuccess.get(selectedAlert.alertId!) && !this.disableAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-circle"></i>
+                    <i *ngIf="this.disableAlertsMapLoading.get(selectedAlert.alertId!)" class="pi pi-spinner spin"></i>
+                    <i *ngIf="this.disableAlertsMapSuccess.get(selectedAlert.alertId!)" class="pi pi-check-circle" style="color: green;"></i>
+                    <i *ngIf="this.disableAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-times-circle" style="color: red;"></i>
+                </div>
+
+                <div *ngIf="!last" class="separator"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <p-button *ngIf="completedDisables != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="disableAlertModalVisible = false;" [disabled]="disableAlertsLoading()" />
+        <p-button *ngIf="completedDisables != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmDisableAlerts();" [disabled]="disableAlertsLoading()" />
+        <div *ngIf="completedDisables == selectedAlerts.length"></div>
+        <p-button *ngIf="completedDisables == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedDisables = 0; getAllAlerts(page, size, this.filterForm.value); disableAlertModalVisible = false;" [disabled]="disableAlertsLoading()" />
+    </div>
+</app-modal>
+
+<app-modal [title]="selectedAlerts.length == 1 ? 'Activar alerta' : 'Activar alertas'" [visible]="enableAlertModalVisible">
+    <div class="modal-container">
+        <div class="modal-icon-container">
+            <i *ngIf="!isLoading" class="pi pi-power-off" style="font-size: 128px"></i>
+            <i *ngIf="isLoading" class="pi pi-spinner spin" style="font-size: 128px"></i>
+            <div class="font-16 font-w-600">Se {{selectedAlerts.length == 1 ? 'va' : 'van'}} a activar {{selectedAlerts.length}} {{selectedAlerts.length == 1 ? 'alerta' : 'alertas'}}</div>
+            <div class="font-12 text-gray">{{selectedAlerts.length == 1 ? 'A continuación se muestra la alerta que va a ser activada' : 'A continuación se muestran las alertas que van a ser activadas'}}</div>
+        </div>
+        <div class="changed-alerts-container">
+            <div class="changed-alert-container" *ngFor="let selectedAlert of selectedAlerts; let i = index; let last = last;">
+                <div class="data">
+                    <div class="font-w-600">#{{selectedAlert.alertId}} - {{selectedAlert.name}}</div>
+                    <i *ngIf="!this.enableAlertsMapLoading.get(selectedAlert.alertId!) && !this.enableAlertsMapSuccess.get(selectedAlert.alertId!) && !this.enableAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-circle"></i>
+                    <i *ngIf="this.enableAlertsMapLoading.get(selectedAlert.alertId!)" class="pi pi-spinner spin"></i>
+                    <i *ngIf="this.enableAlertsMapSuccess.get(selectedAlert.alertId!)" class="pi pi-check-circle" style="color: green;"></i>
+                    <i *ngIf="this.enableAlertsMapError.get(selectedAlert.alertId!)" class="pi pi-times-circle" style="color: red;"></i>
+                </div>
+
+                <div *ngIf="!last" class="separator"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-actions">
+        <p-button *ngIf="completedEnables != selectedAlerts.length" label="Cerrar" severity="secondary" (onClick)="enableAlertModalVisible = false;" [disabled]="enableAlertsLoading()" />
+        <p-button *ngIf="completedEnables != selectedAlerts.length" label="Confirmar" severity="primary" (onClick)="onClickConfirmEnableAlerts();" [disabled]="enableAlertsLoading()" />
+        <div *ngIf="completedEnables == selectedAlerts.length"></div>
+        <p-button *ngIf="completedEnables == selectedAlerts.length" label="Aceptar" severity="primary" (onClick)="completedEnables = 0; getAllAlerts(page, size, this.filterForm.value); enableAlertModalVisible = false;" [disabled]="enableAlertsLoading()" />
     </div>
 </app-modal>
 

@@ -299,23 +299,7 @@
             [disabled]="(isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)"
             [isOpen]="mode == 'edit' ? true : false">
             <div class="step-2-container">
-                <div class="font-20 font-w-600">Configurar umbrales de alerta</div>
-                <div class="notice c-blue">
-                    <i class="pi pi-info-circle"></i>
-                    <div>
-                        <span class="font-w-700">Importante</span>: las reglas se ejecutan según un orden de
-                        precedencia. Si una misma combinación (por ejemplo: OB = España) se repite en varias líneas con
-                        el mismo umbral, se aplicará la primera que aparezca. Utiliza las flechas para subir o bajar las
-                        reglas y así establecer tu orden de preferencia.
-                    </div>
-                </div>
-
-                <div class="notice c-blue">
-                    <i class="pi pi-info-circle"></i>
-                    <div>
-                        <span class="font-w-700">Aviso</span>: ten en cuenta que al modificar las severidades, los endpoints mantendrán la severidad asignada inicialmente. Esto implica que si cambias la severidad de una condición después de haberla creado, el endpoint mentendrá la/s severidad/es original/es.
-                    </div>
-                </div>
+                <div class="font-20 font-w-600" style="display: flex; flex-direction: row; align-items: center; gap: 16px;">Configurar umbrales de alerta <i class="pi pi-info-circle font-w-600" style="color: #2563eb; font-size: 1.2rem; cursor: pointer;" (mouseenter)="onHoverConditionInformationIcon($event)" (mouseleave)="conditionInformationModalVisible = false"></i></div>
 
                 <div class="threshold-container" *ngFor="let condition of conditionArray.controls; let i = index;">
                     <div class="condition-content">
@@ -337,9 +321,9 @@
                             </div>
                             <input *ngIf="!isBaselineAlert" type="text" pInputText [pSize]="'small'" [ngModel]="conditionTextMap.get(i)"
                                 style="width: 100%; pointer-events: none;" [readOnly]="true" />
-                            <div class="condition-status-container" [formGroup]="condition">
+                            <div *ngIf="mode == 'edit'" class="condition-status-container" [formGroup]="condition">
                                 <p-toggleswitch formControlName="status" />
-                                <span class="font-14">Habilitada</span>
+                                <span class="font-14">{{condition.get('status')?.value ? 'Habilitada' : 'Deshabilitada'}}</span>
                             </div>
                             <div *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
                                 style="width: 2px; height: 32px; background-color: lightgray;"></div>
@@ -710,7 +694,7 @@
                             <p-button *ngIf="selectedTagIndex !== null" label="Cancelar" icon="pi pi-times" (onClick)="resetTagSelection();"
                                 severity="secondary" size="small"/>
                             <p-button *ngIf="selectedTagIndex !== null" label="Guardar cambios" icon="pi pi-save" (onClick)="onClickSaveTagChanges();"
-                                severity="secondary" size="small" />
+                                severity="secondary" size="small" [disabled]="!tagForm.valid || (tagForm.get('name')?.value! == tagList[selectedTagIndex!].name && tagForm.get('value')?.value! == tagList[selectedTagIndex!].value)" />
                             <p-button *ngIf="selectedTagIndex !== null" label="Eliminar etiqueta" icon="pi pi-trash" (onClick)="onClickRemoveTag();"
                                 severity="secondary" size="small" />
                         </div>
@@ -724,17 +708,8 @@
                     </div>
                 </div>
                 <div class="notification-message-container">
-                    <div class="font-20 font-w-600">Mensaje de notificación</div>
+                    <div class="font-20 font-w-600" style="display: flex; flex-direction: row; align-items: center; gap: 16px;">Mensaje de notificación <i class="pi pi-info-circle font-w-600" style="color: #2563eb; font-size: 1.2rem; cursor: pointer;" (mouseenter)="onHoverMessageInformationIcon($event)" (mouseleave)="messageInformationModalVisible = false"></i></div>
                     <div class="font-16">Configura el mensaje que se enviará con cada notificación.</div>
-                    <div class="notice c-blue">
-                        <i class="pi pi-info-circle"></i>
-                        <div>
-                            <span class="font-w-700">Uso de variables y bloques condicionales</span>: Puedes usar
-                            <strong>&#123;&#123;</strong> en los campos de mensaje y detalles para acceder a variables
-                            de plantilla (como <strong>host.name</strong>) y bloques condicionales (como
-                            <strong>#is_alert</strong>)
-                        </div>
-                    </div>
 
                     <p-tabs class="tabs" value="0">
                         <p-tablist>
@@ -800,12 +775,7 @@
             [disabled]="(isSimpleConditionAlert || isCompositeConditionAlert) && (indicatorArray.length == 0 || indicatorArray.at(0).controls.metrics.length == 0)"
             [isOpen]="mode == 'edit' ? true : false">
             <div class="step-4-container">
-                <div class="notice c-blue">
-                    <i class="pi pi-info-circle"></i>
-                    <div>
-                        <span class="font-w-700">Importante</span>: por defecto, tu equipo tendrá permiso de lectura/escritura sobre la alerta. Puedes añadir nuevos equipos, y puedes elegir si tendrán permiso de lectura o lectura/escritura.
-                    </div>
-                </div>
+                <div class="font-20 font-w-600" style="display: flex; flex-direction: row; align-items: center; gap: 16px;">Configuración de permisos <i class="pi pi-info-circle font-w-600" style="color: #2563eb; font-size: 1.2rem; cursor: pointer;" (mouseenter)="onHoverPermissionInformationIcon($event)" (mouseleave)="permissionInformationModalVisible = false"></i></div>
 
                 <div class="permissions-container">
                     <div class="permission-container" *ngFor="let permission of permissionList; let i = index;"
@@ -1273,3 +1243,42 @@
         </div>
     </div>
 </div>
+
+<p-dialog [(visible)]="conditionInformationModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false"
+    [style]="conditionInformationModalStyle" (click)="$event.stopPropagation();" styleClass="condition-info-dialog">
+    
+    <div class="notice c-blue">
+        <i class="pi pi-info-circle"></i>
+        <div>
+            <span class="font-w-700">Importante</span>: las reglas se ejecutan según un orden de
+            precedencia. Si una misma combinación (por ejemplo: OB = España) se repite en varias líneas con
+            el mismo umbral, se aplicará la primera que aparezca. Utiliza las flechas para subir o bajar las
+            reglas y así establecer tu orden de preferencia.
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="messageInformationModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false"
+    [style]="messageInformationModalStyle" (click)="$event.stopPropagation();" styleClass="condition-info-dialog">
+
+    <div class="notice c-blue">
+        <i class="pi pi-info-circle"></i>
+        <div>
+            <span class="font-w-700">Uso de variables y bloques condicionales</span>: Puedes usar
+            <strong>&#123;&#123;</strong> en los campos de mensaje y detalles para acceder a variables
+            de plantilla (como <strong>host.name</strong>) y bloques condicionales (como
+            <strong>#is_alert</strong>)
+        </div>
+    </div>
+</p-dialog>
+
+<p-dialog [(visible)]="permissionInformationModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false"
+    [style]="permissionInformationModalStyle" (click)="$event.stopPropagation();" styleClass="condition-info-dialog">
+
+    <div class="notice c-blue">
+        <i class="pi pi-info-circle"></i>
+        <div>
+            <span class="font-w-700">Importante</span>: por defecto, tu equipo tendrá permiso de lectura/escritura sobre la alerta. Puedes añadir nuevos equipos, y puedes elegir si tendrán permiso de lectura o lectura/escritura.
+        </div>
+    </div>
+</p-dialog>
