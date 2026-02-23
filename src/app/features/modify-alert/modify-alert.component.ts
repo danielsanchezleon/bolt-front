@@ -224,7 +224,7 @@ export class ModifyAlertComponent implements OnInit
     .subscribe(filters => 
     {
       sessionStorage.setItem('tableFilters', JSON.stringify(filters));
-      this.getAllAlerts(this.page, this.size, filters);
+      this.getAllAlerts(0, 20, filters);
     });
 
     this.getServices();

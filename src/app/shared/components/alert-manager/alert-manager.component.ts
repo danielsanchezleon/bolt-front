@@ -1741,8 +1741,6 @@ export class AlertManagerComponent implements OnInit{
 
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
-      this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
-
       this.conditionFiltersMap = new Map();
 
       alertViewDto.conditions!.forEach((condition, i) => 
@@ -1835,6 +1833,9 @@ export class AlertManagerComponent implements OnInit{
                     name: this._fb.control(this.letters[i] + "." + (j + 1)),
                     metric: this._fb.control(
                       (() => {
+
+                        let returnMetric: any = null;
+
                         // 0️⃣ Candidatos por metric + table
                         const baseCandidates = response.filter(met =>
                           met.metric === metric.metricName &&
@@ -1854,12 +1855,14 @@ export class AlertManagerComponent implements OnInit{
                             .join(',') === metric.dimensions
                         );
 
-                        if (exact) return exact;
+                        if (exact) returnMetric = exact;
 
-                        // 2️⃣ Fallback por dimensiones
-                        const metricDims = metric.dimensions!.split(',').map(d => d.trim().toLowerCase());
+                        if (returnMetric == null || !returnMetric || returnMetric == undefined)
+                        {
+                          // 2️⃣ Fallback por dimensiones
+                          const metricDims = metric.dimensions!.split(',').map(d => d.trim().toLowerCase());
 
-                        const candidates = baseCandidates
+                          const candidates = baseCandidates
                           .map(met => ({
                             met,
                             dims: met.dimension!.map(d => d.toLowerCase())
@@ -1871,7 +1874,12 @@ export class AlertManagerComponent implements OnInit{
                             a.dims.length - b.dims.length
                           );
 
-                        return candidates.length ? candidates[0].met : null;
+                          returnMetric = candidates.length ? candidates[0].met : null;
+                        }
+
+                        console.log(returnMetric)
+
+                        return returnMetric;
                       })()
                     ),
                     operation: this._fb.control(matOperationOptions.find(opt => opt.value == metric.operation)),
@@ -1899,8 +1907,6 @@ export class AlertManagerComponent implements OnInit{
         this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
           this.generateGraphAgroupations(dimension);
         });
-
-        this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
 
         // Prepara map
         this.conditionFiltersMap = new Map();
@@ -2039,8 +2045,6 @@ export class AlertManagerComponent implements OnInit{
       });
 
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
-
-      this.dimensionIntersectionOptions = alertViewDto.groupBy?.map(dimension => dimension.toLowerCase())!;
 
       this.conditionFiltersMap = new Map();
 
@@ -2688,7 +2692,10 @@ export class AlertManagerComponent implements OnInit{
                 }
               },
               (error) => {
-
+                if (!this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
+                {
+                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('merge', []))
+                }
               }
             )
           }

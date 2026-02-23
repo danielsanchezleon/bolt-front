@@ -66,7 +66,7 @@
                     <th class="th-blue">Nombre</th>
                     <th class="th-blue">Mensaje</th>
                     <th class="th-blue">Creación</th>
-                    <th class="th-blue">Severidades</th>
+                    <th class="th-blue">Condiciones</th>
                     <th class="th-blue">Metadatos</th>
                     <th class="th-blue">Endpoints</th>
                     <!-- <th class="th-blue">Última vez</th> -->
@@ -134,10 +134,10 @@
                     <td>
                         <div (click)="op1.toggle($event)" class="font-12 threshold-button-container font-w-600">
                             {{alert.conditions.length
-                            == 1 ? '1 severidad' : alert.conditions.length + ' severidades'}}</div>
+                            == 1 ? '1 condición' : alert.conditions.length + ' condiciones'}}</div>
                         <p-popover #op1>
                             <div class="popover-container">
-                                <div class="font-w-600">Severidades</div>
+                                <div class="font-w-600">Condiciones</div>
 
                                 <div class="notice c-blue">
                                     <i class="pi pi-info-circle"></i>
