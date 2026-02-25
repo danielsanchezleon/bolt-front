@@ -73,6 +73,7 @@ import { GraphSerieResponse } from '../../responses/plotting/GraphSerieResponse'
 import { PlottingService } from '../../services/plotting.service';
 import { GraphRequest } from '../../requests/GraphRequest';
 import { DimensionValuesRequest } from '../../requests/baseline/DimensionValuesRequest';
+import { AlertIndicatorViewDto } from '../../dto/alert/AlertIndicatorViewDto';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -327,6 +328,8 @@ export class AlertManagerComponent implements OnInit{
   isBaselinePastAverageAlert: boolean = false;
   isBaselinePastAveragePonderedAlert: boolean = false;
   isBaselineKSigmaAlert: boolean = false;
+
+  baselineIndicator: AlertIndicatorViewDto | null = null;
 
   isInitialMetricListLoading: boolean = false;
 
@@ -1725,6 +1728,43 @@ export class AlertManagerComponent implements OnInit{
     this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
   }
 
+  loadBaselineIndicators(alertViewDto: AlertViewDto)
+  {
+    this.indicatorArray.clear();
+
+    alertViewDto.indicators?.forEach((indicator) => {
+
+      if (!indicator.isBaseline)
+      {
+        const newIndicator: IndicatorFormGroup = this._fb.group({
+          id: this._fb.control(indicator.id),
+          name: this._fb.control(indicator.name),
+          metrics: this._fb.array<MetricFormGroup>([]),
+          finalExpression: this._fb.control({value: indicator.finalExpression, disabled: true})
+        }) as IndicatorFormGroup;
+
+        indicator.alertMetrics?.forEach((metric, j) => 
+        {
+          let metricList: TableMetricInfo[] = [];
+
+          metricList.push(new TableMetricInfo(metric.dbName, metric.tableName, metric.metricName, []));
+
+          newIndicator.controls.metrics.push(this._fb.group({
+              metricId: this._fb.control(metric.metricId),
+              id: this._fb.control((j + 1).toString()),
+              name: this._fb.control(this.letters[0] + "." + (j + 1)),
+              metric: this._fb.control({value: metricList[0], disabled: true}),
+              operation: this._fb.control({value: matOperationOptions.find((opt) => opt.value == metric.operation), disabled: true}),
+              options: this._fb.control(metricList),
+              idInventory: this._fb.control(metric.idInventory)
+            }) as MetricFormGroup)
+        });
+
+        this.indicatorArray.push(newIndicator);
+      }
+    });
+  }
+
   async loadBaselines(alertViewDto: AlertViewDto) 
   {
     try 
@@ -1735,9 +1775,16 @@ export class AlertManagerComponent implements OnInit{
         this.inventoryBaselinesService.getBaselines(this.isBaselinePastAverageAlert ? 'past_average' : this.isBaselinePastAveragePonderedAlert ? 'past_average_pondered' : 'ksigma')
       );
 
-      this.selectedBaseline = this.baselineResponseList.find(baseline => baseline.name === alertViewDto.indicators?.at(alertViewDto.indicators.length - 1)?.alertMetrics?.at(0)?.metricName!);
+      this.baselineIndicator = alertViewDto.indicators?.find(indicator => indicator.isBaseline)!;
+      this.selectedBaseline = this.baselineResponseList.find(baseline => baseline.name === this.baselineIndicator?.alertMetrics?.at(0)?.metricName!);
 
-      this.onChangeBaselineSelection();
+      this.getBaselineGroupByOptions();
+
+      this.loadBaselineIndicators(alertViewDto);
+
+      this.resultMetricMap.set(0, this.selectedBaseline.alertIndicatorViewDto.finalExpression);
+
+      this.generateInternalNameAndName();
 
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
 
@@ -1848,11 +1895,14 @@ export class AlertManagerComponent implements OnInit{
                           return null;
                         }
 
+                        if (baseCandidates.length === 1) return baseCandidates[0];
+
                         // 1️⃣ Match exacto
                         const exact = baseCandidates.find(met =>
                           met.dimension!
                             .slice().sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
-                            .join(',') === metric.dimensions
+                            .join(',') === metric.dimensions!.split(',').sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+                            .join(',')
                         );
 
                         if (exact) returnMetric = exact;
@@ -1868,7 +1918,7 @@ export class AlertManagerComponent implements OnInit{
                             dims: met.dimension!.map(d => d.toLowerCase())
                           }))
                           .filter(x =>
-                            x.dims.every(d => metricDims.includes(d))
+                            metricDims.every(d => x.dims.includes(d))
                           )
                           .sort((a, b) =>
                             a.dims.length - b.dims.length
@@ -1876,8 +1926,6 @@ export class AlertManagerComponent implements OnInit{
 
                           returnMetric = candidates.length ? candidates[0].met : null;
                         }
-
-                        console.log(returnMetric)
 
                         return returnMetric;
                       })()
@@ -2384,10 +2432,23 @@ export class AlertManagerComponent implements OnInit{
     }
 
     //BASELINE
-    if (this.isBaselineAlert)
+    if (this.isBaselineAlert && this.mode == 'create')
     {
       let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
       alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
+    }
+    else if (this.isBaselineAlert && this.mode == 'edit')
+    {
+      if (this.baselineIndicator)
+      {
+        let alertMetrics: AlertMetricDto[] = [];
+
+        this.baselineIndicator.alertMetrics?.forEach((metric) => {
+          alertMetrics.push(new AlertMetricDto(metric.metricId!, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory));
+        });
+
+        alertIndicators.push(new AlertIndicatorDto(this.baselineIndicator.id!, 'B', alertMetrics, "B.1", this.isBaselineAlert));
+      }
     }
 
     //ALERTA

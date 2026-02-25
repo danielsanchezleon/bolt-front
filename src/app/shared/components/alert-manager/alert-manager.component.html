@@ -25,7 +25,7 @@
                     <div class="select-container">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
                             <span class="font-14 font-w-600">Baseline</span>
-                            <p-select class="select" [options]="baselineResponseList" optionLabel="name" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" (onChange)="onChangeBaselineSelection();" [disabled]="baselinesListLoading || baselineSelectDisabled " />
+                            <p-select class="select" [options]="baselineResponseList" optionLabel="name" appendTo="body" placeholder="Selecciona una baseline" [(ngModel)]="selectedBaseline" [disabled]="baselinesListLoading" (onChange)="onChangeBaselineSelection();" [disabled]="baselinesListLoading || baselineSelectDisabled || mode === 'edit'" />
                         </div>
                     </div>
                 </div>
