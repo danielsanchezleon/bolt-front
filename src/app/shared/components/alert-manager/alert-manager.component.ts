@@ -437,8 +437,8 @@ export class AlertManagerComponent implements OnInit{
   selectedTagIndex: number | null = null;
   tagList: Tag[] = [];
 
-  tagNames: string[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
-  tagFilteredNames: any[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
+  tagNames: string[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
+  tagFilteredNames: any[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
 
   messageInformationModalStyle: any = {};
   messageInformationModalVisible: boolean = false;
@@ -3166,8 +3166,8 @@ export class AlertManagerComponent implements OnInit{
     let boltService = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltService!;
     let boltFunction = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltFunction!;
 
-    this.tagList.unshift(new Tag('source', boltGroup, 'METRIC'));
-    this.tagList.unshift(new Tag('service', boltService, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_source', boltGroup, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_service', boltService, 'METRIC'));
     this.tagList.unshift(new Tag('bolt_funcion', boltFunction, 'METRIC'));
   }
 

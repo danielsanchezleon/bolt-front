@@ -182,8 +182,8 @@ export class ModifyAlertComponent implements OnInit
 
   //TAGS
   selectedTagIndex: number | null = null;
-  tagNames: string[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
-  tagFilteredNames: any[] = ['source', 'service', 'bolt_funcion', 'data_type', 'category', 'bolt_host', 'bolt_ob'];
+  tagNames: string[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
+  tagFilteredNames: any[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
 
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService) 
   {
