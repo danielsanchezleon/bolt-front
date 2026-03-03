@@ -26,13 +26,6 @@ export class MetricService {
     return this.http.get<TableMetricInfo[]>(this.apiUrl + '/tables-metrics-info', { params });
   }
 
-  getMetric(metric: string, table: string): Observable<TableMetricInfo>
-  {
-    const params = new HttpParams().set('metric', metric).set('table', table);
-
-    return this.http.get<TableMetricInfo>(this.apiUrl + '/getMetric', {params: params});
-  }
-
   getChartData(chartRequestDto: ChartRequestDto): Observable<any>
   {
     return this.http.post<any>(this.apiUrl + '/getChartData', chartRequestDto);

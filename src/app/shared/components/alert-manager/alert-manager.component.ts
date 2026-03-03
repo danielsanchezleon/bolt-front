@@ -3158,17 +3158,41 @@ export class AlertManagerComponent implements OnInit{
     return allValid;
   }
 
-  generateMetricTags()
+  generateMetricTags() 
   {
-    this.tagList = this.tagList.filter(tag => tag.type != 'METRIC');
+    // Limpiamos los tags METRIC existentes
+    this.tagList = this.tagList.filter(tag => tag.type !== 'METRIC');
 
-    let boltGroup = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltGroup!;
-    let boltService = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltService!;
-    let boltFunction = this.indicatorArray.at(0).controls.metrics.at(0).get('metric')?.value?.boltFunction!;
+    // Objeto temporal para almacenar los últimos valores no nulos
+    let metricValues: any = {
+      boltGroup: null,
+      boltService: null,
+      boltFunction: null,
+      boltDataType: null,
+      boltCategory: null
+    };
 
-    this.tagList.unshift(new Tag('bolt_source', boltGroup, 'METRIC'));
-    this.tagList.unshift(new Tag('bolt_service', boltService, 'METRIC'));
-    this.tagList.unshift(new Tag('bolt_funcion', boltFunction, 'METRIC'));
+    // Recorremos todos los indicadores
+    this.indicatorArray.controls.forEach(indicator => {
+      // Recorremos todas las métricas del indicador
+      indicator.controls.metrics.controls.forEach(metricControl => {
+        const metric = metricControl.get('metric')?.value;
+        if (metric) {
+          if (metric.boltGroup != null) metricValues.boltGroup = metric.boltGroup;
+          if (metric.boltService != null) metricValues.boltService = metric.boltService;
+          if (metric.boltFunction != null) metricValues.boltFunction = metric.boltFunction;
+          if (metric.boltDataType != null) metricValues.boltDataType = metric.boltDataType;
+          if (metric.boltCategory != null) metricValues.boltCategory = metric.boltCategory;
+        }
+      });
+    });
+
+    // Añadimos los tags solo si hay valor
+    this.tagList.unshift(new Tag('bolt_source', metricValues.boltGroup, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_service', metricValues.boltService, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_funcion', metricValues.boltFunction, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_data_type', metricValues.boltDataType, 'METRIC'));
+    this.tagList.unshift(new Tag('bolt_category', metricValues.boltCategory, 'METRIC'));
   }
 
   selectTag(i: number)
