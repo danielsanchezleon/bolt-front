@@ -44,6 +44,7 @@ import { MessageService } from 'primeng/api';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AutoCompleteModule } from 'primeng/autocomplete';
+import { AuthService } from '../../shared/services/auth.service';
 
 @Component({
   selector: 'app-modify-alert',
@@ -81,6 +82,8 @@ import { AutoCompleteModule } from 'primeng/autocomplete';
 })
 export class ModifyAlertComponent implements OnInit
 {
+  isAdmin: boolean = false;
+
   //METADATA FILTERS
   servicesList: string[] = [];
   sourcesList: string[] = [];
@@ -185,7 +188,7 @@ export class ModifyAlertComponent implements OnInit
   tagNames: string[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
   tagFilteredNames: any[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
 
-  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService) 
+  constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService, private authService: AuthService) 
   {
     const navigation = this.router.getCurrentNavigation();
     const state = navigation?.extras.state as { alertId: any };
@@ -198,6 +201,8 @@ export class ModifyAlertComponent implements OnInit
 
   ngOnInit() 
   {
+    this.isAdmin = this.authService.isAdmin() && this.authService.isAdmin() == true ? true : false;
+
     this.filterForm = this._fb.group({
       filterText: new FormControl(''),
       service: new FormControl(''),

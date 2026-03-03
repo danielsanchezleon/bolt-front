@@ -61,7 +61,9 @@
         <p-table *ngIf="alertList && alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
             <ng-template #header>
                 <tr>
-                    <th class="th-blue" style="width: 4rem; text-align: center;"><p-tableHeaderCheckbox /></th>
+                    <th class="th-blue" style="width: 4rem; text-align: center;">
+                        <!-- <p-tableHeaderCheckbox /> -->
+                    </th>
                     <th class="th-blue">Id.</th>
                     <th class="th-blue">Nombre</th>
                     <th class="th-blue">Mensaje</th>
@@ -79,16 +81,16 @@
             <ng-template #body let-alert>
                 <tr>
                     <td style="width: 4rem; text-align: center;">
-                        <p-tableCheckbox [value]="alert" />
+                        <p-tableCheckbox *ngIf="alert.canEdit || this.isAdmin" [value]="alert" />
                     </td>
                      <td style="text-align: center;">
                         {{alert.alertId}}
                     </td>
                     <td class="title-container">
-                        <div *ngIf="alert.canEdit" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="onClickGoToEditAlert(alert)">
+                        <div *ngIf="alert.canEdit || this.isAdmin" [pTooltip]="tooltipContent" tooltipPosition="top" class="name title font-w-600" (click)="onClickGoToEditAlert(alert)">
                             {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
-                        <div *ngIf="!alert.canEdit" class="name font-w-500">
+                        <div *ngIf="!alert.canEdit && !this.isAdmin" class="name font-w-500">
                             {{alert.alertType == 'simple' || alert.alertType == 'composite' || alert.alertType == 'baseline' ? alert.alertDefinition : alert.name}}
                         </div>
                         <ng-template #tooltipContent>
@@ -114,11 +116,11 @@
                     </td>
                     <td class="message-column">
                         <div class="content">
-                            <div *ngIf="alert.canEdit" class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
+                            <div *ngIf="alert.canEdit || this.isAdmin" class="cell-flex" (click)="alertMessageEdited = alert; newAlertMessage = alert.alertText;">
                                 <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [pTooltip]="alert.alertText" tooltipPosition="top">{{alert.alertText}}</span>
                                 <i *ngIf="alertMessageEdited?.alertId != alert.alertId" class="pi pi-pencil cell-icon"></i>
                             </div>
-                            <div *ngIf="!alert.canEdit" class="cell-flex">
+                            <div *ngIf="!alert.canEdit && !this.isAdmin" class="cell-flex">
                                 <span class="cell-text" *ngIf="alertMessageEdited == null || (alertMessageEdited != null && alertMessageEdited.alertId != alert.alertId)" [pTooltip]="alert.alertText" tooltipPosition="top">{{alert.alertText}}</span>
                             </div>
                             <textarea style="width: 100%;" *ngIf="alertMessageEdited != null && alertMessageEdited.alertId == alert.alertId" rows="3" cols="30" pTextarea [(ngModel)]="newAlertMessage"></textarea>
@@ -152,17 +154,17 @@
                                             <div class="id-container font-w-600">{{i+1}}</div>
                                             <p-select class="select" size="small" [(ngModel)]="condition.severity"
                                                 [options]="severityOptions" optionLabel="label" optionValue="value"
-                                                appendTo="body" />
-                                            <p-toggleswitch [(ngModel)]="condition.status" />
+                                                appendTo="body" [disabled]="!alert.canEdit && !this.isAdmin" />
+                                            <p-toggleswitch [(ngModel)]="condition.status" [disabled]="!alert.canEdit && !this.isAdmin" />
                                         </div>
                                         <div *ngIf="condition.alertClauses.length > 0" class="clauses-container">
                                             <div class="clause-container" *ngFor="let clause of condition.alertClauses; let j = index;">
                                                 <ng-container *ngIf="clause.threshold != null">
                                                     <p-select class="select-2" size="small" [(ngModel)]="clause.compOperation"
                                                         [options]="comparationOptions" optionLabel="label" optionValue="value"
-                                                        appendTo="body" />
+                                                        appendTo="body" [disabled]="!alert.canEdit && !this.isAdmin" />
                                                     <p-inputnumber size="small" [(ngModel)]="clause.threshold" mode="decimal"
-                                                        [minFractionDigits]="0" [maxFractionDigits]="6" />
+                                                        [minFractionDigits]="0" [maxFractionDigits]="6" [disabled]="!alert.canEdit && !this.isAdmin" />
                                                         <p-button *ngIf="!condition.id && condition.id == null && condition.id == undefined" icon="pi pi-minus" [rounded]="true" [text]="true"
                                                         severity="danger" (onClick)="onClickRemoveSeverity(alert, i);" />
                                                 </ng-container>
@@ -196,13 +198,13 @@
                                     </p-floatlabel>
                                     <p-floatlabel class="floatlabel" variant="on" size="small">
                                         <input class="input" pInputText id="value" formControlName="value"
-                                            size="small" />
+                                            size="small"/>
                                         <label for="value">Valor *</label>
                                     </p-floatlabel>
                                 </form>
                                 <div class="add-tag-actions">
                                     <p-button *ngIf="selectedTagIndex == null" label="Añadir etiqueta" icon="pi pi-plus" (onClick)="onClickAddTag(alert);"
-                                        severity="secondary" [disabled]="!tagForm.valid" size="small" />
+                                        severity="secondary" [disabled]="!tagForm.valid || (!alert.canEdit && !this.isAdmin)" size="small" />
                                     <p-button *ngIf="selectedTagIndex !== null" label="Cancelar" icon="pi pi-times" (onClick)="resetTagSelection();"
                                         severity="secondary" size="small"/>
                                     <p-button *ngIf="selectedTagIndex !== null" label="Guardar cambios" icon="pi pi-save" (onClick)="onClickSaveTagChanges(alert);"
@@ -212,8 +214,14 @@
                                 </div>
                                 <div class="font-16 font-w-600">Etiquetas añadidas</div>
                                 <div *ngIf="alert.alertTags.length == 0" class="font-12 text-gray">Ninguna etiqueta añadida aún</div>
-                                <div *ngIf="alert.alertTags.length > 0" class="tags-container">
+                                <div *ngIf="alert.alertTags.length > 0 && (alert.canEdit || this.isAdmin)" class="tags-container">
                                     <div class="tag-container" *ngFor="let tag of alert.alertTags; let i = index;" (click)="selectTag(alert ,i);" [ngStyle]="{'outline': selectedTagIndex == i ? '2px solid gray' : 'none'}">
+                                        <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
+                                        <div class="font-12">{{tag.name + ': ' + tag.value}}</div>
+                                    </div>
+                                </div>
+                                <div *ngIf="alert.alertTags.length > 0 && !alert.canEdit && !this.isAdmin" class="tags-container">
+                                    <div class="tag-container" *ngFor="let tag of alert.alertTags; let i = index;" [ngStyle]="{'outline': selectedTagIndex == i ? '2px solid gray' : 'none'}" style="cursor: default !important;">
                                         <i class="pi pi-tag" style="font-size: 0.75rem;"></i>
                                         <div class="font-12">{{tag.name + ': ' + tag.value}}</div>
                                     </div>
@@ -236,10 +244,10 @@
                         {{alert.triggersLastDay == 1 ? '1 vez' : alert.triggersLastDay + ' veces'}}
                     </td> -->
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationPeriod" [options]="modifyAlertTimeWindowOptions" optionLabel="label" optionValue="value" appendTo="body" [disabled]="!alert.canEdit && !this.isAdmin"/>
                     </td>
                     <td>
-                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();"/>
+                        <p-select size="small" [(ngModel)]="alert.evaluationFrequency" [options]="periodicityOptions" optionLabel="label" optionValue="value" appendTo="body" (onChange)="hasChanges();" [disabled]="!alert.canEdit && !this.isAdmin"/>
                     </td>
                     <td style="text-align: center;">
                         <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta creada activa'"></i>
