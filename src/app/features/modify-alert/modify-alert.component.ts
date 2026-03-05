@@ -89,6 +89,12 @@ export class ModifyAlertComponent implements OnInit
   sourcesList: string[] = [];
   dataTypesList: string[] = [];
   categoriesList: string[] = [];
+  alertTypeList: any[] = [
+    { value: 'SIMPLE', label: 'Simple' },
+    { value: 'COMPOSITE', label: 'Compuesta' },
+    { value: 'LOGS', label: 'Logs' },
+    { value: 'BASELINE', label: 'Baseline' }
+  ];
 
   severityOptions: any[] = [
     {value: 'DISASTER', label: 'Disaster'},
@@ -208,7 +214,8 @@ export class ModifyAlertComponent implements OnInit
       service: new FormControl(''),
       source: new FormControl(''),
       dataType: new FormControl(''),
-      category: new FormControl('')
+      category: new FormControl(''),
+      alertType: new FormControl('')
     });
 
     const saved = sessionStorage.getItem('tableFilters');

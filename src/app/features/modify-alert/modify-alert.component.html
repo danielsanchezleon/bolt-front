@@ -35,6 +35,7 @@
 
     <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
         <form *ngIf="filterForm && !isLoading && !isError" [formGroup]="filterForm" style="width: 100%;">
+            <p-select [ngStyle]="{'width': '100%'}" [options]="alertTypeList" appendTo="body" formControlName="alertType" placeholder="Tipo de alerta" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="servicesList" appendTo="body" formControlName="service" placeholder="Servicio" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="sourcesList" appendTo="body" formControlName="source" placeholder="Fuente" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="dataTypesList" appendTo="body" formControlName="dataType" placeholder="Tipo de dato" />

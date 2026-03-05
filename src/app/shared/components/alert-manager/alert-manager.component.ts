@@ -253,7 +253,7 @@ type IndicatorFormGroup = FormGroup<{
 
 type IndicatorFormArray = FormArray<IndicatorFormGroup>;
 
-//LOGS
+// LOGS
 
 type LogConditionFormGroup = FormGroup<{
   logConditionId: FormControl<number | null>;
@@ -266,7 +266,7 @@ type LogConditionFormGroup = FormGroup<{
 
 type LogConditionFormArray = FormArray<LogConditionFormGroup>;
 
-//END_LOGS
+// END_LOGS
 
 type ClauseFormGroup = FormGroup<{
   clauseId: FormControl<number | null>;
@@ -313,7 +313,7 @@ type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 })
 export class AlertManagerComponent implements OnInit{
 
-  //General
+  // General
   alertId: number = 0;
   mode: string = 'create';
   subscriptions: Subscription[] = [];
@@ -347,7 +347,7 @@ export class AlertManagerComponent implements OnInit{
 
   corruptedAlert: boolean = false;
 
-  //Step 1
+  // Step 1
   matOperationOptions: any[] = [];
 
   internalName: string = '';
@@ -377,7 +377,7 @@ export class AlertManagerComponent implements OnInit{
   groupByForm: FormGroup;
   advancedOptionsForm: FormGroup;
 
-  //LOGS
+  // LOGS
   logsStep1Form: FormGroup;
   advancedSearchOptions: any[] = [];
 
@@ -387,7 +387,10 @@ export class AlertManagerComponent implements OnInit{
   catalogLoaded = new BehaviorSubject<boolean>(false);
   metricsLoaded = new BehaviorSubject<boolean>(false);
 
-  //BASELINE
+  endpointsLoaded = new BehaviorSubject<boolean>(false);
+  teamsLoaded = new BehaviorSubject<boolean>(false);
+
+  // BASELINE
   baselinesListLoading: boolean = false;
   baselinesListError: boolean = false;
   baselineResponseList: BaselineResponse[] = [];
@@ -397,7 +400,7 @@ export class AlertManagerComponent implements OnInit{
   baselineGroupByOptionsLoading: boolean = false;
   baselineGroupByOptionsError: boolean = false;
 
-  //Step 2
+  // Step 2
   conditionInformationModalStyle: any = {};
   conditionInformationModalVisible: boolean = false;
 
@@ -419,12 +422,12 @@ export class AlertManagerComponent implements OnInit{
   errorBehaviorOptions: any[] = [];
   errorBehaviorForm: FormGroup;
 
-  //BASELINE
+  // BASELINE
   baselinesClauseComparationOptions: any[] = [];
   baselinesVariablesConditionTypes: any[] = [];
   baselinesComparationTypes: any[] = [];
 
-  //Step 3
+  // Step 3
   endpointsByTypeMap: any;
   endpointFieldValues: EndpointViewDto[] = [];
   endpointForm: FormGroup;
@@ -457,7 +460,7 @@ export class AlertManagerComponent implements OnInit{
   previousDetailsValue: string = '';
   notificationMessageForm: FormGroup;
 
-  //Step 4
+  // Step 4
   permissionInformationModalStyle: any = {};
   permissionInformationModalVisible: boolean = false;
 
@@ -465,7 +468,7 @@ export class AlertManagerComponent implements OnInit{
   permissionList: Permission[] = [];
   teamList: TeamViewDto[] = [];
 
-  //Modal
+  // Modal
   modalVisible: boolean = false;
   isDetails: boolean = false;
   isLoading: boolean = false;
@@ -473,7 +476,7 @@ export class AlertManagerComponent implements OnInit{
   dbError: boolean = false;
   dolphinError: boolean = false;
 
-  //LOGS
+  // LOGS
   dataTypesLoading: boolean = false;
   dataTypesError: boolean = false;
   dataTypesList: string[] = [];
@@ -548,7 +551,7 @@ export class AlertManagerComponent implements OnInit{
       this.alertId = this.route.snapshot.params['alert_id'];
     }
 
-    //Step 1
+    // Step 1
     this.indicatorArray = this._fb.array<IndicatorFormGroup>([]);
 
     this.groupByForm = this._fb.group({
@@ -561,7 +564,7 @@ export class AlertManagerComponent implements OnInit{
       periodicity: [periodicityOptions[1], [Validators.required]]
     });
 
-    //LOGS
+    // LOGS
     this.logsStep1Form = this._fb.group({
       service: ['', [Validators.required]],
       catalog: [{value: '', disabled: true}, [Validators.required]]
@@ -569,7 +572,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.logsConditionArray = this._fb.array<LogConditionFormGroup>([]);
 
-    //Step 2
+    // Step 2
     this.conditionArray = this._fb.array<ConditionFormGroup>([]);
 
     this.activationRecoverForm = this._fb.group({
@@ -586,7 +589,7 @@ export class AlertManagerComponent implements OnInit{
       error2: [errorBehaviorOptions[0], [Validators.required]]
     });
 
-    //Step 3
+    // Step 3
 
     this.endpointForm = this._fb.group({
       type: ['', [Validators.required]],
@@ -642,7 +645,7 @@ export class AlertManagerComponent implements OnInit{
       this.resetSeverityOptions();
     }
 
-    //Step 1
+    // Step 1
 
     this.matOperationOptions = matOperationOptions;
 
@@ -665,10 +668,10 @@ export class AlertManagerComponent implements OnInit{
     this.discardTimeOptions = discardTimeOptions;
     this.periodicityOptions = periodicityOptions;
 
-    //LOGS
+    // LOGS
     this.advancedSearchOptions = advancedSearchOptions;
 
-    //Step 2
+    // Step 2
     this.clauseComparationOptions = clauseComparationOptions;
 
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
@@ -677,12 +680,12 @@ export class AlertManagerComponent implements OnInit{
 
     this.errorBehaviorOptions = errorBehaviorOptions;
 
-    //BASELINES
+    // BASELINES
     this.baselinesClauseComparationOptions = baselinesClauseComparationOptions;
     this.baselinesVariablesConditionTypes = baselinesVariablesConditionTypes;
     this.baselinesComparationTypes = baselinesComparationTypes;
 
-    //Step 3
+    // Step 3
     this.getEndpointsByType();
 
     this.endpointTypeOptions = endpointTypeOptions;
@@ -690,417 +693,242 @@ export class AlertManagerComponent implements OnInit{
     this.conditionalBlockOptions = conditionalBlockOptions;
     this.templateVariableOptions = templateVariableOptions;
 
-    //Step 4
+    // Step 4
     this.permissionTypeOptions = permissionTypeOptions;
     this.getAllTeams();
   }
 
-  getAlert()
-  {
+  getAlert() {
     this.alertResponseLoading = true;
     this.alertResponseError = false;
-
     this.alertService.getAlert(this.alertId).subscribe(
-      (response) => {
-        this.fromDtoToForm(response);
-        this.alertResponseLoading = false;
-      },
-      (error) => 
-      {
-        this.alertResponseLoading = false;
-        this.alertResponseError = true;
-      }
-    )
+      (response) => { this.fromDtoToForm(response); this.alertResponseLoading = false; },
+      () => { this.alertResponseLoading = false; this.alertResponseError = true; }
+    );
   }
 
-  onClickNavigateToCreateAlert() {
-    this.router.navigate(['alert/create']);
-  }
+  onClickNavigateToCreateAlert() { this.router.navigate(['alert/create']); }
+  onClickNavigateToAlerts() { this.router.navigate(['alerts']); }
 
-  onClickNavigateToAlerts() {
-    this.router.navigate(['alerts']);
-  }
-
-  generateInternalNameAndName()
-  {
+  generateInternalNameAndName() {
     this.internalName = '';
     this.name = '';
 
-    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
-    {
-      let metricNameList: string[] = [];
-
-      this.indicatorArray.controls.forEach(indicator => {
-        if (indicator.controls.metrics.controls.length > 0)
-        {
-          indicator.controls.metrics.controls.forEach(metric => {
-            metricNameList.push(metric.get('metric')?.value?.metric!);
-          });
-        }
-      });
-
-      this.internalName = metricNameList.join('_');
-      this.name = metricNameList.join('_');
-
-      if (this.groupByForm.get('groupBy')?.value.length > 0)
-      {
-        this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join('_')
-      }
-    }
-    else if (this.isLogsAlert)
-    {
-      this.internalName = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
-
-      this.name = this.logsStep1Form.get('service')?.value + '_' + this.logsStep1Form.get('catalog')?.value;
-
-      if (this.groupByForm.get('groupBy')?.value.length > 0)
-      {
-        this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join('_')
-      }
-    }
-    else if (this.isBaselineAlert)
-    {
-      this.internalName = this.selectedBaseline.name;
-      this.name = this.selectedBaseline.name;
-
-      if (this.groupByForm.get('groupBy')?.value.length > 0)
-      {
-        this.internalName += '_' + this.groupByForm.get('groupBy')?.value.join('_')
-      }
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) {
+      const metricNames = this.indicatorArray.controls.flatMap(ind =>
+        ind.controls.metrics.controls.map(m => m.get('metric')?.value?.metric!)
+      );
+      this.internalName = this.name = metricNames.join('_');
+    } else if (this.isLogsAlert) {
+      this.internalName = this.name = `${this.logsStep1Form.get('service')?.value}_${this.logsStep1Form.get('catalog')?.value}`;
+    } else if (this.isBaselineAlert) {
+      this.internalName = this.name = this.selectedBaseline.name;
     }
 
-    if (this.mode == 'create' && !this.authService.isAdmin())
-      this.existsByInternalName();
+    const groupBy: string[] = this.groupByForm.get('groupBy')?.value ?? [];
+    if (groupBy.length > 0) this.internalName += '_' + groupBy.join('_');
+
+    if (this.mode === 'create' && !this.authService.isAdmin()) this.existsByInternalName();
   }
 
-  existsByInternalName()
-  {
+  existsByInternalName() {
     this.alertService.existsByInternalName(this.internalName).subscribe(
-      (response: any) => {
-        this.configuredAlertExists = response;
-      }
-    )
+      (response: any) => { this.configuredAlertExists = response; }
+    );
   }
 
-  //INDICATORS
-  createIndicator()
-  {
-    let indicatorIndex: number = this.indicatorArray.length;
-
-    const group: IndicatorFormGroup = this._fb.group({
+  // INDICATORS
+  createIndicator() {
+    const i = this.indicatorArray.length;
+    const group = this._fb.group({
       id: this._fb.control(null),
-      name: this._fb.control(this.letters[indicatorIndex]),
+      name: this._fb.control(this.letters[i]),
       metrics: this._fb.array<MetricFormGroup>([]),
       finalExpression: this._fb.control(''),
     }) as IndicatorFormGroup;
-
     this.indicatorArray.push(group);
-
-    this.createMetric(indicatorIndex);
-
-    this.indicatorNames.push(this.letters[indicatorIndex]);
+    this.createMetric(i);
+    this.indicatorNames.push(this.letters[i]);
   }
 
-  removeIndicator(indicatorIndex: number)
-  {
+  removeIndicator(indicatorIndex: number) {
     this.indicatorArray.removeAt(indicatorIndex);
     this.indicatorNames = [];
-
-    for (let indicator of this.indicatorArray.controls)
-    {
-      indicator.get('name')?.setValue(this.letters[this.indicatorArray.controls.indexOf(indicator)]);
-      this.indicatorNames.push(this.letters[this.indicatorArray.controls.indexOf(indicator)]);
-    }
-
-    this.generateDimensionIntersection();
-
-    this.resultMetricMap.delete(indicatorIndex);
-
-    this.conditionArray.controls.forEach(condition => {
-      condition.controls.clauses.controls.forEach(clause => {
-        clause.get('indicatorName')?.setValue(this.letters[0]);
-      });
+    this.indicatorArray.controls.forEach((ind, i) => {
+      ind.get('name')?.setValue(this.letters[i]);
+      this.indicatorNames.push(this.letters[i]);
     });
+    this.generateDimensionIntersection();
+    this.resultMetricMap.delete(indicatorIndex);
+    this.conditionArray.controls.forEach(cond =>
+      cond.controls.clauses.controls.forEach(c => c.get('indicatorName')?.setValue(this.letters[0]))
+    );
   }
 
-  createMetric(indicatorIndex: number)
-  {
-    this.indicatorArray.at(indicatorIndex).controls.metrics.push(this._fb.group({
+  createMetric(indicatorIndex: number) {
+    const ind = this.indicatorArray.at(indicatorIndex);
+    const len = ind.controls.metrics.length;
+    ind.controls.metrics.push(this._fb.group({
       metricId: this._fb.control(null),
-      id: this._fb.control((this.indicatorArray.at(indicatorIndex).controls.metrics.length! + 1).toString()),
-      name: this._fb.control(this.letters[indicatorIndex] + "." + (this.indicatorArray.at(indicatorIndex).controls.metrics.length!+1)),
+      id: this._fb.control((len + 1).toString()),
+      name: this._fb.control(`${this.letters[indicatorIndex]}.${len + 1}`),
       metric: this._fb.control(TableMetricInfo),
       operation: this._fb.control(matOperationOptions[1]),
       options: this._fb.control([] as TableMetricInfo[]),
       idInventory: this._fb.control(null)
     }) as MetricFormGroup);
-  
     this.rebindExprValidator(indicatorIndex);
-
     this.generateFinalExpression(indicatorIndex);
   }
 
-  private generateFinalExpression(indicatorIndex: number): string
-  {
-    let expression: string = '';
-    let metricExpressionList: string[] = [];
-    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach( (metric, metricIndex) => {
-      metricExpressionList.push(metric.get('name')?.value ?? '');
-    });
-
-    expression = metricExpressionList.join('+');
-
+  private generateFinalExpression(indicatorIndex: number): string {
+    const expression = this.indicatorArray.at(indicatorIndex).controls.metrics.controls
+      .map(m => m.get('name')?.value ?? '').join('+');
     this.resultMetricMap.set(indicatorIndex, expression);
-    this.resultMetricEditionMap.set(indicatorIndex,  false);
+    this.resultMetricEditionMap.set(indicatorIndex, false);
     this.indicatorArray.at(indicatorIndex).get('finalExpression')?.setValue(expression);
-
     return expression;
   }
 
-  removeMetric(indicatorIndex: number, metricIndex: number)
-  {
+  removeMetric(indicatorIndex: number, metricIndex: number) {
     this.indicatorArray.at(indicatorIndex).controls.metrics.removeAt(metricIndex);
-
-    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach( (metric, i) => {
-      metric.get('id')?.setValue((i + 1).toString());
-      metric.get('name')?.setValue(this.letters[indicatorIndex] + "." + (i + 1));
+    this.indicatorArray.at(indicatorIndex).controls.metrics.controls.forEach((m, i) => {
+      m.get('id')?.setValue((i + 1).toString());
+      m.get('name')?.setValue(`${this.letters[indicatorIndex]}.${i + 1}`);
     });
-
     this.generateDimensionIntersection();
-
     this.generateInternalNameAndName();
-
     this.rebindExprValidator(indicatorIndex);
-
     this.generateFinalExpression(indicatorIndex);
-
     this.getGraphSeries();
-
-    if (this.mode == 'create')
-      this.generateMetricTags();
+    if (this.mode === 'create') this.generateMetricTags();
   }
 
-  onChangeMetricSelect()
-  {
+  onChangeMetricSelect() {
     this.generateInternalNameAndName();
-
     this.generateDimensionIntersection();
-
-    if (this.mode  == 'create')
-      this.getGraphSeries();
-
+    if (this.mode === 'create') this.getGraphSeries();
     this.conditionFiltersMap = new Map();
-    this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
-      this.resetConditionFilters(condition);
-    });
-
-    //Reset groupBy with values in the intersection only
-    let newGroupBy: string[] = [];
-    this.groupByForm.get('groupBy')?.value.forEach( (dimension: string) => {
-      if (!this.dimensionIntersectionOptions.includes(dimension))
-        newGroupBy.push(dimension.toLowerCase());
-    });
+    this.conditionArray.controls.forEach((c: ConditionFormGroup) => this.resetConditionFilters(c));
+    const newGroupBy = (this.groupByForm.get('groupBy')?.value as string[])
+      .filter(dim => !this.dimensionIntersectionOptions.includes(dim))
+      .map(dim => dim.toLowerCase());
     this.groupByForm.get('groupBy')?.setValue(newGroupBy);
-
-    if (this.mode == 'create')
-      this.generateMetricTags();
+    if (this.mode === 'create') this.generateMetricTags();
   }
 
-  createLogCondition()
-  {
-    const group: LogConditionFormGroup = this._fb.group({
+  createLogCondition() {
+    this.logsConditionArray.push(this._fb.group({
       logConditionId: this._fb.control(null),
       externalOperation: this._fb.control('AND'),
-      field: this._fb.control({value: null, disabled: !this.logsStep1Form.get('catalog')?.value}, [Validators.required]),
+      field: this._fb.control({ value: null, disabled: !this.logsStep1Form.get('catalog')?.value }, [Validators.required]),
       comparation: this._fb.control(advancedSearchOptions[0]),
       value: this._fb.control(''),
       dimensions: this._fb.control([] as string[])
-    }) as LogConditionFormGroup;
-
-    this.logsConditionArray.push(group);
+    }) as LogConditionFormGroup);
   }
 
-  removeLogCondition(logConditionIndex: number)
-  {
+  removeLogCondition(logConditionIndex: number) {
     this.logsConditionArray.removeAt(logConditionIndex);
-
     this.getLogsDimensionsIntersection();
   }
 
   generateDimensionIntersection() {
     let intersection: Set<string> | null = null;
-
-    this.indicatorArray.controls.forEach((indicator, i) => {
-      indicator.get('metrics')?.value.forEach((metric, j) => {
-        if (metric && metric.metric && Array.isArray(metric.metric!.dimension)) {
-          const currentSet = new Set(metric.metric!.dimension);
-
-          if (intersection === null) 
-          {
-            intersection = currentSet;
-          } 
-          else 
-          {
-            intersection = new Set([...intersection].filter((dim: string) => currentSet.has(dim)));
-          }
+    this.indicatorArray.controls.forEach(ind => {
+      ind.get('metrics')?.value.forEach((m: any) => {
+        if (m?.metric && Array.isArray(m.metric.dimension)) {
+          const cur = new Set<string>(m.metric.dimension);
+          intersection = intersection === null ? cur : new Set([...intersection].filter(d => cur.has(d)));
         }
       });
     });
-
-    if (intersection && intersection != null && intersection != undefined)
-      this.dimensionIntersectionOptions = Array.from(intersection).map(dim => (dim as string).toLowerCase());
+    if (intersection) this.dimensionIntersectionOptions = Array.from(intersection as Set<string>).map(d => d.toLowerCase());
   }
 
-  generateConditionText(conditionIndex: number): string
-  {
-    let text: string = '';
-    this.conditionArray.at(conditionIndex).controls.clauses.controls.forEach( (clause, clauseIndex) => {
-      if (clauseIndex > 0)
-        text += ' ' + (clause.get('externalOperation')?.value ?? '') + ' ';
-      text += (clause.get('startBrackets')?.value ?? 0) > 0 ? '( '.repeat(clause.get('startBrackets')?.value!) : '';
-      text += this.isBaselineAlert ? 'Baseline' : clause.get('indicatorName')?.value ?? '';
-      switch (clause.get('comparation')?.value.value) {
-        case 'MORE_THAN':
-          text += ' > ';
-          text += clause.get('value')?.value ?? '?';
-          break;
-        case 'LESS_THAN':
-          text += ' < ';
-          text += clause.get('value')?.value ?? '?';
-          break;
-        case 'WITHIN_RANGE':
-          text += ' entre ';
-          text += clause.get('minIncluded')?.value ? ' [ ' : ' ( ';
-          text += clause.get('min')?.value ?? '?';
-          text += ' , ';
-          text += clause.get('max')?.value ?? '?';
-          text += clause.get('maxIncluded')?.value ? ' ] ' : ' ) ';
-          break;
-        case 'OUT_OF_RANGE':
-          text += ' fuera de ';
-          text += clause.get('minIncluded')?.value ? ' [ ' : ' ( ';
-          text += clause.get('min')?.value ?? '?';
-          text += ' , ';
-          text += clause.get('max')?.value ?? '?';
-          text += clause.get('maxIncluded')?.value ? ' ] ' : ' ) ';
-          break;
-        default:
-          break;
+  generateConditionText(conditionIndex: number): string {
+    let text = '';
+    this.conditionArray.at(conditionIndex).controls.clauses.controls.forEach((clause, ci) => {
+      if (ci > 0) text += ` ${clause.get('externalOperation')?.value ?? ''} `;
+      const sb = clause.get('startBrackets')?.value ?? 0;
+      const eb = clause.get('endBrackets')?.value ?? 0;
+      if (sb > 0) text += '( '.repeat(sb);
+      text += this.isBaselineAlert ? 'Baseline' : (clause.get('indicatorName')?.value ?? '');
+      const comp = clause.get('comparation')?.value.value;
+      if (comp === 'MORE_THAN') text += ` > ${clause.get('value')?.value ?? '?'}`;
+      else if (comp === 'LESS_THAN') text += ` < ${clause.get('value')?.value ?? '?'}`;
+      else if (comp === 'WITHIN_RANGE' || comp === 'OUT_OF_RANGE') {
+        const lb = clause.get('minIncluded')?.value ? '[' : '(';
+        const rb = clause.get('maxIncluded')?.value ? ']' : ')';
+        text += ` ${comp === 'WITHIN_RANGE' ? 'entre' : 'fuera de'} ${lb} ${clause.get('min')?.value ?? '?'} , ${clause.get('max')?.value ?? '?'} ${rb}`;
       }
-      text += (clause.get('endBrackets')?.value ?? 0) > 0 ? ' )'.repeat(clause.get('endBrackets')?.value!) : '';
+      if (eb > 0) text += ' )'.repeat(eb);
     });
     return text;
   }
 
-  removeClause(conditionIndex: number, clauseIndex: number)
-  {
+  removeClause(conditionIndex: number, clauseIndex: number) {
     this.conditionArray.at(conditionIndex).controls.clauses.removeAt(clauseIndex);
-
-    if (this.conditionArray.at(conditionIndex).controls.clauses.length == 0 && !this.isBaselineAlert)
+    if (this.conditionArray.at(conditionIndex).controls.clauses.length === 0 && !this.isBaselineAlert)
       this.conditionArray.at(conditionIndex).controls.clauses.at(0).get('externalOperation')?.setValue(null);
-
     this.buildConditionGraphsList();
   }
 
   createCondition() {
-
-    let group: ConditionFormGroup = this._fb.group({
+    const group = this._fb.group({
       conditionId: this._fb.control(null),
       id: this._fb.control((this.conditionArray.length + 1).toString()),
       severity: this._fb.control(severityOptions[0]),
       status: this._fb.control(true),
-      clauses:  this._fb.array<ClauseFormGroup>([]),
+      clauses: this._fb.array<ClauseFormGroup>([]),
       baselineVariables: this._fb.group({
         baselinesVariablesId: [null],
         type: [baselinesVariablesConditionTypes[0]],
-        auxVar1: [],
-        auxVar2: [],
-        auxVar3: []
+        auxVar1: [], auxVar2: [], auxVar3: []
       })
     }) as ConditionFormGroup;
-
     this.conditionArray.push(group);
 
-    group = this.conditionArray.at(this.conditionArray.length-1);
+    const cur = this.conditionArray.at(this.conditionArray.length - 1);
 
-    if (this.isBaselineAlert)
-    {
-      // Suscripción para ajustar validadores dinámicamente
-      const baselineFg = group.get('baselineVariables') as FormGroup;
+    if (this.isBaselineAlert) {
+      const baselineFg = cur.get('baselineVariables') as FormGroup;
       const typeCtrl = baselineFg.get('type');
-
-      const sub = typeCtrl!.valueChanges
-        .pipe(startWith(typeCtrl!.value))
-        .subscribe((typeValue: any) => {
-
-          const auxVar1 = baselineFg.get('auxVar1');
-          const auxVar2 = baselineFg.get('auxVar2');
-          const auxVar3 = baselineFg.get('auxVar3');
-
-          // Limpia primero
-          auxVar1?.clearValidators();
-          auxVar2?.clearValidators();
-          auxVar3?.clearValidators();
-
-          // OJO: aquí depende de cómo sea tu value:
-          // si es string: typeValue === 'LESS_THAN'
-          // si es objeto: typeValue.value === 'LESS_THAN'
-          const comp = typeValue?.value ?? typeValue;
-
-          if (this.isBaselinePastAverageAlert) {
-            if (comp === 'LESS_THAN') {
-              auxVar1?.setValidators([Validators.required]);
-            } else if (comp === 'MORE_THAN') {
-              auxVar2?.setValidators([Validators.required]);
-            } else {
-              auxVar1?.setValidators([Validators.required]);
-              auxVar2?.setValidators([Validators.required]);
-            }
-          } else if (this.isBaselinePastAveragePonderedAlert) {
-            auxVar1?.setValidators([Validators.required]);
-            auxVar2?.setValidators([Validators.required]);
-            auxVar3?.setValidators([Validators.required]);
-          } else if (this.isBaselineKSigmaAlert) {
-            auxVar3?.setValidators([Validators.required]);
-          }
-
-          auxVar1?.updateValueAndValidity({ emitEvent: false });
-          auxVar2?.updateValueAndValidity({ emitEvent: false });
-          auxVar3?.updateValueAndValidity({ emitEvent: false });
-        });
-
+      const sub = typeCtrl!.valueChanges.pipe(startWith(typeCtrl!.value)).subscribe((typeValue: any) => {
+        const [auxVar1, auxVar2, auxVar3] = ['auxVar1', 'auxVar2', 'auxVar3'].map(k => baselineFg.get(k));
+        [auxVar1, auxVar2, auxVar3].forEach(c => c?.clearValidators());
+        const comp = typeValue?.value ?? typeValue;
+        if (this.isBaselinePastAverageAlert) {
+          if (comp === 'LESS_THAN') auxVar1?.setValidators([Validators.required]);
+          else if (comp === 'MORE_THAN') auxVar2?.setValidators([Validators.required]);
+          else { auxVar1?.setValidators([Validators.required]); auxVar2?.setValidators([Validators.required]); }
+        } else if (this.isBaselinePastAveragePonderedAlert) {
+          [auxVar1, auxVar2, auxVar3].forEach(c => c?.setValidators([Validators.required]));
+        } else if (this.isBaselineKSigmaAlert) {
+          auxVar3?.setValidators([Validators.required]);
+        }
+        [auxVar1, auxVar2, auxVar3].forEach(c => c?.updateValueAndValidity({ emitEvent: false }));
+      });
       this.subscriptions.push(sub);
     }
 
-    if (!this.isBaselineAlert)
-      this.createClause(this.conditionArray.length-1);
-
+    if (!this.isBaselineAlert) this.createClause(this.conditionArray.length - 1);
     this.lastThresholdArrayLength = this.conditionArray.length;
+    this.conditionFiltersMap.set(cur.get('id')?.value!, new Map());
 
-    //WHEN A CONDITION IS CREATED, CONDITION FILTERS MAP MUST HAVE AN ENTRY FOR IT
-
-    this.conditionFiltersMap.set(group.get('id')?.value!, new Map());
-
-    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert)
-    {
-      this.resetConditionFilters(group);
-    }
-    else if (this.isLogsAlert)
-    {
-      this.resetLogsConditionFilters(group);
-    }
-    else
-    {
-      this.resetBaselineConditionFilters(group);
-    }
+    if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) this.resetConditionFilters(cur);
+    else if (this.isLogsAlert) this.resetLogsConditionFilters(cur);
+    else this.resetBaselineConditionFilters(cur);
   }
 
-  createClause(conditionIndex: number)
-  {
-    this.conditionArray.at(conditionIndex).controls.clauses.push(this._fb.group({
+  createClause(conditionIndex: number) {
+    const isComp = this.isCompositeConditionAlert;
+    const isBase = this.isBaselineAlert;
+    const clauses = this.conditionArray.at(conditionIndex).controls.clauses;
+    clauses.push(this._fb.group({
       clauseId: this._fb.control(null),
-      indicatorName: this._fb.control( (this.isSimpleConditionAlert || this.isCompositeConditionAlert || this.isBaselineAlert) ? 'A' : ''),
-      id: this._fb.control((this.conditionArray.at(conditionIndex).controls.clauses.length! + 1).toString()),
+      indicatorName: this._fb.control((this.isSimpleConditionAlert || isComp || isBase) ? 'A' : ''),
+      id: this._fb.control((clauses.length + 1).toString()),
       comparation: this._fb.control(clauseComparationOptions[0]),
       order: this._fb.control(this.conditionArray.length + 1),
       value: this._fb.control(null, [Validators.required]),
@@ -1108,660 +936,341 @@ export class AlertManagerComponent implements OnInit{
       min: this._fb.control(null),
       maxIncluded: this._fb.control(true),
       max: this._fb.control(null),
-      startBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
-      endBrackets: this._fb.control(this.isCompositeConditionAlert ? 0 : null),
-      externalOperation: this._fb.control(this.isCompositeConditionAlert || this.isBaselineAlert ? 'AND' : null)
+      startBrackets: this._fb.control(isComp ? 0 : null),
+      endBrackets: this._fb.control(isComp ? 0 : null),
+      externalOperation: this._fb.control(isComp || isBase ? 'AND' : null)
     }) as ClauseFormGroup);
 
-    let group: ClauseFormGroup = this.conditionArray.at(conditionIndex).controls.clauses.at(this.conditionArray.at(conditionIndex).controls.clauses.length!-1);
+    const newClause = clauses.at(clauses.length - 1);
+    newClause.valueChanges.subscribe(() => this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex)));
 
-    group.valueChanges.subscribe(() => {
-      this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex));
-    });
-
-    // Suscripción para ajustar validadores dinámicamente
-    const comparationControl = group.get('comparation');
-    const dynamicValidationSub = comparationControl?.valueChanges.subscribe((comp: any) => {
-      const valueControl = group.get('value');
-      const minControl = group.get('min');
-      const minIncludedControl = group.get('minIncluded');
-      const maxControl = group.get('max');
-      const maxIncludedControl = group.get('maxIncluded');
-
-      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert || this.isLogsAlert)
-      {
-        if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
-        {
-          valueControl?.setValidators(Validators.required);
-          minControl?.clearValidators();
-          maxControl?.clearValidators();
-          minIncludedControl?.clearValidators();
-          maxIncludedControl?.clearValidators();
-        } 
-        else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
-        {
-          valueControl?.clearValidators();
-          minControl?.setValidators(Validators.required);
-          maxControl?.setValidators(Validators.required);
-          minIncludedControl?.setValidators(Validators.required);
-          maxIncludedControl?.setValidators(Validators.required);
-        }
+    const comparationCtrl = newClause.get('comparation');
+    const sub = comparationCtrl?.valueChanges.subscribe((comp: any) => {
+      const isRange = comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE';
+      const isSimple = comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN';
+      const valueCtrl = newClause.get('value');
+      const minCtrl = newClause.get('min');
+      const maxCtrl = newClause.get('max');
+      const minInc = newClause.get('minIncluded');
+      const maxInc = newClause.get('maxIncluded');
+      if (isSimple) {
+        valueCtrl?.setValidators(Validators.required);
+        [minCtrl, maxCtrl, minInc, maxInc].forEach(c => c?.clearValidators());
+      } else if (isRange) {
+        valueCtrl?.clearValidators();
+        [minCtrl, maxCtrl, minInc, maxInc].forEach(c => c?.setValidators(Validators.required));
       }
-      else
-      {
-        if (this.isBaselineAlert)
-        {
-          if (comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN') 
-          {
-            valueControl?.setValidators(Validators.required);
-            minControl?.clearValidators();
-            maxControl?.clearValidators();
-            minIncludedControl?.clearValidators();
-            maxIncludedControl?.clearValidators();
-          } 
-          else if (comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE') 
-          {
-            valueControl?.clearValidators();
-            minControl?.setValidators(Validators.required);
-            maxControl?.setValidators(Validators.required);
-            minIncludedControl?.setValidators(Validators.required);
-            maxIncludedControl?.setValidators(Validators.required);
-          }
-        }
-      }
-
-      // Importante: actualizar validación
-      valueControl?.updateValueAndValidity();
-      minControl?.updateValueAndValidity();
-      maxControl?.updateValueAndValidity();
-      minIncludedControl?.updateValueAndValidity();
-      maxIncludedControl?.updateValueAndValidity();
+      [valueCtrl, minCtrl, maxCtrl, minInc, maxInc].forEach(c => c?.updateValueAndValidity());
     }) as Subscription;
-
-    this.subscriptions.push(dynamicValidationSub);
-
-    // Ejecutar validación inicial según el valor inicial
-    comparationControl?.updateValueAndValidity();
+    this.subscriptions.push(sub);
+    comparationCtrl?.updateValueAndValidity();
   }
 
   allConditionsCorrect(): boolean {
-    return this.conditionArray.controls.every(condition => condition.valid && condition.controls.clauses.controls.every((clause) => clause.valid));
+    return this.conditionArray.controls.every(c => c.valid && c.controls.clauses.controls.every(cl => cl.valid));
   }
 
   createSilencePeriod() {
-    const group: SilencePeriodFormGroup = this._fb.group({
+    const group = this._fb.group({
       id: this._fb.control((this.silencePeriodArray.length + 1).toString()),
       days: this._fb.control(null),
       from: this._fb.control(null),
       to: this._fb.control(null),
       stored: this._fb.control(false)
-    },
-    {
-      validators: this.timeValidator
-    }) as SilencePeriodFormGroup;
-
-    group.get('from')?.valueChanges.subscribe(() => group.updateValueAndValidity());
-    group.get('to')?.valueChanges.subscribe(() => group.updateValueAndValidity());
-
+    }, { validators: this.timeValidator }) as SilencePeriodFormGroup;
+    ['from', 'to'].forEach(k => group.get(k)?.valueChanges.subscribe(() => group.updateValueAndValidity()));
     this.silencePeriodArray.push(group);
   }
 
   timeValidator(group: AbstractControl): { [key: string]: any } | null {
     const from = group.get('from')?.value;
     const to = group.get('to')?.value;
-
-    if (from && to && to <= from) {
-      return { horaInvalida: true };
-    }
-
-    return null;
+    return from && to && to <= from ? { horaInvalida: true } : null;
   }
 
   allSilencePeriodFieldsCompleted(): boolean {
-    return this.silencePeriodArray.controls.every(control => {
-      let days = control.get('days')?.value;
-      let from = control.get('from')?.value;
-      let to = control.get('to')?.value;
-
-      return days != null && days != undefined && days.length != 0 && from != null && from != undefined && to != null && to != undefined;
+    return this.silencePeriodArray.controls.every(c => {
+      const days = c.get('days')?.value;
+      return (days?.length ?? 0) > 0 && c.get('from')?.value != null && c.get('to')?.value != null;
     });
   }
 
-  deleteSilencePeriod(i: number) {
-    this.silencePeriodArray.removeAt(i);
-  }
+  deleteSilencePeriod(i: number) { this.silencePeriodArray.removeAt(i); }
 
   createPermission() {
-    let newPermission: Permission = new Permission();
-    newPermission.type = this.permissionTypeOptions[1];
-    this.permissionList.push(newPermission);
+    const p = new Permission();
+    p.type = this.permissionTypeOptions[1];
+    this.permissionList.push(p);
   }
 
-  deletePermission(i: number) 
-  {
+  deletePermission(i: number) {
     if (this.permissionList[i].team)
-      this.teamList[this.teamList.findIndex(team => team.id == this.permissionList[i].team.id)].disabled = false;
+      this.teamList[this.teamList.findIndex(t => t.id === this.permissionList[i].team.id)].disabled = false;
     this.permissionList.splice(i, 1);
   }
 
-  firstPermissionCompleted(): boolean {
-    let team = this.permissionList[0].team;
-    return team !== null && team !== undefined;
-  }
+  firstPermissionCompleted(): boolean { return this.permissionList[0]?.team != null; }
 
   allPermissionsCompleted(): boolean {
-    return this.permissionList.every(permission => {
-      let team = permission.team;
-      let type = permission.type;
-      return team !== null && team !== undefined && type !== null && type !== undefined;
-    });
+    return this.permissionList.every(p => p.team != null && p.type != null);
   }
 
   onClickSetConditionType(condition: any, type: any) {
-
     condition.get('severity').setValue(type);
-
     this.resetSeverityOptions();
   }
 
   onClickSetEndpointAlert(endpoint: any, alert: any) {
     let alerts: any[] = endpoint.get('alerts')?.value;
-
-    if (alerts.includes(alert)) {
-      alerts = alerts.filter((al) => al !== alert);
-    }
-    else {
-      alerts.push(alert);
-    }
-
+    alerts = alerts.includes(alert) ? alerts.filter(a => a !== alert) : [...alerts, alert];
     endpoint.get('alerts')?.setValue(alerts);
   }
 
   onClickAddTag() {
     this.tagList.push(new Tag(this.tagForm.get('name')?.value, this.tagForm.get('value')?.value, 'CUSTOM'));
-
     this.tagForm.reset();
     this.tagForm.updateValueAndValidity();
   }
 
   onClickRemoveTag() {
-    if (this.selectedTagIndex !== null) 
-    {
-      this.tagList.splice(this.selectedTagIndex, 1);
-      this.resetTagSelection();
-    }
+    if (this.selectedTagIndex !== null) { this.tagList.splice(this.selectedTagIndex, 1); this.resetTagSelection(); }
   }
 
-  onClickCreateAlert() {
-    this.modalVisible = true;
-  }
+  onClickCreateAlert() { this.modalVisible = true; }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach(sub => sub.unsubscribe());
-  }
+  ngOnDestroy() { this.subscriptions.forEach(s => s.unsubscribe()); }
 
-  verifyMessageText(value: string, messageInput: HTMLTextAreaElement) {
-    const prev = this.previousMessageValue || '';
-
-    // Posición actual del cursor
-    const caretPos = messageInput.selectionStart ?? value.length;
-
-    // ¿Se ha escrito un nuevo '{{' justo antes del cursor?
-    const justTypedDoubleBraces =
-      value.length > prev.length &&          // ha añadido caracteres
-      caretPos >= 2 &&                       // hay al menos 2 chars
-      value.slice(caretPos - 2, caretPos) === '{{';
-
-    if (justTypedDoubleBraces) {
-
-      // Aquí guardamos la posición EXACTA del '{{' que acaba de escribir
-      this.messageTokenIndex = caretPos - 2;
-
-      const messageInputRect = messageInput.getBoundingClientRect();
-
-      this.messageDialogStyle = {
-        position: 'fixed',
-        top: messageInputRect.bottom + 'px',
-        left: messageInputRect.left + 'px',
-        width: '300px'
-      };
-
-      this.messageModalVisible = true;
+  private _verifyTextInput(value: string, input: HTMLTextAreaElement, prev: string, setIndex: (i: number) => void, setStyle: (s: any) => void, setVisible: (v: boolean) => void): string {
+    const caretPos = input.selectionStart ?? value.length;
+    const justTyped = value.length > prev.length && caretPos >= 2 && value.slice(caretPos - 2, caretPos) === '{{';
+    if (justTyped) {
+      setIndex(caretPos - 2);
+      const rect = input.getBoundingClientRect();
+      setStyle({ position: 'fixed', top: rect.bottom + 'px', left: rect.left + 'px', width: '300px' });
+      setVisible(true);
     } else {
-      this.messageModalVisible = false;
+      setVisible(false);
     }
-
-    this.previousMessageValue = value;
+    return value;
   }
 
-  verifyDetailsText(value: string, detailsInput: HTMLTextAreaElement) {
-    const prev = this.previousDetailsValue || '';
-
-    // Posición actual del cursor
-    const caretPos = detailsInput.selectionStart ?? value.length;
-
-    // ¿Se ha escrito un nuevo '{{' justo antes del cursor?
-    const justTypedDoubleBraces =
-      value.length > prev.length &&          // ha añadido caracteres
-      caretPos >= 2 &&                       // hay al menos 2 chars
-      value.slice(caretPos - 2, caretPos) === '{{';
-
-    if (justTypedDoubleBraces) {
-
-      // Aquí guardamos la posición EXACTA del '{{' que acaba de escribir
-      this.messageTokenIndex = caretPos - 2;
-
-      const messageInputRect = detailsInput.getBoundingClientRect();
-
-      this.detailsDialogStyle = {
-        position: 'fixed',
-        top: messageInputRect.bottom + 'px',
-        left: messageInputRect.left + 'px',
-        width: '300px'
-      };
-
-      this.detailsModalVisible = true;
-    } else {
-      this.detailsModalVisible = false;
-    }
-
-    this.previousDetailsValue = value;
+  verifyMessageText(value: string, input: HTMLTextAreaElement) {
+    this.previousMessageValue = this._verifyTextInput(value, input, this.previousMessageValue,
+      i => this.messageTokenIndex = i,
+      s => this.messageDialogStyle = s,
+      v => this.messageModalVisible = v);
   }
 
-  onClickAddConditionalBlockToMessage(i: number) 
-  {
-    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
-    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
-
-    let newMessage = before + `{{${conditionalBlockOptions[i].label}}\n\n{{${conditionalBlockOptions[i].label}}}` + after;
-
-    this.notificationMessageForm.get('message')?.setValue(newMessage);
+  verifyDetailsText(value: string, input: HTMLTextAreaElement) {
+    this.previousDetailsValue = this._verifyTextInput(value, input, this.previousDetailsValue,
+      i => this.messageTokenIndex = i,
+      s => this.detailsDialogStyle = s,
+      v => this.detailsModalVisible = v);
   }
 
-  onClickAddTemplateVariableToMessage(i: number) 
-  {
-    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
-    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
-
-    let newMessage = before + `{{${templateVariableOptions[i].value}}}` + after;
-
-    this.notificationMessageForm.get('message')?.setValue(newMessage);
+  private _spliceFormValue(ctrl: string, idx: number, replacement: string) {
+    const val: string = this.notificationMessageForm.get(ctrl)?.value ?? '';
+    this.notificationMessageForm.get(ctrl)?.setValue(val.slice(0, idx) + replacement + val.slice(idx + 2));
   }
 
-  onClickAddTagTemplateVariableToMessage(i: number) 
-  {
-    const before = this.notificationMessageForm.get('message')?.value.slice(0, this.messageTokenIndex);
-    const after = this.notificationMessageForm.get('message')?.value.slice(this.messageTokenIndex + 2);
-
-    let newMessage = before + `{{${this.groupByForm.get('groupBy')?.value[i]}}}` + after;
-
-    this.notificationMessageForm.get('message')?.setValue(newMessage);
+  onClickAddConditionalBlockToMessage(i: number) {
+    this._spliceFormValue('message', this.messageTokenIndex, `{{${conditionalBlockOptions[i].label}}\n\n{{${conditionalBlockOptions[i].label}}}`);
   }
-
-  onClickAddConditionalBlockToDetails(i: number) 
-  {
-    const before = this.notificationMessageForm.get('details')?.value.slice(0, this.messageTokenIndex);
-    const after = this.notificationMessageForm.get('details')?.value.slice(this.messageTokenIndex + 2);
-
-    let newDetails = before + `{{${conditionalBlockOptions[i].label}}\n\n{{/${conditionalBlockOptions[i].value}}}` + after;
-
-    this.notificationMessageForm.get('details')?.setValue(newDetails);
+  onClickAddTemplateVariableToMessage(i: number) {
+    this._spliceFormValue('message', this.messageTokenIndex, `{{${templateVariableOptions[i].value}}}`);
   }
-
-  onClickAddTemplateVariableToDetails(i: number) 
-  {
-    const before = this.notificationMessageForm.get('details')?.value.slice(0, this.messageTokenIndex);
-    const after = this.notificationMessageForm.get('details')?.value.slice(this.messageTokenIndex + 2);
-
-    let newDetails = before + `{{${templateVariableOptions[i].value}}}` + after;
-
-    this.notificationMessageForm.get('details')?.setValue(newDetails);
+  onClickAddTagTemplateVariableToMessage(i: number) {
+    this._spliceFormValue('message', this.messageTokenIndex, `{{${this.groupByForm.get('groupBy')?.value[i]}}}`);
+  }
+  onClickAddConditionalBlockToDetails(i: number) {
+    this._spliceFormValue('details', this.messageTokenIndex, `{{${conditionalBlockOptions[i].label}}\n\n{{/${conditionalBlockOptions[i].value}}}`);
+  }
+  onClickAddTemplateVariableToDetails(i: number) {
+    this._spliceFormValue('details', this.messageTokenIndex, `{{${templateVariableOptions[i].value}}}`);
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {
-    let term = event.filter?.trim() || '';
-
-    if (term.length > 2)
-      this.filterSubject.next({term, metric});
+    const term = event.filter?.trim() ?? '';
+    if (term.length > 2) this.filterSubject.next({ term, metric });
   }
 
   removeCondition(index: number) {
-
     this.conditionArray.controls.splice(index, 1);
-
-    this.conditionArray.controls.forEach((condition, i) => {
-      condition.get('id')?.setValue((i + 1).toString());
-    });
-
+    this.conditionArray.controls.forEach((c, i) => c.get('id')?.setValue((i + 1).toString()));
     this.buildConditionGraphsList();
-
     this.resetSeverityOptions();
-
-    //WHEN A CONDITION IS REMOVED, CONDITION FILTERS MAP MUST REMOVE ITS ENTRY
     this.conditionFiltersMap.delete((index + 1).toString());
   }
 
-  resetSeverityOptions()
-  {
-    //DISABLE ALL SEVERITIES
-    this.severityOptions.forEach((svt) => {
-      svt.disabled = true;
-    });
-
-    //ENABLE SELECTED SEVERITIES
-    this.conditionArray.controls.forEach((cond) => {
-      this.severityOptions[severityOptions.findIndex((svt) => svt.label == cond.get('severity')?.value.label)].disabled = false;
-    });
+  resetSeverityOptions() {
+    this.severityOptions.forEach(s => s.disabled = true);
+    this.conditionArray.controls.forEach(c =>
+      this.severityOptions[severityOptions.findIndex(s => s.label === c.get('severity')?.value.label)].disabled = false
+    );
   }
 
-  onClickThresholdArrowDown(index: number) {
-    [this.conditionArray.controls[index], this.conditionArray.controls[index + 1]] = [this.conditionArray.controls[index + 1], this.conditionArray.controls[index]];
-
-    let orderAux: number | null = this.conditionArray.controls[index].get('order')?.value!;
-    this.conditionArray.controls[index].get('order')?.setValue(this.conditionArray.controls[index + 1].get('order')?.value!);
-    this.conditionArray.controls[index + 1].get('order')?.setValue(orderAux);
-
-    this.conditionArray.controls.forEach((condition, i) => {
-      condition.get('id')?.setValue((i + 1).toString());
-    });
+  private _swapConditions(a: number, b: number) {
+    [this.conditionArray.controls[a], this.conditionArray.controls[b]] = [this.conditionArray.controls[b], this.conditionArray.controls[a]];
+    const orderA = this.conditionArray.controls[a].get('order')?.value ?? null;
+    const orderB = this.conditionArray.controls[b].get('order')?.value ?? null;
+    this.conditionArray.controls[a].get('order')?.setValue(orderB as never);
+    this.conditionArray.controls[b].get('order')?.setValue(orderA as never);
+    this.conditionArray.controls.forEach((c, i) => c.get('id')?.setValue((i + 1).toString()));
   }
 
-  onClickThresholdArrowUp(index: number) {
-    [this.conditionArray.controls[index], this.conditionArray.controls[index - 1]] = [this.conditionArray.controls[index - 1], this.conditionArray.controls[index]];
+  onClickThresholdArrowDown(index: number) { this._swapConditions(index, index + 1); }
+  onClickThresholdArrowUp(index: number) { this._swapConditions(index, index - 1); }
 
-    let orderAux: number | null = this.conditionArray.controls[index].get('order')?.value!;
-    this.conditionArray.controls[index].get('order')?.setValue(this.conditionArray.controls[index - 1].get('order')?.value!);
-    this.conditionArray.controls[index - 1].get('order')?.setValue(orderAux);
-
-    this.conditionArray.controls.forEach((condition, i) => {
-      condition.get('id')?.setValue((i + 1).toString());
-    });
-  }
-
-  onChangeConditionFiltersSelection(condition: any, dimension: string, event: MultiSelectChangeEvent) 
-  {
+  onChangeConditionFiltersSelection(condition: any, dimension: string, event: MultiSelectChangeEvent) {
     this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.set('selected', event.value);
     this.graphGroupBy.set(dimension, event.value);
     this.requestGraphGroupBy.set(dimension, event.value);
     this.getGraphSeries();
 
-    if (this.isLogsAlert)
-    { 
-      let selectedDimensions: SelectedDimensionDto[] = [];
-
-      this.groupByForm.get('groupBy')?.value.forEach((dim: string) => 
-      {
-        this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)?.get('selected')?.forEach((filter) => {
-          selectedDimensions.push(new SelectedDimensionDto(dim, filter));
-        });
-      });
-
+    if (this.isLogsAlert) {
+      const selectedDimensions: SelectedDimensionDto[] = [];
+      this.groupByForm.get('groupBy')?.value.forEach((dim: string) =>
+        this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)?.get('selected')?.forEach((f: string) =>
+          selectedDimensions.push(new SelectedDimensionDto(dim, f))
+        )
+      );
       const filterParameters = this.buildFilterOccurrencesDtos();
-      let distinctValuesRequest: DistinctValuesRequest = new DistinctValuesRequest(selectedDimensions,filterParameters);
-
+      const req = new DistinctValuesRequest(selectedDimensions, filterParameters);
       this.groupByForm.get('groupBy')?.value.forEach((dim: string) => {
-
-        if (dimension != dim)
-        {
-          this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dim, distinctValuesRequest).subscribe(
-            (response) => {
-              let auxSelectedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('selected')!;
-              let auxCreatedFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('created')!;
-              let auxLostFilters: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!.get('lost')!;
-              this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim, new Map().set('values', response).set('selected', auxSelectedFilters).set('created', auxCreatedFilters).set('lost', auxLostFilters).set('merge', [...new Set([...auxCreatedFilters, ...auxLostFilters, ...auxSelectedFilters])]));          },
-            (error) => {
-
-            }
-          );
-        }
+        if (dim === dimension) return;
+        this.alertOcurrencesService.getDistinctValuesForDimension(this.logsStep1Form.get('catalog')?.value, dim, req).subscribe(
+          (response) => {
+            const m = this.conditionFiltersMap.get(condition.get('id')?.value!)!.get(dim)!;
+            const sel = m.get('selected')!; const crt = m.get('created')!; const lst = m.get('lost')!;
+            this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dim,
+              new Map().set('values', response).set('selected', sel).set('created', crt).set('lost', lst)
+                .set('merge', [...new Set([...crt, ...lst, ...sel])])
+            );
+          },
+          () => {}
+        );
       });
     }
   }
 
-  onClickGoToCreateAlert()
-  {
-    this.router.navigate(['alert/create'], {
-      state: { isThreshold: true }
-    });
+  onClickGoToCreateAlert() { this.router.navigate(['alert/create'], { state: { isThreshold: true } }); }
+  onClickGoToMofifyAlert() { this.router.navigate(['alerts']); }
+
+  toSeconds(timeStr: string): number {
+    const m = timeStr.match(/^(\d+)([smhd])$/i);
+    if (!m) throw new Error('Formato inválido: ' + timeStr);
+    const v = parseInt(m[1], 10);
+    return ({ s: 1, m: 60, h: 3600, d: 86400 } as any)[m[2].toLowerCase()] * v;
   }
 
-  onClickGoToMofifyAlert()
-  {
-    this.router.navigate(['alerts']);
+  private _getTime(key: string): string {
+    return this.formatTime(this.toSeconds(this.advancedOptionsForm.get('timeWindow')?.value.value) * this.activationRecoverForm.get(key)?.value.value);
   }
 
-  toSeconds(timeStr: string): number 
-  {
-    const match = timeStr.match(/^(\d+)([smhd])$/i);
-    if (!match) {
-      throw new Error("Formato inválido: " + timeStr);
-    }
+  getActivationTime1() { return this._getTime('activation1'); }
+  getActivationTime2() { return this._getTime('activation2'); }
+  getRecoverTime1()    { return this._getTime('recover1'); }
+  getRecoverTime2()    { return this._getTime('recover2'); }
 
-    const value = parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
-
-    switch (unit) {
-      case "s": return value;          // segundos
-      case "m": return value * 60;     // minutos
-      case "h": return value * 3600;   // horas
-      case "d": return value * 86400;  // días
-      default: throw new Error("Unidad no soportada: " + unit);
-    }
-  }
-
-  getActivationTime1()
-  {
-    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
-
-    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('activation1')?.value.value);
-  }
-
-  getActivationTime2()
-  {
-    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
-
-    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('activation2')?.value.value);
-  }
-
-  getRecoverTime1()
-  {
-    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
-
-    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('recover1')?.value.value);
-  }
-
-  getRecoverTime2()
-  {
-    let timeWindow: string = this.advancedOptionsForm.get('timeWindow')?.value.value;
-
-    return this.formatTime(this.toSeconds(timeWindow) * this.activationRecoverForm.get('recover2')?.value.value);
-  }
-
-  formatTime(totalSeconds: number): string 
-  {
-    let days = Math.floor(totalSeconds / 86400);
-    let hours = Math.floor((totalSeconds % 86400) / 3600);
-    let minutes = Math.floor((totalSeconds % 3600) / 60);
-    let seconds = totalSeconds % 60;
-
-    const parts: string[] = [];
-
-    if (days) parts.push(`${days} día${days > 1 ? 's' : ''}`);
-    if (hours) parts.push(`${hours} h`);
-    if (minutes) parts.push(`${minutes} m`);
-    if (seconds) parts.push(`${seconds} s`);
-
-    if (parts.length === 0) return '0 s';
+  formatTime(totalSeconds: number): string {
+    const d = Math.floor(totalSeconds / 86400);
+    const h = Math.floor((totalSeconds % 86400) / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+    const parts = [
+      d && `${d} día${d > 1 ? 's' : ''}`,
+      h && `${h} h`, m && `${m} m`, s && `${s} s`
+    ].filter(Boolean) as string[];
+    if (!parts.length) return '0 s';
     if (parts.length === 1) return parts[0];
     if (parts.length === 2) return `${parts[0]} y ${parts[1]}`;
-
     return parts.slice(0, -1).join(', ') + ' y ' + parts.slice(-1);
   }
 
-  private buildFilterOccurrencesDtos(): any[] { 
-    const filters: any[] = [];
-    
-    this.logsConditionArray.controls.forEach((logCondition, i) => {
-        const field = logCondition.get('field')?.value;
-        const operator = logCondition.get('comparation')?.value?.value; 
-        const value = logCondition.get('value')?.value;
-        
-        const logicalOperator = i > 0 ? logCondition.get('externalOperation')?.value : null;
-
-        if (field && operator && value) {
-            filters.push({
-                field: field,
-                operator: operator,
-                value: value,
-                logicalOperator: logicalOperator
-            });
-        }
-    });
-
-    return filters;
+  private buildFilterOccurrencesDtos(): any[] {
+    return this.logsConditionArray.controls
+      .map((lc, i) => {
+        const field = lc.get('field')?.value;
+        const op = lc.get('comparation')?.value?.value;
+        const val = lc.get('value')?.value;
+        if (!field || !op || !val) return null;
+        return { field, operator: op, value: val, logicalOperator: i > 0 ? lc.get('externalOperation')?.value : null };
+      })
+      .filter(Boolean);
   }
 
-  disasterSelected()
-  {
-    let selected: boolean = false;
-
-    this.conditionArray.controls.forEach((group) => {
-      if (group.get('severity')?.value.value == 0)
-        selected = true;
-    });
-
-    return selected;
+  private _severitySelected(value: number): boolean {
+    return this.conditionArray.controls.some(g => g.get('severity')?.value.value === value);
   }
+  disasterSelected() { return this._severitySelected(0); }
+  criticalSelected()  { return this._severitySelected(1); }
+  majorSelected()     { return this._severitySelected(2); }
+  warningSelected()   { return this._severitySelected(3); }
 
-  criticalSelected()
-  {
-    let selected: boolean = false;  
-
-    this.conditionArray.controls.forEach((group) => {
-      if (group.get('severity')?.value.value == 1)
-        selected = true;
-    });
-
-    return selected;
-  }
-
-  majorSelected()
-  {
-    let selected: boolean = false;
-
-    this.conditionArray.controls.forEach((group) => {
-      if (group.get('severity')?.value.value == 2)
-        selected = true;
-    });
-
-    return selected;
-  }
-
-  warningSelected()
-  {
-    let selected: boolean = false;
-
-    this.conditionArray.controls.forEach((group) => {
-      if (group.get('severity')?.value.value == 3)
-        selected = true;
-    });
-
-    return selected;
-  }
-
-  getEndpointsByType()
-  {
+  getEndpointsByType() {
     this.endpointService.getEndpointsByType().subscribe(
-      (response: any) => {
-        this.endpointsByTypeMap = response;
-      },
-      (error: any) => {
-
-      }
+      (response: any) => { this.endpointsByTypeMap = response; this.endpointsLoaded.next(true); },
+      () => this.endpointsLoaded.next(true)
     );
   }
 
-  onChangeStep3EndpointType()
-  {
+  onChangeStep3EndpointType() {
     this.endpointFieldValues = this.endpointsByTypeMap[this.endpointForm.get('type')?.value.value] || [];
     this.endpointForm.get('endpoint')?.enable();
     this.endpointForm.get('severities')?.enable();
   }
 
-  onClickAddEndpoint()
-  {
+  onClickAddEndpoint() {
     this.endpointList.push(new Endpoint(null, this.endpointForm.get('type')?.value, this.endpointForm.get('endpoint')?.value, this.endpointForm.get('severities')?.value));
-
     this.endpointForm.reset();
     this.endpointForm.get('endpoint')?.disable();
     this.endpointForm.get('severities')?.disable();
   }
 
-  onClickDeleteEndpoint (i: number) 
-  {
-    this.endpointList.splice(i, 1);
-  }
+  onClickDeleteEndpoint(i: number) { this.endpointList.splice(i, 1); }
 
-  getAllTeams()
-  {
+  getAllTeams() {
     this.permissionList = [];
-
     this.alertService.getAllTeams().subscribe(
-      (response) => 
-      {
+      (response) => {
         this.teamList = response;
-
-        if (this.mode == 'create')
-        {
-          this.permissionList.push(new Permission(null, this.teamList.filter(team => team.id == this.authService.getTeam())[0], permissionTypeOptions[1]));
-          this.teamList[this.teamList.findIndex(team => team.id == this.authService.getTeam())].disabled = true;
+        if (this.mode === 'create') {
+          const teamIdx = this.teamList.findIndex(t => t.id === this.authService.getTeam());
+          this.permissionList.push(new Permission(null, this.teamList[teamIdx], permissionTypeOptions[1]));
+          this.teamList[teamIdx].disabled = true;
         }
+        this.teamsLoaded.next(true);
       },
-      (error) => 
-      {
-      }
+      () => this.teamsLoaded.next(true)
     );
   }
 
-  onChangeTeam(event: any)
-  {
-    this.teamList[this.teamList.findIndex(team => team.id == event.value.id)].disabled = true;
+  onChangeTeam(event: any) {
+    this.teamList[this.teamList.findIndex(t => t.id === event.value.id)].disabled = true;
   }
 
-  loadBaselineIndicators(alertViewDto: AlertViewDto)
-  {
+  loadBaselineIndicators(alertViewDto: AlertViewDto) {
     this.indicatorArray.clear();
-
-    alertViewDto.indicators?.forEach((indicator) => {
-
-      if (!indicator.isBaseline)
-      {
-        const newIndicator: IndicatorFormGroup = this._fb.group({
-          id: this._fb.control(indicator.id),
-          name: this._fb.control(indicator.name),
-          metrics: this._fb.array<MetricFormGroup>([]),
-          finalExpression: this._fb.control({value: indicator.finalExpression, disabled: true})
-        }) as IndicatorFormGroup;
-
-        indicator.alertMetrics?.forEach((metric, j) => 
-        {
-          let metricList: TableMetricInfo[] = [];
-
-          metricList.push(new TableMetricInfo(metric.dbName, metric.tableName, metric.metricName, []));
-
-          newIndicator.controls.metrics.push(this._fb.group({
-              metricId: this._fb.control(metric.metricId),
-              id: this._fb.control((j + 1).toString()),
-              name: this._fb.control(this.letters[0] + "." + (j + 1)),
-              metric: this._fb.control({value: metricList[0], disabled: true}),
-              operation: this._fb.control({value: matOperationOptions.find((opt) => opt.value == metric.operation), disabled: true}),
-              options: this._fb.control(metricList),
-              idInventory: this._fb.control(metric.idInventory)
-            }) as MetricFormGroup)
-        });
-
-        this.indicatorArray.push(newIndicator);
-      }
+    alertViewDto.indicators?.filter(ind => !ind.isBaseline).forEach(indicator => {
+      const newIndicator = this._fb.group({
+        id: this._fb.control(indicator.id),
+        name: this._fb.control(indicator.name),
+        metrics: this._fb.array<MetricFormGroup>([]),
+        finalExpression: this._fb.control({ value: indicator.finalExpression, disabled: true })
+      }) as IndicatorFormGroup;
+      indicator.alertMetrics?.forEach((metric, j) => {
+        const ml = [new TableMetricInfo(metric.dbName, metric.tableName, metric.metricName, [])];
+        newIndicator.controls.metrics.push(this._fb.group({
+          metricId: this._fb.control(metric.metricId),
+          id: this._fb.control((j + 1).toString()),
+          name: this._fb.control(`${this.letters[0]}.${j + 1}`),
+          metric: this._fb.control({ value: ml[0], disabled: true }),
+          operation: this._fb.control({ value: matOperationOptions.find(o => o.value === metric.operation), disabled: true }),
+          options: this._fb.control(ml),
+          idInventory: this._fb.control(metric.idInventory)
+        }) as MetricFormGroup);
+      });
+      this.indicatorArray.push(newIndicator);
     });
   }
 
@@ -1821,11 +1330,10 @@ export class AlertManagerComponent implements OnInit{
               // 🔥 Merge con orden: created → lost → values
               merge = [...new Set([...created, ...lost, ...response[dimension]])];
 
-              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('merge', merge).set('lost', lost));
+              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('lost', lost).set('merge', merge));
             }
           },
-          (error) => 
-          {
+          (error) => {
 
           }
         );
@@ -2243,56 +1751,76 @@ export class AlertManagerComponent implements OnInit{
   });
 
   // ===========================
-  // ENDPOINTS
+  // ENDPOINTS + TAGS + NOTIFICATIONS + PERMISSIONS
+  // Esperamos a que endpointsByTypeMap y teamList estén cargados
+  // para evitar race conditions.
   // ===========================
-  alertViewDto.endpoints?.forEach((endpoint) => {
+  forkJoin([
+    this.endpointsLoaded.pipe(filter(v => v === true), take(1)),
+    this.teamsLoaded.pipe(filter(v => v === true), take(1))
+  ]).subscribe(() => {
 
-    this.endpointsByTypeMap[endpoint.type].forEach((ept: any) => {
-      if (ept.id == endpoint.endpointId) {
-        let severityList: any[] = [];
+    // ===========================
+    // ENDPOINTS
+    // ===========================
+    (alertViewDto.endpoints ?? []).forEach((endpoint) => {
+      if (!this.endpointsByTypeMap || !this.endpointsByTypeMap[endpoint.type]) return;
 
-        endpoint.severities!.forEach((svrt) => {
-          severityList.push(this.severityOptions.find((opt) => opt.value == svrt));
-        });
+      this.endpointsByTypeMap[endpoint.type].forEach((ept: any) => {
+        if (ept.id == endpoint.endpointId) {
+          let severityList: any[] = [];
 
-        this.endpointList.push(new Endpoint(endpoint.id!, this.endpointTypeOptions.find((opt) => opt.value == endpoint.type), ept, severityList));
-      }
-    })
-  });
+          (endpoint.severities ?? []).forEach((svrt) => {
+            const found = this.severityOptions.find((opt) => opt.value == svrt);
+            if (found) severityList.push(found);
+          });
 
-  // ===========================
-  // ALERT TAGS
-  // ===========================
-  alertViewDto.alertTags?.forEach((tag) => {
-    this.tagList.push(new Tag(tag.name!, tag.value!, 'METRIC'));
-  });
+          this.endpointList.push(new Endpoint(endpoint.id!, this.endpointTypeOptions.find((opt) => opt.value == endpoint.type), ept, severityList));
+        }
+      });
+    });
 
-  // ===========================
-  // NOTIFICATIONS
-  // ===========================
-  this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText ? alertViewDto.alertText : '');
-  this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail ? alertViewDto.alertDetail : '');
-  this.notificationMessageForm.get('opiUrl')?.setValue(alertViewDto.opiUrl ? alertViewDto.opiUrl : '');
+    // ===========================
+    // ALERT TAGS
+    // ===========================
+    (alertViewDto.alertTags ?? []).forEach((tag) => {
+      this.tagList.push(new Tag(tag.name!, tag.value!, 'METRIC'));
+    });
 
-  // ===========================
-  // PERMISSIONS
-  // ===========================
-  for (let i = 0; i < alertViewDto.permissions!.length; i++) {
-    this.permissionList.push(
-      new Permission(
-        alertViewDto.permissions![i].id,
-        this.teamList.find((team) => team.id == alertViewDto.permissions![i].teamId),
-        this.permissionTypeOptions.find((permissionType) =>
-          alertViewDto.permissions![i].writePermission ? permissionType.value == 'rw' : permissionType.value == 'r'
+    // ===========================
+    // NOTIFICATIONS
+    // ===========================
+    this.notificationMessageForm.get('message')?.setValue(alertViewDto.alertText ?? '');
+    this.notificationMessageForm.get('details')?.setValue(alertViewDto.alertDetail ?? '');
+    this.notificationMessageForm.get('opiUrl')?.setValue(alertViewDto.opiUrl ?? '');
+
+    // ===========================
+    // PERMISSIONS
+    // ===========================
+    (alertViewDto.permissions ?? []).forEach((permission) => {
+      const team = this.teamList.find((t) => t.id == permission.teamId);
+      if (!team) return; // protección contra team no encontrado
+
+      this.permissionList.push(
+        new Permission(
+          permission.id,
+          team,
+          this.permissionTypeOptions.find((permissionType) =>
+            permission.writePermission ? permissionType.value == 'rw' : permissionType.value == 'r'
+          )
         )
-      )
-    )
-    this.teamList[this.teamList.findIndex(team => team.id == alertViewDto.permissions![i].teamId)]!.disabled = true;
-  }
+      );
 
-  if (this.isLogsAlert) {
-    this.generateInternalNameAndName();
-  }
+      const teamIndex = this.teamList.findIndex(t => t.id == permission.teamId);
+      if (teamIndex !== -1) {
+        this.teamList[teamIndex].disabled = true;
+      }
+    });
+
+    if (this.isLogsAlert) {
+      this.generateInternalNameAndName();
+    }
+  });
 }
 
   onClickConfirmCrupdateAlert() 
@@ -2302,7 +1830,7 @@ export class AlertManagerComponent implements OnInit{
     this.dbError = false;
     this.dolphinError = false;
 
-    //PERMISSIONS
+    // PERMISSIONS
     let alertPermissions: AlertPermissionDto[] = [];
 
     for (let permission of this.permissionList)
@@ -2310,10 +1838,10 @@ export class AlertManagerComponent implements OnInit{
       alertPermissions.push(new AlertPermissionDto(permission.id, permission.type.value.includes('rw') ? true : false, permission.team.id));
     }
 
-    //CONDITION HISTORIES
+    // CONDITION HISTORIES
     let alertConditionHistories: AlertConditionHistoryDto[] = [];
 
-    //ENDPOINTS
+    // ENDPOINTS
     let endpointAlerts: EndpointAlertDto[] = [];
 
     for (let endpoint of this.endpointList) 
@@ -2322,7 +1850,7 @@ export class AlertManagerComponent implements OnInit{
       endpointAlerts.push(endpointAlert);
     }
 
-    //PERIODOS DE SILENCIO
+    // PERIODOS DE SILENCIO
     let alertSilences: AlertSilenceDto[] = [];
 
     if (this.allSilencePeriodFieldsCompleted())
@@ -2340,12 +1868,12 @@ export class AlertManagerComponent implements OnInit{
       }
     }
 
-    //INDICATORS
+    // INDICATORS
     let alertIndicators: AlertIndicatorDto[] = [];
 
     for (let i = 0; i < this.indicatorArray.length; i++)
     {
-      //METRICS
+      // METRICS
       let alertMetrics: AlertMetricDto[] = [];
 
       for (let metric of this.indicatorArray.at(i).controls.metrics.controls) 
@@ -2359,7 +1887,7 @@ export class AlertManagerComponent implements OnInit{
       alertIndicators.push(new AlertIndicatorDto(this.indicatorArray.at(i).get('id')?.value!, this.indicatorArray.at(i).get('name')?.value!, alertMetrics, this.resultMetricMap.get(i)!, false));
     }
 
-    //CONDITIONS
+    // CONDITIONS
     let alertConditions: AlertConditionDto[] = [];
 
     for (let condition of this.conditionArray.controls) {
@@ -2367,12 +1895,12 @@ export class AlertManagerComponent implements OnInit{
       let conditionFiltersList: ConditionFilterDto[] = [];
       let alertClauses: AlertClauseDto[] = [];
 
-      //CLAUSES
+      // CLAUSES
       for (let clause of condition.controls.clauses.controls) {
         alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clause.get('indicatorName')?.value!, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
       }
 
-      //CONDITION FILTERS
+      // CONDITION FILTERS
       conditionFiltersDimensionsMap.forEach((filterMap, dimension) => {
         let selected: string[] = filterMap.get('selected') || [];
         let created: string[]  = filterMap.get('created')  || [];
@@ -2431,7 +1959,7 @@ export class AlertManagerComponent implements OnInit{
       alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariablesDto, alertClauses, conditionFiltersList));
     }
 
-    //BASELINE
+    // BASELINE
     if (this.isBaselineAlert && this.mode == 'create')
     {
       let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
@@ -2451,7 +1979,7 @@ export class AlertManagerComponent implements OnInit{
       }
     }
 
-    //ALERTA
+    // ALERTA
     let alertDto: AlertDto = new AlertDto(
       this.internalName,
       this.name,
@@ -2613,7 +2141,7 @@ export class AlertManagerComponent implements OnInit{
 
         this.logsStep1Form.get('catalog')?.enable();
 
-        //If service is modyfied, log conditions are reset
+        // If service is modyfied, log conditions are reset
         if (resetLogCondition)
         {
           this.logsConditionArray = this._fb.array<LogConditionFormGroup>([]);
@@ -2654,7 +2182,7 @@ export class AlertManagerComponent implements OnInit{
     );
   }
 
-  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string,logConditionIndex: number)
+  getDistinctDimensionsByDataTypeTableAndMetric(dataType: string, tableName: string, logConditionIndex: number)
   {
     this.dimensionsByDataTypeTableAndMetricLoading = true;
     this.dimensionsByDataTypeTableAndMetricError = false;
@@ -2686,7 +2214,6 @@ export class AlertManagerComponent implements OnInit{
         this.logsDimensionsIntersectionOptions.filter(item => arr.includes(item));
     });
   }
-
 
   countMetrics()
   {
