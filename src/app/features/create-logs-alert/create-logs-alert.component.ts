@@ -19,7 +19,7 @@ import { InnerAccordionComponent } from '../../shared/components/inner-accordion
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { endpointTypeOptions, severityOptions, conditionalBlockOptions, templateVariableOptions } from '../../shared/constants/addressee-options';
+import { endpointTypeOptions, severityOptions } from '../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 
@@ -175,8 +175,6 @@ export class CreateLogsAlertComponent implements OnInit {
   conditionalBlockOptions: any[] = [];
   templateVariableOptions: any[] = [];
 
-  @HostListener('document:click', ['$event']) clickout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
-  @HostListener('document:scroll', ['$event']) scrollout() { this.messageModalVisible = false; this.detailsModalVisible = false; }
   messageDialogStyle: any = {};
   detailsDialogStyle: any = {};
   messageModalVisible: boolean = false;
@@ -280,8 +278,6 @@ export class CreateLogsAlertComponent implements OnInit {
       this.iconMap.set(option.value, option.icon);
     }
 
-    this.conditionalBlockOptions = conditionalBlockOptions;
-    this.templateVariableOptions = templateVariableOptions;
 
     //Step 4
     this.permissionTeamOptions = permissionTeamOptions;
@@ -505,25 +501,5 @@ export class CreateLogsAlertComponent implements OnInit {
 
     // Guardar el valor actual como "anterior" para la próxima comparación
     this.previousDetailsValue = value;
-  }
-
-  onClickAddConditionalBlockToMessage(i: number)
-  {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
-  }
-
-  onClickAddTemplateVariableToMessage(i: number)
-  {
-    this.notificationMessageForm.get('message')?.setValue(this.notificationMessageForm.get('message')?.value + templateVariableOptions[i].value + '}}');
-  }
-
-  onClickAddConditionalBlockToDetails(i: number)
-  {
-    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + conditionalBlockOptions[i].label + '}\n\n{{/' +  conditionalBlockOptions[i].value + '}}');
-  }
-
-  onClickAddTemplateVariableToDetails(i: number)
-  {
-    this.notificationMessageForm.get('details')?.setValue(this.notificationMessageForm.get('details')?.value + templateVariableOptions[i].value + '}}');
   }
 }

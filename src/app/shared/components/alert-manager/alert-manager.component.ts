@@ -19,7 +19,7 @@ import { InnerAccordionComponent } from '../../../shared/components/inner-accord
 import { CheckboxModule } from 'primeng/checkbox';
 import { DatePickerModule } from 'primeng/datepicker';
 import { RadioButtonModule } from 'primeng/radiobutton';
-import { endpointTypeOptions, conditionalBlockOptions, templateVariableOptions } from '../../../shared/constants/addressee-options';
+import { endpointTypeOptions } from '../../../shared/constants/addressee-options';
 import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { FloatingGraphComponent } from '../../../shared/components/floating-graph/floating-graph.component';
@@ -690,9 +690,6 @@ export class AlertManagerComponent implements OnInit{
 
     this.endpointTypeOptions = endpointTypeOptions;
 
-    this.conditionalBlockOptions = conditionalBlockOptions;
-    this.templateVariableOptions = templateVariableOptions;
-
     // Step 4
     this.permissionTypeOptions = permissionTypeOptions;
     this.getAllTeams();
@@ -1073,20 +1070,14 @@ export class AlertManagerComponent implements OnInit{
     this.notificationMessageForm.get(ctrl)?.setValue(val.slice(0, idx) + replacement + val.slice(idx + 2));
   }
 
-  onClickAddConditionalBlockToMessage(i: number) {
-    this._spliceFormValue('message', this.messageTokenIndex, `{{${conditionalBlockOptions[i].label}}\n\n{{${conditionalBlockOptions[i].label}}}`);
+  onClickAddTemplateVariableToMessage(value: string) {
+    this._spliceFormValue('message', this.messageTokenIndex, `{{${value}}}`);
   }
-  onClickAddTemplateVariableToMessage(i: number) {
-    this._spliceFormValue('message', this.messageTokenIndex, `{{${templateVariableOptions[i].value}}}`);
+  onClickAddTagTemplateVariableToMessage(value: string) {
+    this._spliceFormValue('message', this.messageTokenIndex, `{{${value}}}`);
   }
-  onClickAddTagTemplateVariableToMessage(i: number) {
-    this._spliceFormValue('message', this.messageTokenIndex, `{{${this.groupByForm.get('groupBy')?.value[i]}}}`);
-  }
-  onClickAddConditionalBlockToDetails(i: number) {
-    this._spliceFormValue('details', this.messageTokenIndex, `{{${conditionalBlockOptions[i].label}}\n\n{{/${conditionalBlockOptions[i].value}}}`);
-  }
-  onClickAddTemplateVariableToDetails(i: number) {
-    this._spliceFormValue('details', this.messageTokenIndex, `{{${templateVariableOptions[i].value}}}`);
+  onClickAddTemplateVariableToDetails(value: string) {
+    this._spliceFormValue('details', this.messageTokenIndex, `{{${value}}}`);
   }
 
   onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {

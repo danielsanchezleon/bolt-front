@@ -1107,31 +1107,24 @@
     [style]="messageDialogStyle" (click)="$event.stopPropagation();">
     <div class="notification-modal-content">
         <div class="notification-modal-title">
-            <div class="font-20 c-blue font-w-700">#</div>
-            <div class="font-16 font-w-600">Bloques condicionales</div>
-        </div>
-        <div class="options-container">
-            <div class="option-container" *ngFor="let conditionalBlockOption of conditionalBlockOptions; let i = index;"
-                (click)="onClickAddConditionalBlockToMessage(i);">
-                <div class="font-12 font-w-600 title">{{conditionalBlockOption.label}}</div>
-                <div class="font-12 text-gray">{{conditionalBlockOption.description}}</div>
-            </div>
-        </div>
-        <div class="notification-modal-title">
             <div class="font-20 c-green font-w-700">&#123;x&#125;</div>
             <div class="font-16 font-w-600">Variables de plantilla</div>
         </div>
         <div class="options-container">
-            <div class="option-container"
-                *ngFor="let groupByOption of groupByForm.get('groupBy')?.value; let i = index;"
-                (click)="onClickAddTagTemplateVariableToMessage(i);">
-                <div class="font-12 font-w-600 title">{{groupByOption}}</div>
-                <div class="font-12 text-gray">{{groupByOption}}</div>
+            <div class="option-container" *ngFor="let indicator of indicatorArray.controls; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(indicator.get('name')?.value + '_value');">
+                <div class="font-12 font-w-600 title">{{indicator.get('name')?.value}}_value</div>
+                <div class="font-12 text-gray">Valor resuelto de la expresión final del indicador <strong>{{indicator.get('name')?.value}}</strong></div>
             </div>
-            <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;"
-                (click)="onClickAddTemplateVariableToMessage(i);">
-                <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>
-                <div class="font-12 text-gray">{{templateVariableOption.description}}</div>
+            <div class="option-container" *ngFor="let dimension of groupByForm.get('groupBy')?.value; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(dimension);">
+                <div class="font-12 font-w-600 title">{{dimension}}</div>
+                <div class="font-12 text-gray">Valor resuelto de la dimensión <strong>{{dimension}}</strong></div>
+            </div>
+            <div class="option-container" *ngFor="let tag of tagList; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(tag.name);">
+                <div class="font-12 font-w-600 title">{{tag.name}}</div>
+                <div class="font-12 text-gray">Valor del tag <strong>{{tag.name}}</strong></div>
             </div>
         </div>
     </div>
@@ -1141,25 +1134,24 @@
     [style]="detailsDialogStyle" (click)="$event.stopPropagation();">
     <div class="notification-modal-content">
         <div class="notification-modal-title">
-            <div class="font-20 c-blue font-w-700">#</div>
-            <div class="font-16 font-w-600">Bloques condicionales</div>
-        </div>
-        <div class="options-container">
-            <div class="option-container" *ngFor="let conditionalBlockOption of conditionalBlockOptions; let i = index;"
-                (click)="onClickAddConditionalBlockToDetails(i);">
-                <div class="font-12 font-w-600 title">{{conditionalBlockOption.label}}</div>
-                <div class="font-12 text-gray">{{conditionalBlockOption.description}}</div>
-            </div>
-        </div>
-        <div class="notification-modal-title">
             <div class="font-20 c-green font-w-700">&#123;x&#125;</div>
             <div class="font-16 font-w-600">Variables de plantilla</div>
         </div>
         <div class="options-container">
-            <div class="option-container" *ngFor="let templateVariableOption of templateVariableOptions; let i = index;"
-                (click)="onClickAddTemplateVariableToDetails(i);">
-                <div class="font-12 font-w-600 title">{{templateVariableOption.label}}</div>
-                <div class="font-12 text-gray">{{templateVariableOption.description}}</div>
+            <div class="option-container" *ngFor="let indicator of indicatorArray.controls; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(indicator.get('name')?.value + '_value');">
+                <div class="font-12 font-w-600 title">{{indicator.get('name')?.value}}_value</div>
+                <div class="font-12 text-gray">Valor resuelto de la expresión final del indicador <strong>{{indicator.get('name')?.value}}</strong></div>
+            </div>
+            <div class="option-container" *ngFor="let dimension of groupByForm.get('groupBy')?.value; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(dimension);">
+                <div class="font-12 font-w-600 title">{{dimension}}</div>
+                <div class="font-12 text-gray">Valor resuelto de la dimensión <strong>{{dimension}}</strong></div>
+            </div>
+            <div class="option-container" *ngFor="let tag of tagList; let i = index;"
+                 (click)="onClickAddTemplateVariableToDetails(tag.name);">
+                <div class="font-12 font-w-600 title">{{tag.name}}</div>
+                <div class="font-12 text-gray">Valor del tag <strong>{{tag.name}}</strong></div>
             </div>
         </div>
     </div>
