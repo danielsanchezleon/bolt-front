@@ -74,6 +74,10 @@ import { PlottingService } from '../../services/plotting.service';
 import { GraphRequest } from '../../requests/GraphRequest';
 import { DimensionValuesRequest } from '../../requests/baseline/DimensionValuesRequest';
 import { AlertIndicatorViewDto } from '../../dto/alert/AlertIndicatorViewDto';
+import { DimensionValuesRequest as AlertDimensionValuesRequest } from '../../../shared/dto/alert/dimension/DimensionValuesRequest';
+import { DimensionValuesMetricRequest } from '../../../shared/dto/alert/dimension/DimensionValuesMetricRequest';
+import { DimensionValuesAgroupationRequest } from '../../../shared/dto/alert/dimension/DimensionValuesAgroupationRequest';
+import { DimensionValuesResponse } from '../../dto/alert/dimension/DimensionValuesResponse';
 
 type TokType = 'VAR' | 'NUM' | 'OP' | 'LPAREN' | 'RPAREN';
 interface Tok { type: TokType; value: string }
@@ -854,6 +858,8 @@ export class AlertManagerComponent implements OnInit{
       const comp = clause.get('comparation')?.value.value;
       if (comp === 'MORE_THAN') text += ` > ${clause.get('value')?.value ?? '?'}`;
       else if (comp === 'LESS_THAN') text += ` < ${clause.get('value')?.value ?? '?'}`;
+      else if (comp === 'EQUALS') text += ` = ${clause.get('value')?.value ?? '?'}`;
+      else if (comp === 'NOT_EQUALS') text += ` != ${clause.get('value')?.value ?? '?'}`;
       else if (comp === 'WITHIN_RANGE' || comp === 'OUT_OF_RANGE') {
         const lb = clause.get('minIncluded')?.value ? '[' : '(';
         const rb = clause.get('maxIncluded')?.value ? ']' : ')';
@@ -1117,6 +1123,12 @@ export class AlertManagerComponent implements OnInit{
     this.graphGroupBy.set(dimension, event.value);
     this.requestGraphGroupBy.set(dimension, event.value);
     this.getGraphSeries();
+
+    // Actualiza los valores disponibles del resto de dimensiones según la selección actual,
+    // preservando el selected ya establecido arriba.
+    // if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) {
+    //   this.resetConditionFilters(condition);
+    // }
 
     if (this.isLogsAlert) {
       const selectedDimensions: SelectedDimensionDto[] = [];
@@ -2250,37 +2262,103 @@ export class AlertManagerComponent implements OnInit{
     });
   }
 
-  resetConditionFilters(condition: ConditionFormGroup)
-  {
-    this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
-    this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
-      this.indicatorArray.controls.forEach(indicator => {
-        indicator.controls.metrics.controls.forEach(metric => {
-          const metricField = metric.get('metric')?.value;
-          if (metricField) {
-            this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
-              (response) => {
-                if (this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
-                {
-                  let dimensionValuesIntersection: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.get('values')!.filter((value) => response.includes(value))!;
-                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.set('values', dimensionValuesIntersection).set('merge', dimensionValuesIntersection);
-                }
-                else
-                {
-                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', response).set('created', []).set('merge', response))
-                }
-              },
-              (error) => {
-                if (!this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
-                {
-                  this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('merge', []))
-                }
-              }
-            )
+  // resetConditionFilters(condition: ConditionFormGroup)
+  // {
+  //   this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
+  //   this.groupByForm.get('groupBy')?.value.forEach((dimension: string) => {
+  //     this.indicatorArray.controls.forEach(indicator => {
+  //       indicator.controls.metrics.controls.forEach(metric => {
+  //         const metricField = metric.get('metric')?.value;
+  //         if (metricField) {
+  //           this.alertService.getDimensionValues(metricField.bbdd!, metricField.table_name!, metricField.metric!, dimension).subscribe(
+  //             (response) => {
+  //               if (this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
+  //               {
+  //                 let dimensionValuesIntersection: string[] = this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.get('values')!.filter((value) => response.includes(value))!;
+  //                 this.conditionFiltersMap.get(condition.get('id')?.value!)?.get(dimension)!.set('values', dimensionValuesIntersection).set('merge', dimensionValuesIntersection);
+  //               }
+  //               else
+  //               {
+  //                 this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', response).set('selected', response).set('created', []).set('merge', response))
+  //               }
+  //             },
+  //             (error) => {
+  //               if (!this.conditionFiltersMap.get(condition.get('id')?.value!)?.has(dimension))
+  //               {
+  //                 this.conditionFiltersMap.get(condition.get('id')?.value!)?.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('merge', []))
+  //               }
+  //             }
+  //           )
+  //         }
+  //       });
+  //     });
+  //   });
+  // }
+
+  resetConditionFilters(condition: ConditionFormGroup) {
+    const condId = condition.get('id')?.value!;
+
+    // Inicializa la entrada solo si no existe aún (preserva selected/created existentes)
+    if (!this.conditionFiltersMap.has(condId)) {
+      this.conditionFiltersMap.set(condId, new Map());
+    }
+
+    const metrics: DimensionValuesMetricRequest[] = [];
+    this.indicatorArray.controls.forEach(indicator =>
+      indicator.controls.metrics.controls.forEach(metric => {
+        const f = metric.get('metric')?.value;
+        if (f) metrics.push(new DimensionValuesMetricRequest(f.bbdd!, f.table_name!, f.metric!));
+      })
+    );
+
+    if (!metrics.length) return;
+
+    const condMap = this.conditionFiltersMap.get(condId)!;
+    const dimensions: DimensionValuesAgroupationRequest[] = (this.groupByForm.get('groupBy')?.value as string[])
+      .map(dim => new DimensionValuesAgroupationRequest(dim, condMap.get(dim)?.get('selected') ?? []));
+
+    if (!dimensions.length) return;
+
+    const request = new AlertDimensionValuesRequest(metrics, dimensions);
+
+    this.alertService.getAllDimensionValues(request).subscribe(
+      (response: DimensionValuesResponse[]) => {
+        dimensions.forEach(({ dimension }) => {
+          const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
+
+          if (condMap.has(dimension)) {
+            const dimMap = condMap.get(dimension)!;
+            const prevSelected: string[] = dimMap.get('selected') ?? [];
+            const created: string[]      = dimMap.get('created')  ?? [];
+
+            // Intersección de values con los nuevos valores
+            const intersection = (dimMap.get('values') ?? []).filter((v: string) => newValues.includes(v));
+            // Eliminar del selected los que ya no existen en newValues (salvo created)
+            const validSelected = prevSelected.filter(v => newValues.includes(v) || created.includes(v));
+            const lost = validSelected.filter(v => !newValues.includes(v));
+            const merge = [...new Set([...created, ...lost, ...newValues])];
+
+            dimMap.set('values', intersection.length ? intersection : newValues)
+                  .set('selected', validSelected)
+                  .set('lost', lost)
+                  .set('merge', merge);
+          } else {
+            condMap.set(dimension, new Map()
+              .set('values', newValues)
+              .set('selected', newValues)
+              .set('created', [])
+              .set('lost', [])
+              .set('merge', newValues));
           }
         });
-      });
-    });
+      },
+      () => {
+        dimensions.forEach(({ dimension }) => {
+          if (!condMap.has(dimension))
+            condMap.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('lost', []).set('merge', []));
+        });
+      }
+    );
   }
 
   resetLogsConditionFilters(condition: ConditionFormGroup)
@@ -2400,7 +2478,14 @@ export class AlertManagerComponent implements OnInit{
       this.resetConditionFilters(condition);
     });
 
-    this.generateGraphAgroupations(event.itemValue);
+    if (event.itemValue)
+      this.generateGraphAgroupations(event.itemValue);
+    else
+    {
+      event.value.forEach((dimension: string) => {
+        this.generateGraphAgroupations(dimension);
+      });
+    }
   }
 
   onChangeBaselineGroupBy()

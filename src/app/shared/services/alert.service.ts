@@ -8,6 +8,8 @@ import { HomePanelsViewDto } from '../dto/home/HomePanelsViewDto';
 import { TeamViewDto } from '../dto/TeamViewDto';
 import { TableViewDto } from '../dto/table/TableViewDto';
 import { CrupdateAlertResultResponse } from '../responses/alerts/CrupdateAlertResultResponse';
+import { DimensionValuesRequest } from '../dto/alert/dimension/DimensionValuesRequest';
+import { DimensionValuesResponse } from '../dto/alert/dimension/DimensionValuesResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -70,6 +72,11 @@ export class AlertService {
     params = params.append('bbdd', bbdd).append('table_name', table_name).append('metric', metric).append('dimension', dimension);
 
     return this.http.get<string[]>(this.apiUrl + '/getDimensionValues', {params: params});
+  }
+
+  getAllDimensionValues(dimensionValuesRequest: DimensionValuesRequest): Observable<DimensionValuesResponse[]>
+  {
+    return this.http.post<DimensionValuesResponse[]>(this.apiUrl + '/getAllDimensionValues', dimensionValuesRequest);
   }
 
   getAllTeams(): Observable<TeamViewDto[]>

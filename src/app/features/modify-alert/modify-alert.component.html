@@ -36,6 +36,7 @@
     <div class="accordion-content" [class.open]="filterPanelOpen" [@accordionAnimation]="filterPanelOpen ? 'open' : 'closed'">
         <form *ngIf="filterForm && !isLoading && !isError" [formGroup]="filterForm" style="width: 100%;">
             <p-select [ngStyle]="{'width': '100%'}" [options]="alertTypeList" appendTo="body" formControlName="alertType" placeholder="Tipo de alerta" />
+            <p-select [ngStyle]="{'width': '100%'}" [options]="alertStatusList" appendTo="body" formControlName="alertStatus" placeholder="Estado" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="servicesList" appendTo="body" formControlName="service" placeholder="Servicio" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="sourcesList" appendTo="body" formControlName="source" placeholder="Fuente" />
             <p-select [ngStyle]="{'width': '100%'}" [options]="dataTypesList" appendTo="body" formControlName="dataType" placeholder="Tipo de dato" />
@@ -142,7 +143,7 @@
                             <div class="popover-container">
                                 <div class="font-w-600">Condiciones</div>
 
-                                <div class="notice c-blue">
+                                <div class="small-notice c-blue">
                                     <i class="pi pi-info-circle"></i>
                                     <div>
                                         <span class="font-12 font-w-700">Al modificar la severidad de las condiciones, no se modificarán las severidades de las notificaciones ya existentes.</span>

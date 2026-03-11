@@ -96,6 +96,13 @@ export class ModifyAlertComponent implements OnInit
     { value: 'BASELINE', label: 'Baseline' }
   ];
 
+  alertStatusList: any[] = [
+    { value: 'ENABLED', label: 'Habilitada' },
+    { value: 'DISABLED', label: 'Deshabilitada' },
+    { value: 'DOLPHIN_ERROR', label: 'Error en Dolphin' },
+    { value: 'PARTIALLY_ACTIVE', label: 'Parcialmente Activa' },
+  ];
+
   severityOptions: any[] = [
     {value: 'DISASTER', label: 'Disaster'},
     {value: 'CRITICAL', label: 'Critical'},
@@ -107,7 +114,9 @@ export class ModifyAlertComponent implements OnInit
     {value: 'MORE_THAN', label: 'Mayor que'},
     {value: 'LESS_THAN', label: 'Menor que'},
     {value: 'WITHIN_RANGE', label: 'Dentro del rango'},
-    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'}
+    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'},
+    {value: 'EQUALS', label: 'Igual a'},
+    {value: 'NOT_EQUALS', label: 'Distinto de'}
   ];
 
   filterTextControl: FormControl = new FormControl('');
@@ -215,7 +224,8 @@ export class ModifyAlertComponent implements OnInit
       source: new FormControl(''),
       dataType: new FormControl(''),
       category: new FormControl(''),
-      alertType: new FormControl('')
+      alertType: new FormControl(''),
+      alertStatus: new FormControl('')
     });
 
     const saved = sessionStorage.getItem('tableFilters');

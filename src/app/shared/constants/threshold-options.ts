@@ -9,7 +9,9 @@ export const thresholdComparationOptions = [
     {value: 0, label: 'Mayor que'},
     {value: 1, label: 'Menor que'},
     {value: 2, label: 'Dentro del rango'},
-    {value: 3, label: 'Fuera del rango'}
+    {value: 3, label: 'Fuera del rango'},
+    {value: 4, label: 'Igual a'},
+    {value: 5, label: 'Distinto de'}
 ];
 
 export const activationRecoverEvaluationOptions = [

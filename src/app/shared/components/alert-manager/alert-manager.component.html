@@ -383,7 +383,7 @@
                                     formControlName="comparation" class="select" [options]="clauseComparationOptions"
                                     optionLabel="label" appendTo="body" size="small" />
                                 <p-inputnumber class="threshold-value"
-                                    *ngIf="(clause.get('comparation')?.value.value == 'MORE_THAN' || clause.get('comparation')?.value.value == 'LESS_THAN')"
+                                    *ngIf="(clause.get('comparation')?.value.value == 'MORE_THAN' || clause.get('comparation')?.value.value == 'LESS_THAN' || clause.get('comparation')?.value.value == 'EQUALS' || clause.get('comparation')?.value.value == 'NOT_EQUALS')"
                                     formControlName="value" mode="decimal" [minFractionDigits]="0"
                                     [maxFractionDigits]="6" size="small" placeholder="Valor"
                                     (onInput)="buildConditionGraphsList();" />
@@ -1112,17 +1112,17 @@
         </div>
         <div class="options-container">
             <div class="option-container" *ngFor="let indicator of indicatorArray.controls; let i = index;"
-                 (click)="onClickAddTemplateVariableToDetails(indicator.get('name')?.value + '_value');">
+                 (click)="onClickAddTemplateVariableToMessage(indicator.get('name')?.value + '_value');">
                 <div class="font-12 font-w-600 title">{{indicator.get('name')?.value}}_value</div>
                 <div class="font-12 text-gray">Valor resuelto de la expresión final del indicador <strong>{{indicator.get('name')?.value}}</strong></div>
             </div>
             <div class="option-container" *ngFor="let dimension of groupByForm.get('groupBy')?.value; let i = index;"
-                 (click)="onClickAddTemplateVariableToDetails(dimension);">
+                 (click)="onClickAddTemplateVariableToMessage(dimension);">
                 <div class="font-12 font-w-600 title">{{dimension}}</div>
                 <div class="font-12 text-gray">Valor resuelto de la dimensión <strong>{{dimension}}</strong></div>
             </div>
             <div class="option-container" *ngFor="let tag of tagList; let i = index;"
-                 (click)="onClickAddTemplateVariableToDetails(tag.name);">
+                 (click)="onClickAddTemplateVariableToMessage(tag.name);">
                 <div class="font-12 font-w-600 title">{{tag.name}}</div>
                 <div class="font-12 text-gray">Valor del tag <strong>{{tag.name}}</strong></div>
             </div>

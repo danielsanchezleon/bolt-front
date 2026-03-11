@@ -44,7 +44,9 @@ export class UserComponent
     {value: 'MORE_THAN', label: 'Mayor que'},
     {value: 'LESS_THAN', label: 'Menor que'},
     {value: 'WITHIN_RANGE', label: 'Dentro del rango'},
-    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'}
+    {value: 'OUT_OF_RANGE', label: 'Fuera del rango'},
+    {value: 'EQUALS', label: 'Igual a'},
+    {value: 'NOT_EQUALS', label: 'Distinto de'}
   ];
 
   modifyAlertTimeWindowOptions: any[] = [
