@@ -370,6 +370,8 @@ export class AlertManagerComponent implements OnInit{
   resultMetricEditionMap: Map<number, boolean> = new Map();
 
   dimensionIntersectionOptions: string[] = [];
+  allDimensionValuesLoading: boolean = false;
+  allDimensionValuesError: boolean = false;
 
   conditionFiltersMap: Map<string, Map<string, Map<string, string[]>>> = new Map(); //Map<condition, Map<dimension, Map<("values", "selected"), string[]>>>
   lastFilter: string = '';
@@ -950,7 +952,7 @@ export class AlertManagerComponent implements OnInit{
     const comparationCtrl = newClause.get('comparation');
     const sub = comparationCtrl?.valueChanges.subscribe((comp: any) => {
       const isRange = comp.value === 'WITHIN_RANGE' || comp.value === 'OUT_OF_RANGE';
-      const isSimple = comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN';
+      const isSimple = comp.value === 'MORE_THAN' || comp.value === 'LESS_THAN' || comp.value === 'EQUALS' || comp.value === 'NOT_EQUALS';
       const valueCtrl = newClause.get('value');
       const minCtrl = newClause.get('min');
       const maxCtrl = newClause.get('max');
@@ -1697,23 +1699,21 @@ export class AlertManagerComponent implements OnInit{
 
     if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! > 1)) {
       condition.alertClauses?.forEach((clause) => {
-        if (clause.threshold != null) {
-          this.conditionArray.at(i).controls.clauses.push(this._fb.group({
-            clauseId: this._fb.control(clause.id),
-            indicatorName: this._fb.control(clause.indicatorName),
-            id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
-            comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
-            order: this._fb.control(this.conditionArray.length + 1),
-            value: this._fb.control(clause.threshold),
-            minIncluded: this._fb.control(clause.thresholdInclude),
-            min: this._fb.control(clause.threshold),
-            maxIncluded: this._fb.control(clause.thresholdIncludeUp),
-            max: this._fb.control(clause.thresholdUp),
-            startBrackets: this._fb.control(clause.startBrackets),
-            endBrackets: this._fb.control(clause.endBrackets),
-            externalOperation: this._fb.control(clause.externalOperation)
-          }) as ClauseFormGroup);
-        }
+        this.conditionArray.at(i).controls.clauses.push(this._fb.group({
+          clauseId: this._fb.control(clause.id),
+          indicatorName: this._fb.control(clause.indicatorName),
+          id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
+          comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
+          order: this._fb.control(this.conditionArray.length + 1),
+          value: this._fb.control(clause.threshold),
+          minIncluded: this._fb.control(clause.thresholdInclude),
+          min: this._fb.control(clause.threshold),
+          maxIncluded: this._fb.control(clause.thresholdIncludeUp),
+          max: this._fb.control(clause.thresholdUp),
+          startBrackets: this._fb.control(clause.startBrackets),
+          endBrackets: this._fb.control(clause.endBrackets),
+          externalOperation: this._fb.control(clause.externalOperation)
+        }) as ClauseFormGroup);
       });
     }
 
@@ -1900,7 +1900,7 @@ export class AlertManagerComponent implements OnInit{
 
       // CLAUSES
       for (let clause of condition.controls.clauses.controls) {
-        alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clause.get('indicatorName')?.value!, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
+        alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clause.get('indicatorName')?.value!, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" || clause.get('comparation')?.value.value == "EQUALS" || clause.get('comparation')?.value.value == "NOT_EQUALS" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
       }
 
       // CONDITION FILTERS
@@ -2250,6 +2250,14 @@ export class AlertManagerComponent implements OnInit{
               this.conditionGraphList.push({type: 'line', label: `Clause ${i + 1}_${j + 1}`, y: clause.value, color: 'red'});
             break;
 
+            case 'EQUALS':
+              this.conditionGraphList.push({type: 'line', label: `Clause ${i + 1}_${j + 1}`, y: clause.value, color: 'red'});
+            break;
+
+            case 'NOT_EQUALS':
+              this.conditionGraphList.push({type: 'line', label: `Clause ${i + 1}_${j + 1}`, y: clause.value, color: 'red'});
+            break;
+
             case 'WITHIN_RANGE':
               
             break;
@@ -2321,8 +2329,15 @@ export class AlertManagerComponent implements OnInit{
 
     const request = new AlertDimensionValuesRequest(metrics, dimensions);
 
+    this.allDimensionValuesLoading = true;
+    this.allDimensionValuesError = false;
+
     this.alertService.getAllDimensionValues(request).subscribe(
       (response: DimensionValuesResponse[]) => {
+
+        this.allDimensionValuesLoading = false;
+        this.allDimensionValuesError = false;
+
         dimensions.forEach(({ dimension }) => {
           const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
 
@@ -2353,6 +2368,8 @@ export class AlertManagerComponent implements OnInit{
         });
       },
       () => {
+        this.allDimensionValuesLoading = false;
+        this.allDimensionValuesError = true;
         dimensions.forEach(({ dimension }) => {
           if (!condMap.has(dimension))
             condMap.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('lost', []).set('merge', []));
@@ -2718,7 +2735,7 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray.controls.forEach((condition) => {
       condition.get('clauses')?.value.forEach((clause: any) => 
       {
-        if ( ((clause.comparation.value == 'MORE_THAN' || clause.comparation.value == 'LESS_THAN') && !clause.value) || ((clause.comparation.value == 'WITHIN_RANGE' || clause.comparation.value == 'OUT_OF_RANGE') && (!clause.min || !clause.max)))
+        if ( ((clause.comparation.value == 'MORE_THAN' || clause.comparation.value == 'LESS_THAN' || clause.comparation.value == 'EQUALS' || clause.comparation.value == 'NOT_EQUALS') && (clause.value == undefined || clause.value == null)) || ((clause.comparation.value == 'WITHIN_RANGE' || clause.comparation.value == 'OUT_OF_RANGE') && (clause.min == undefined || clause.min == null || clause.max == undefined || clause.max == null)))
         {
           allCompleted = false;
         }

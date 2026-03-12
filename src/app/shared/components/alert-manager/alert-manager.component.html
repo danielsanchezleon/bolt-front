@@ -445,7 +445,9 @@
                                         (onChange)="onChangeConditionFiltersSelection(condition, dimension, $event);"
                                         appendTo="body" size="small" placeholder="{{dimension}}" [maxSelectedLabels]="1"
                                         [filter]="true" (onFilter)="onFilter($event)" [resetFilterOnHide]="true"
-                                        [title]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == 0 || conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!.length ? 'Todas las opciones seleccionadas' : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!">
+                                        [title]="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == 0 || conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!.length == conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('merge')!.length ? 'Todas las opciones seleccionadas' : conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!.get('selected')!"
+                                        [loading]="allDimensionValuesLoading"
+                                        [disabled]="allDimensionValuesLoading">
 
                                         <!-- Ítem del desplegable -->
                                         <ng-template pTemplate="item" let-option>
