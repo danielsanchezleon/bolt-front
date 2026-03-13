@@ -99,6 +99,11 @@ export const silencePeriodDayOptions = [
     {value: 6, label: 'Domingo'}
 ];
 
+export const dimensionValuesInclusionOptions = [
+    {value: 'INCLUDE', label: 'Incluir valores seleccionados'},
+    {value: 'EXCLUDE', label: 'Excluir valores seleccionados'}
+]
+
 //BASELINES
 
 export const baselinesClauseComparationOptions = [

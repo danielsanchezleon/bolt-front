@@ -5,4 +5,5 @@ export class ConditionFilterViewDto {
   filterField?: string;
   filterValue?: string;
   isCreated?: boolean;
+  inclusionType?: string | null;
 }

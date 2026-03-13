@@ -6,6 +6,7 @@ export class ConditionFilterDto
         public compOperation: string,
         public filterField: string,
         public filterValue: string,
-        public isCreated: boolean
+        public isCreated: boolean,
+        public inclusionType: string | null,
     ) {}
 }

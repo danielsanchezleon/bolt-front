@@ -60,7 +60,8 @@ import {matOperationOptions,
         silencePeriodDayOptions,
         baselinesVariablesConditionTypes,
         baselinesComparationTypes,
-        baselinesClauseComparationOptions
+        baselinesClauseComparationOptions,
+        dimensionValuesInclusionOptions
       } from '../../constants/alert-constants';
 import { AlertOcurrencesService } from '../../services/alert-ocurrences.service';
 import { ConditionFilterDto } from '../../dto/ConditionFilterDto';
@@ -373,7 +374,8 @@ export class AlertManagerComponent implements OnInit{
   allDimensionValuesLoading: boolean = false;
   allDimensionValuesError: boolean = false;
 
-  conditionFiltersMap: Map<string, Map<string, Map<string, string[]>>> = new Map(); //Map<condition, Map<dimension, Map<("values", "selected"), string[]>>>
+  conditionFiltersMap: Map<string, Map<string, Map<string, string[]>>> = new Map();
+  conditionFiltersInclusionTypeMap: Map<string, Map<string, any>> = new Map();
   lastFilter: string = '';
 
   timeWindowOptions: any[] = [];
@@ -414,6 +416,8 @@ export class AlertManagerComponent implements OnInit{
   clauseComparationOptions: any[] = [];
   conditionArray: ConditionFormArray;
   lastThresholdArrayLength: number = 0;
+
+  dimensionValuesInclusionOptions: any[] = [];
 
   conditionTextMap: Map<number, string> = new Map();
 
@@ -679,6 +683,8 @@ export class AlertManagerComponent implements OnInit{
 
     // Step 2
     this.clauseComparationOptions = clauseComparationOptions;
+
+    this.dimensionValuesInclusionOptions = dimensionValuesInclusionOptions;
 
     this.activationRecoverEvaluationOptions = activationRecoverEvaluationOptions;
 
@@ -1719,6 +1725,14 @@ export class AlertManagerComponent implements OnInit{
 
     this.resetSeverityOptions();
     this.conditionTextMap.set(i, this.generateConditionText(i));
+
+    this.conditionFiltersInclusionTypeMap.set((i+1).toString(), new Map());
+
+    condition.conditionFilters!.forEach((conditionFilter) => {
+      if (!this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.has(conditionFilter.filterField!))
+        this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.set(conditionFilter.filterField!, dimensionValuesInclusionOptions.find((opt) => opt.value == conditionFilter.inclusionType!));
+    });
+
   });
 
   // ===========================
@@ -1923,7 +1937,7 @@ export class AlertManagerComponent implements OnInit{
         // 1) Enviar creados a mano que estén seleccionados (siempre)
         for (let filter of created) {
           if (selectedSet.has(filter)) {
-            conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, filter, true));
+            conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, filter, true, this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get(dimension)!.value));
           }
         }
 
@@ -1931,7 +1945,7 @@ export class AlertManagerComponent implements OnInit{
         if (!allNonCreatedSelected) {
           for (let filter of nonCreated) {
             if (selectedSet.has(filter)) {
-              conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, filter, false));
+              conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, filter, false, this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get(dimension)!.value));
             }
           }
         }
@@ -1940,7 +1954,7 @@ export class AlertManagerComponent implements OnInit{
       if (this.isLogsAlert)
       {
         this.logsConditionArray.controls.forEach((logCondition) => {
-          conditionFiltersList.push(new ConditionFilterDto(null, logCondition.get('externalOperation')?.value!, logCondition.get('comparation')?.value!.value!, logCondition.get('field')?.value!, logCondition.get('value')?.value!, false));
+          conditionFiltersList.push(new ConditionFilterDto(null, logCondition.get('externalOperation')?.value!, logCondition.get('comparation')?.value!.value!, logCondition.get('field')?.value!, logCondition.get('value')?.value!, false, this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get('dimension')!.value));
         });
       }
 
@@ -2306,11 +2320,17 @@ export class AlertManagerComponent implements OnInit{
   resetConditionFilters(condition: ConditionFormGroup) {
     const condId = condition.get('id')?.value!;
 
-    // Inicializa la entrada solo si no existe aún (preserva selected/created existentes)
+    // Se inicializa conditionFiltersInclusionTypeMap
+    if (!this.conditionFiltersInclusionTypeMap.has(condId)) {
+      this.conditionFiltersInclusionTypeMap.set(condId, new Map());
+    }
+
+    // Se inicializa conditionFiltersMap
     if (!this.conditionFiltersMap.has(condId)) {
       this.conditionFiltersMap.set(condId, new Map());
     }
 
+    // Se inicializa la request para obtener los dimension values
     const metrics: DimensionValuesMetricRequest[] = [];
     this.indicatorArray.controls.forEach(indicator =>
       indicator.controls.metrics.controls.forEach(metric => {
@@ -2339,16 +2359,18 @@ export class AlertManagerComponent implements OnInit{
         this.allDimensionValuesError = false;
 
         dimensions.forEach(({ dimension }) => {
+
+          this.conditionFiltersInclusionTypeMap.get(condId)?.set(dimension, this.conditionFiltersInclusionTypeMap.get(condId)?.has(dimension) ? this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) : this.dimensionValuesInclusionOptions[0]);
+
           const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
 
-          if (condMap.has(dimension)) {
+          if (condMap.has(dimension)) 
+          {
             const dimMap = condMap.get(dimension)!;
             const prevSelected: string[] = dimMap.get('selected') ?? [];
             const created: string[]      = dimMap.get('created')  ?? [];
 
-            // Intersección de values con los nuevos valores
             const intersection = (dimMap.get('values') ?? []).filter((v: string) => newValues.includes(v));
-            // Eliminar del selected los que ya no existen en newValues (salvo created)
             const validSelected = prevSelected.filter(v => newValues.includes(v) || created.includes(v));
             const lost = validSelected.filter(v => !newValues.includes(v));
             const merge = [...new Set([...created, ...lost, ...newValues])];
@@ -2357,7 +2379,9 @@ export class AlertManagerComponent implements OnInit{
                   .set('selected', validSelected)
                   .set('lost', lost)
                   .set('merge', merge);
-          } else {
+          } 
+          else 
+          {
             condMap.set(dimension, new Map()
               .set('values', newValues)
               .set('selected', newValues)
@@ -2402,22 +2426,51 @@ export class AlertManagerComponent implements OnInit{
   resetBaselineConditionFilters(condition: ConditionFormGroup)
   {
     if (this.groupByForm.get('groupBy')?.value.length == 0) return;
-    
-    this.conditionFiltersMap.set(condition.get('id')?.value!, new Map());
-    
+
+    const condId = condition.get('id')?.value!;
+
+    // Se inicializa conditionFiltersInclusionTypeMap
+    if (!this.conditionFiltersInclusionTypeMap.has(condId)) {
+      this.conditionFiltersInclusionTypeMap.set(condId, new Map());
+    }
+
+    // Se inicializa conditionFiltersMap
+    if (!this.conditionFiltersMap.has(condId)) {
+      this.conditionFiltersMap.set(condId, new Map());
+    }
+
+    this.conditionFiltersMap.set(condId, new Map());
+
+    const condMap = this.conditionFiltersMap.get(condId)!;
+
     let baselineType: string = this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'CDN' : 'QOE';
     this.inventoryBaselinesService.getDimensionValues(new DimensionValuesRequest(baselineType, this.selectedBaseline.id, this.groupByForm.get('groupBy')?.value!)).subscribe(
       (response) => 
       {
-        for (const dimension in response) {
-          if (response.hasOwnProperty(dimension)) {
-            const filterValues: string[] = response[dimension];
-            this.conditionFiltersMap.get(condition.get('id')?.value!)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));   
+        for (const dimension in response) 
+        {
+          if (response.hasOwnProperty(dimension)) 
+          {
+            this.conditionFiltersInclusionTypeMap.get(condId)?.set(dimension, this.conditionFiltersInclusionTypeMap.get(condId)?.has(dimension) ? this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) : this.dimensionValuesInclusionOptions[0]);
+
+            if (condMap.has(dimension))
+            {
+              const filterValues: string[] = response[dimension];
+              this.conditionFiltersMap.get(condId)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));
+            }
+            else
+            {
+              condMap.set(dimension, new Map()
+                .set('values', [])
+                .set('selected', [])
+                .set('created', [])
+                .set('lost', [])
+                .set('merge', []));
+            }
           }
         }
       },
-      (error) => 
-      {
+      (error) => {
 
       }
     );
@@ -2905,5 +2958,16 @@ export class AlertManagerComponent implements OnInit{
     };
 
     this.permissionInformationModalVisible = true;
+  }
+
+  getInclusionType(condition: any, dimension: string): string {
+    const condId = condition.get('id')?.value!;
+    return this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) ?? this.dimensionValuesInclusionOptions[0];
+  }
+
+  onChangeInclusionType(event: any, condition: any, dimension: string) {
+    const condId = condition.get('id')?.value!;
+    const newType = event;
+    this.conditionFiltersInclusionTypeMap.set(condId, this.conditionFiltersInclusionTypeMap.get(condId)!.set(dimension, newType));
   }
 }

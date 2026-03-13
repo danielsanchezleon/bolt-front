@@ -430,7 +430,7 @@ export class ModifyAlertComponent implements OnInit
     
       //CONDITION FILTERS
       for (let conditionFilter of condition.conditionFilters!) {
-        conditionFiltersList.push(new ConditionFilterDto(null, conditionFilter.externalOperation!, conditionFilter.compOperation!, conditionFilter.filterField!, conditionFilter.filterValue!, conditionFilter.isCreated!));
+        conditionFiltersList.push(new ConditionFilterDto(null, conditionFilter.externalOperation!, conditionFilter.compOperation!, conditionFilter.filterField!, conditionFilter.filterValue!, conditionFilter.isCreated!, conditionFilter.inclusionType!));
       }
     
       let baselinesVariablesDto: BaselinesVariablesDto | null = null;

@@ -449,6 +449,13 @@
                                         [loading]="allDimensionValuesLoading"
                                         [disabled]="allDimensionValuesLoading">
 
+                                        <!-- Header -->
+                                        <ng-template pTemplate="header" let-option>
+                                            <div style="margin: 8px 16px;">
+                                                <p-select [options]="dimensionValuesInclusionOptions" [ngModel]="getInclusionType(condition, dimension)" (ngModelChange)="onChangeInclusionType($event, condition, dimension)" optionLabel="label" />
+                                            </div>
+                                        </ng-template>
+                                        
                                         <!-- Ítem del desplegable -->
                                         <ng-template pTemplate="item" let-option>
                                             <div
