@@ -20,7 +20,7 @@
         <div class="font-16"><i class="pi pi-info-circle">&nbsp;</i>Error al obtener la información</div>
       </div>
     </div>
-<!-- 
+    <!-- 
     <div *ngIf="!isLoading && !isError" class="card-container">
       <div class="card-title-description">
         <div class="font-16">Alertas sin destino</div>
@@ -130,7 +130,8 @@
   </div>
 
   <div class="last-24h-container">
-    <div *ngIf="!alertDrilldownTableLoading" class="font-20 font-w-600">Alertas lanzadas en las últimas 24h ({{alertDrilldownTable?.length}})</div>
+    <div *ngIf="!alertDrilldownTableLoading" class="font-20 font-w-600">Alertas lanzadas en las últimas 24h
+      ({{alertDrilldownTable?.length}})</div>
 
     <p-skeleton *ngIf="alertDrilldownTableLoading" width="375px" height="27px" borderRadius="8px" />
 
@@ -141,7 +142,9 @@
             <th style="width: 5rem"></th>
             <th>Id.</th>
             <th>Alerta</th>
-            <th>Saltos totales</th>
+            <th>Eventos totales</th>
+            <th>Hora</th>
+            <th>Acción</th>
             <th>Agrupaciones</th>
             <th>Etiquetas</th>
             <th></th>
@@ -157,10 +160,11 @@
             <td class="name-column">
               <div class="name" title="{{alert.alertText}}">
                 <div class="ellipsis">{{alert.alertText}}</div>
-                <div class="instances font-14 font-w-600">{{alert.children.length}} instancias</div>
               </div>
             </td>
             <td>{{ alert.count }}</td>
+            <td>-</td>
+            <td>-</td>
             <td style="max-width: 250px;">
               <div class="chips">
                 <div class="chip" *ngFor="let agroupation of alert.groupBy; let i = index;"
@@ -195,7 +199,7 @@
             </td>
             <td>
               <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info"
-                (onClick)="onClickGoToEditAlert2(alert);" />
+                (onClick)="onClickGoToEditAlert(alert);" />
             </td>
           </tr>
         </ng-template>
@@ -204,9 +208,11 @@
             <td></td>
             <td></td>
             <td>
-              <div class="ellipsis" title="{{child.label}}">{{child.label}}</div>
+              <div title="{{child.label}}">{{child.label}}</div>
             </td>
             <td>{{ child.count }}</td>
+            <td class="font-12 font-w-600">{{ child.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td class="font-12 font-w-600">{{ child.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
             <td>
               <div *ngIf="!child.groupBy">-</div>
             </td>

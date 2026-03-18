@@ -107,131 +107,274 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Análisis de Alertas Ruidosas y Oportunidades'" [icon]="'pi pi-exclamation-triangle'" [description]="'Alertas con alto volumen de disparos y sugerencias de mejora'" [isOpen]="true">
-            <p-table *ngIf="!alertDrilldownTableLoading" [value]="alertDrilldownTable" dataKey="label" class="step4-table">
-                <ng-template #header>
-                    <tr>
-                        <th style="width: 5rem"></th>
-                        <th>Id.</th>
-                        <th>Alerta</th>
-                        <th>Saltos totales</th>
-                        <th>Agrupaciones</th>
-                        <th>Etiquetas</th>
-                        <th></th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-alert let-expanded="expanded">
-                    <tr class="alert-row" [pRowToggler]="alert">
-                        <td>
-                            <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
-                        </td>
-                        <td><strong>{{ alert.label }}</strong></td>
-                        <td class="name-column">
-                            <div class="name" title="{{alert.alertText}}">
-                                <div class="ellipsis">{{alert.alertText}}</div>
-                                <div class="instances font-14 font-w-600">{{alert.children.length}} instancias</div>
-                            </div>
-                        </td>
-                        <td>{{ alert.count }}</td>
-                        <td style="max-width: 250px;">
-                            <div class="chips">
-                                <div class="chip" *ngFor="let agroupation of alert.groupBy; let i = index;" [ngStyle]="{'background-color': pastelChips[i % pastelChips.length]}">
-                                    {{ agroupation }}
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <p-button *ngIf="!alert.tags || alert.tags.length == 0"
-                                    label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
-                                    size="small"
-                                    severity="secondary"
-                                    class="font-12 font-w-600"
-                                    [rounded]="true"
-                                    [text]="true"
-                                    [disabled]="!alert.tags || alert.tags.length == 0"
-                                />
+        <app-accordion [title]="'Análisis de Alertas Ruidosas y Oportunidades (TOP 10)'" [icon]="'pi pi-exclamation-triangle'" [isOpen]="true">
 
-                            <span *ngIf="alert.tags && alert.tags.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
-                                <p-button
-                                    label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
-                                    size="small"
-                                    severity="secondary"
-                                    class="font-12 font-w-600"
-                                    [rounded]="true"
-                                    [text]="true"
-                                    [disabled]="!alert.tags || alert.tags.length == 0"
-                                />
-                            </span>
+            <p-tabs value="0">
+                <p-tablist>
+                    <p-tab value="0">Top 10 alertas más ruidosas</p-tab>
+                    <p-tab value="1">Todas las alertas</p-tab>
+                </p-tablist>
+                <p-tabpanels>
+                    <p-tabpanel value="0">
+                        <p-table *ngIf="!noiseAlertsTableLoading" [value]="noiseAlertsTable" dataKey="label" class="step4-table">
+                            <ng-template #header>
+                                <tr>
+                                    <th style="width: 5rem"></th>
+                                    <th>Id.</th>
+                                    <th>Alerta</th>
+                                    <th>Eventos totales</th>
+                                    <th>Hora</th>
+                                    <th>Acción</th>
+                                    <th>Agrupaciones</th>
+                                    <th>Etiquetas</th>
+                                    <th></th>
+                                </tr>
+                            </ng-template>
+                            <ng-template #body let-alert let-expanded="expanded">
+                                <tr class="alert-row" [pRowToggler]="alert">
+                                    <td>
+                                        <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+                                    </td>
+                                    <td><strong>{{ alert.label }}</strong></td>
+                                    <td class="name-column">
+                                        <div class="name" title="{{alert.alertText}}">
+                                            <div class="ellipsis">{{alert.alertText}}</div>
+                                        </div>
+                                    </td>
+                                    <td>{{ alert.count }}</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td style="max-width: 250px;">
+                                        <div class="chips">
+                                            <div class="chip" *ngFor="let agroupation of alert.groupBy; let i = index;" [ngStyle]="{'background-color': pastelChips[i % pastelChips.length]}">
+                                                {{ agroupation }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p-button *ngIf="!alert.tags || alert.tags.length == 0"
+                                                label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
+                                                size="small"
+                                                severity="secondary"
+                                                class="font-12 font-w-600"
+                                                [rounded]="true"
+                                                [text]="true"
+                                                [disabled]="!alert.tags || alert.tags.length == 0"
+                                            />
 
+                                        <span *ngIf="alert.tags && alert.tags.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
+                                            <p-button
+                                                label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
+                                                size="small"
+                                                severity="secondary"
+                                                class="font-12 font-w-600"
+                                                [rounded]="true"
+                                                [text]="true"
+                                                [disabled]="!alert.tags || alert.tags.length == 0"
+                                            />
+                                        </span>
+
+                                        <p-popover #op1>
+                                            <div class="popover-container">
+                                                <div class="font-w-600">Tags</div>
+                                                <div class="tags-list">
+                                                    <div *ngFor="let tag of alert.tags" class="tag-item">
+                                                        <strong>{{ tag.name }}</strong>: {{ tag.value }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </p-popover>
+                                    </td>
+                                    <td>
+                                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" (onClick)="onClickGoToEditAlert(alert);" />
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template #expandedrow let-alert>
+                                <tr *ngFor="let child of alert.children">
+                                    <td></td>
+                                    <td></td>
+                                    <td>
+                                        <div title="{{child.label}}">{{child.label}}</div>
+                                    </td>
+                                    <td>{{ child.count }}</td>
+                                    <td class="font-12 font-w-600">{{ child.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                                    <td class="font-12 font-w-600">{{ child.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
+                                    <td>
+                                        <div *ngIf="!child.groupBy">-</div>
+                                    </td>
+                                    <td>
+
+                                        <p-button *ngIf="!child.tags || (child.tags && getKeysCount(child.tags) == 0)"
+                                                label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
+                                                size="small"
+                                                severity="secondary"
+                                                class="font-12 font-w-600"
+                                                [rounded]="true"
+                                                [text]="true"
+                                                [disabled]="!child.tags || getKeysCount(child.tags) == 0"
+                                            />
+
+                                        <span *ngIf="child.tags && getKeysCount(child.tags) > 0" (mouseenter)="op2.show($event)" (mouseleave)="op2.hide()" style="display: inline-block;">
+                                            <p-button
+                                                label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
+                                                size="small"
+                                                severity="secondary"
+                                                class="font-12 font-w-600"
+                                                [rounded]="true"
+                                                [text]="true"
+                                                [disabled]="!child.tags || getKeysCount(child.tags) == 0"
+                                            />
+                                        </span>
+
+                                        <p-popover #op2>
+                                            <div class="popover-container">
+                                                <div class="font-w-600">Filtros</div>
+                                                <div class="tags-list">
+                                                <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">
+                                                    {{ tagString }}
+                                                </div>
+                                                </div>
+                                            </div>
+                                        </p-popover>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                        <div *ngIf="noiseAlertsTableLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
+                            <p-progress-spinner />
+                        </div>
+                    </p-tabpanel>
+                    <p-tabpanel value="1">
+                        <div style="margin-bottom: 16px; border-radius: 8px; border: 1px solid lightgray; padding: 8px;">
+                            <p-chart type="bar" [data]="bucketData" [options]="bucketOptions" height="256px" />
+                        </div>
+                        <div class="filter-container">
+                            <form *ngIf="!(activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall)" style="width: 100%;" [formGroup]="filterForm">
+                                <p-iconfield style="width: 100%;">
+                                    <p-inputicon iconPosition="left" class="pi pi-search" />
+                                    <input style="width: 100%;" formControlName="filterText" type="search" pInputText />
+                                    <p-inputicon iconPosition="right" *ngIf="filterForm.get('filterText')?.value && filterForm.get('filterText')?.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="filterForm.get('filterText')?.reset();"/>
+                                </p-iconfield>
+                            </form>
+                            <p-skeleton *ngIf="activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall" width="1343px" height="39px" borderRadius="8px" />
+                            <div class="date-filter" (click)="op1.toggle($event)">
+                                <i class="pi pi-calendar"></i>
+                                <i class="pi pi-chevron-down" style="font-size: 0.9rem;"></i>
+                            </div>
                             <p-popover #op1>
-                                <div class="popover-container">
-                                    <div class="font-w-600">Tags</div>
-                                    <div class="tags-list">
-                                        <div *ngFor="let tag of alert.tags" class="tag-item">
-                                            <strong>{{ tag.name }}</strong>: {{ tag.value }}
+                                <div class="noise-alerts-popover-container">
+                                    <div class="popover-section">
+                                        <div class="font-w-600 font-12">Selección rápida</div>
+                                        <div class="popover-section-content">
+                                            <form [formGroup]="filterForm" class="quick-select-form">
+                                                <div class="font-14">{{filterForm.get('unit')?.value.value == 'hours' || filterForm.get('unit')?.value.value == 'weeks' ? 'Últimas' : 'Últimos'}}</div>
+                                                <p-inputnumber size="small" formControlName="unitValue" mode="decimal" [min]="1" [showButtons]="true"/>
+                                                <p-select size="small" [options]="unitTypes" formControlName="unit" optionLabel="label" appendTo="body" />
+                                                <p-button size="small" label="Aplicar" (onClick)="op1.hide(); getActiveAlarmInstancesTable(page, pageSize);" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="separator"></div>
+                                    <div class="popover-section">
+                                            
+                                        <div class="popover-section-presets">
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('today');">Hoy</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last24Hours');">Últimas 24 horas</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('thisWeek');">Esta semana</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last7Days');">Últimos 7 días</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last15Minutes');">Últimos 15 minutos</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last30Days');">Últimos 30 días</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last30Minutes');">Últimos 30 minutos</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last90Days');">Últimos 90 días</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last1Hour');">Última 1 hora</div>
+                                            <div class="preset-chip" (click)="op1.hide(); onClickPreset('last1Year');">Último 1 año</div>
+                                        </div>
+                                    </div>
+                                    <div class="separator"></div>
+                                    <div class="popover-section">
+                                        <div class="popover-section-content">
+                                            <form [formGroup]="filterForm" class="quick-select-form">
+                                                <p-toggleswitch size="small" formControlName="refreshEveryToggle"/>
+                                                <div class="font-w-600 font-12">Refrescar cada</div>
+                                                <p-inputnumber size="small" formControlName="refreshUnitValue" mode="decimal" [min]="1" [showButtons]="true" />
+                                                <p-select size="small" [options]="refreshUnitTypes" formControlName="refreshUnit" optionLabel="label" appendTo="body" />
+                                            </form>
                                         </div>
                                     </div>
                                 </div>
                             </p-popover>
-                        </td>
-                        <td>
-                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" (onClick)="onClickGoToEditAlert(alert);" />
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #expandedrow let-alert>
-                    <tr *ngFor="let child of alert.children">
-                        <td></td>
-                        <td></td>
-                        <td>
-                            <div class="ellipsis" title="{{child.label}}">{{child.label}}</div>
-                        </td>
-                        <td>{{ child.count }}</td>
-                        <td>
-                            <div *ngIf="!child.groupBy">-</div>
-                        </td>
-                        <td>
+                        </div>
 
-                            <p-button *ngIf="!child.tags || (child.tags && getKeysCount(child.tags) == 0)"
-                                    label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                                    size="small"
-                                    severity="secondary"
-                                    class="font-12 font-w-600"
-                                    [rounded]="true"
-                                    [text]="true"
-                                    [disabled]="!child.tags || getKeysCount(child.tags) == 0"
-                                />
+                        <p-table *ngIf="!activeAlarmInstancesTableLoading" [value]="activeAlarmInstancesTable.instances" class="step4-table">
+                            <ng-template #header>
+                                <tr>
+                                    <th>Id.</th>
+                                    <th>Mensaje</th>
+                                    <th>Hora</th>
+                                    <th>Acción</th>
+                                    <th>Etiquetas</th>
+                                    <th></th>
+                                </tr>
+                            </ng-template>
+                            <ng-template #body let-instance>
+                                <tr class="alert-row">
+                                    <td><strong>{{ instance.alertId }}</strong></td>
+                                    <td class="name-column">
+                                        <div class="name" title="{{instance.instanceText}}">
+                                            <div>{{instance.instanceText}}</div>
+                                        </div>
+                                    </td>
+                                    <td class="font-12 font-w-600">{{ instance.dateTime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                                    <td class="font-12 font-w-600">{{ instance.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
+                                    <td>
+                                        <span *ngIf="instance.activeAlarmInstanceTagList && instance.activeAlarmInstanceTagList.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
+                                            <p-button
+                                                label="{{instance.activeAlarmInstanceTagList.length == 1 ? '1 tag' : instance.activeAlarmInstanceTagList.length + ' tags'}}"
+                                                size="small"
+                                                severity="secondary"
+                                                class="font-12 font-w-600"
+                                                [rounded]="true"
+                                                [text]="true"
+                                                [disabled]="!instance.activeAlarmInstanceTagList || instance.activeAlarmInstanceTagList.length == 0"
+                                            />
+                                        </span>
 
-                            <span *ngIf="child.tags && getKeysCount(child.tags) > 0" (mouseenter)="op2.show($event)" (mouseleave)="op2.hide()" style="display: inline-block;">
-                                <p-button
-                                    label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                                    size="small"
-                                    severity="secondary"
-                                    class="font-12 font-w-600"
-                                    [rounded]="true"
-                                    [text]="true"
-                                    [disabled]="!child.tags || getKeysCount(child.tags) == 0"
-                                />
-                            </span>
-
-                            <p-popover #op2>
-                                <div class="popover-container">
-                                    <div class="font-w-600">Filtros</div>
-                                    <div class="tags-list">
-                                    <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">
-                                        {{ tagString }}
-                                    </div>
-                                    </div>
-                                </div>
-                            </p-popover>
-                        </td>
-                        <td></td>
-                    </tr>
-                </ng-template>
-            </p-table>
-            <div *ngIf="alertDrilldownTableLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
-                <p-progress-spinner />
-            </div>
+                                        <p-popover #op1>
+                                            <div class="popover-container">
+                                                <div class="font-w-600">Tags</div>
+                                                <div class="tags-list">
+                                                    <div *ngFor="let tag of instance.activeAlarmInstanceTagList" class="tag-item">
+                                                        <strong>{{ tag.label }}</strong>: {{ tag.value }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </p-popover>
+                                    </td>
+                                    <td>
+                                        <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" (onClick)="onClickGoToEditAlert(instance);" />
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                        <p-paginator *ngIf="activeAlarmInstancesTable" 
+                            (onPageChange)="onPageChange($event)" 
+                            [first]="first" 
+                            [rows]="pageSize" 
+                            [totalRecords]="activeAlarmInstancesTable.totalInstances" 
+                            [showCurrentPageReport]="true"
+                            [showPageLinks]="false"
+                            [showJumpToPageDropdown]="false"
+                            currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
+                            [rowsPerPageOptions]="pageSizeOptions"
+                            [showPageLinks]="true"/>
+                        <div *ngIf="activeAlarmInstancesTableLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
+                            <p-progress-spinner />
+                        </div>
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
         </app-accordion>
     </div>
 </app-page-wrapper>

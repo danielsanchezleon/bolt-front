@@ -170,3 +170,63 @@ input[type="search"]::-webkit-search-decoration:hover,
 input[type="search"]::-webkit-search-cancel-button:hover { 
     cursor:pointer; 
 }
+
+.noise-alerts-popover-container
+{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .popover-section
+    {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .popover-section-content
+        {
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+
+            .quick-select-form
+            {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                gap: 8px;
+            }
+        }
+
+        .popover-section-presets
+        {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px 16px;
+
+            .preset-chip
+            {
+                padding: 2px 0;
+                font-size: 12px;
+                font-weight: 400;
+                color: #2563eb;
+                background-color: transparent;
+                text-decoration: none;
+
+                &:hover
+                {
+                    cursor: pointer;
+                    text-decoration: underline;
+                    color: #1d4ed8;
+                }
+            }
+        }
+    }
+
+    .separator
+    {
+        height: 1px;
+        width: 100%;
+        background-color: lightgray;
+    }
+}

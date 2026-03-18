@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SliderModule } from 'primeng/slider';
@@ -15,15 +15,23 @@ import { CarouselModule } from 'primeng/carousel';
 import { ChartModule } from 'primeng/chart';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { PopoverModule } from 'primeng/popover';
-import { AlertViewDto } from '../../shared/dto/alert/AlertViewDto';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { SkeletonModule } from 'primeng/skeleton';
+import { InputTextModule } from 'primeng/inputtext';
+import { Subscription } from 'rxjs';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { TabsModule } from 'primeng/tabs';
+import { PaginatorModule } from 'primeng/paginator';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
-export class AnalyticsModuleComponent 
+export class AnalyticsModuleComponent implements OnInit, OnDestroy
 {
   cityFilterOptions: any[] = [{ label: 'España', value: 'spain' },{ label: 'Alemania', value: 'germany' }];
   severityFilterOptions: any[] = [{ label: 'Critical + Disaster', value: 'critical-disaster' }];
@@ -32,7 +40,14 @@ export class AnalyticsModuleComponent
   selectedSeverityFilterOption: any;
   selectedPlatformFilterOption: any;
 
-  timeFilterOptions: any[] = [{ label: 'Últimas 6 horas', value: '6h' }, { label: 'Últimas 12 horas', value: '12h' }, { label: 'Últimas 24 horas', value: '24h' }, { label: 'Últimos 3 días', value: '3d' }, { label: 'Últimos 10 días', value: '10d' }, { label: 'Último mes', value: '1m' }, { label: 'Últimos 3 meses', value: '3m' }];
+  timeFilterOptions: any[] = [
+    { label: 'Últimas 6 horas', value: '6h' }, 
+    { label: 'Últimas 12 horas', value: '12h' }, 
+    { label: 'Últimas 24 horas', value: '24h' }, 
+    { label: 'Últimos 3 días', value: '3d' }, 
+    { label: 'Últimos 10 días', value: '10d' }, 
+    { label: 'Último mes', value: '1m' }, 
+    { label: 'Últimos 3 meses', value: '3m' }];
   selectedTimeFilterOption: any;
 
   groupedFilters: any[] = [
@@ -145,25 +160,58 @@ export class AnalyticsModuleComponent
   generalMetricsSecondGroup: any[] = [];
   generalMetricsThirdGroup: any[] = [];
 
-  alertDrilldownTable: any;
-  alertDrilldownTableLoading: boolean = false;
-  alertDrilldownTableError: boolean = false;
+  firstCall: boolean = true;
+  noiseAlertsTable: any;
+  noiseAlertsTableLoading: boolean = false;
+  noiseAlertsTableError: boolean = false;
+
+  unitTypes: any[] = [
+    {label: 'Segundos', value: 'seconds'},
+    {label: 'Minutos', value: 'minutes'},
+    {label: 'Horas', value: 'hours'},
+    {label: 'Días', value: 'days'},
+    {label: 'Semanas', value: 'weeks'},
+    {label: 'Meses', value: 'months'},
+    {label: 'Años', value: 'years'}
+  ];
+
+  refreshUnitTypes: any[] = [
+    {label: 'Segundos', value: 'seconds'},
+    {label: 'Minutos', value: 'minutes'},
+    {label: 'Horas', value: 'hours'}
+  ];
 
   pastelChips: string[] = [
-  '#F2B6BC', // rosa
-  '#F6C98B', // melocotón
-  '#F3E08A', // amarillo
-  '#BFE6D3', // verde menta
-  '#CDE3A8', // verde pastel
-  '#B8E0E8', // turquesa
-  '#C9B8F2', // lavanda
-  '#BFD6F6', // azul pastel
-  '#D9D9D9', // gris claro
-  '#D8AFCF'  // lila rosado
-];
+    '#F2B6BC', // rosa
+    '#F6C98B', // melocotón
+    '#F3E08A', // amarillo
+    '#BFE6D3', // verde menta
+    '#CDE3A8', // verde pastel
+    '#B8E0E8', // turquesa
+    '#C9B8F2', // lavanda
+    '#BFD6F6', // azul pastel
+    '#D9D9D9', // gris claro
+    '#D8AFCF'  // lila rosado
+  ];
 
+  filterForm!: FormGroup;
+  private refreshInterval: any = null;
+  private refreshToggleSub: Subscription | null = null;
 
-  constructor (private router: Router, private alarmAnalyticsService: AlarmAnalyticsService) {}
+  //Active alarm instances table
+  activeAlarmInstancesTable: any;
+  activeAlarmInstancesTableLoading: boolean = false;
+  activeAlarmInstancesTableError: boolean = false;
+
+  first: number = 0;
+  page: number = 0;
+  pageSize: number = 10;
+  pageSizeOptions: number[] = [10, 20, 50, 100, 200, 500];
+
+  bucketData: any;
+  bucketOptions: any;
+
+  constructor (private router: Router, private alarmAnalyticsService: AlarmAnalyticsService, private _fb: FormBuilder) {}
 
   ngOnInit()
   {
@@ -171,14 +219,31 @@ export class AnalyticsModuleComponent
     this.getTotalUnique();
     this.getTotalCreated();
     this.getSeverityDist();
-    // this.getTopAlerts(10);
-    // this.getDrillDown(1, 5);
     this.getObDist();
     this.getChannelDist();
     this.getServiceDist();
     this.getSourceDist();
     this.getGeneralMetrics();
-    this.getAlertDrilldownTable();
+    this.getNoiseAlertsTable();
+
+    this.filterForm = this._fb.group({
+      filterText: new FormControl({ value: '', disabled: true }),
+      unit: new FormControl(this.unitTypes[0]),
+      unitValue: new FormControl(1),
+      refreshEveryToggle: new FormControl(false),
+      refreshUnit: new FormControl(this.refreshUnitTypes[0]),
+      refreshUnitValue: new FormControl(60)
+    });
+
+    this.refreshToggleSub = this.filterForm.get('refreshEveryToggle')!.valueChanges.subscribe((enabled: boolean) => {
+      this._clearRefreshInterval();
+      if (enabled) {
+        this.getNoiseAlertsTable();
+        this._startRefreshInterval();
+      }
+    });
+
+    this.onClickPreset('thisWeek');
   }
 
   onClickNavigateToHome() {
@@ -441,19 +506,60 @@ export class AnalyticsModuleComponent
     );
   }
 
-  getAlertDrilldownTable()
+  getNoiseAlertsTable()
   {
-    this.alertDrilldownTableLoading = true;
-    this.alertDrilldownTableError = false;
+    this.noiseAlertsTableLoading = true;
+    this.noiseAlertsTableError = false;
+
+    const lastSeconds = this.filterForm ? this._formToSeconds('unit', 'unitValue') : null;
 
     this.alarmAnalyticsService.getAlertsTable(10, 10, null).subscribe(
       (response) => {
-        this.alertDrilldownTable = response;
-        this.alertDrilldownTableLoading = false;
+        this.noiseAlertsTable = response;
+        this.noiseAlertsTableLoading = false;
+        this.firstCall = false;
       },
       (error) => {
-        this.alertDrilldownTableLoading = false;
-        this.alertDrilldownTableError = true;
+        this.noiseAlertsTableLoading = false;
+        this.noiseAlertsTableError = true;
+      }
+    );
+  }
+
+  getActiveAlarmInstancesTable(page: number, pageSize: number)
+  {
+    this.activeAlarmInstancesTableLoading = true;
+    this.activeAlarmInstancesTableError = false;
+
+    const lastSeconds = this.filterForm ? this._formToSeconds('unit', 'unitValue') : null;
+
+    this.alarmAnalyticsService.getActiveAlarmInstancesResponse(page, pageSize, lastSeconds).subscribe(
+      (response) => {
+        this.activeAlarmInstancesTable = response;
+        this.activeAlarmInstancesTableLoading = false;
+        this.firstCall = false;
+
+        //INIT BUCKET DATA
+        this.bucketData = {
+          labels: response.buckets.map((bucket: any) => bucket.datetime),
+          datasets: [
+            {
+              data: response.buckets.map((bucket: any) => bucket.count),
+            }
+          ]
+        };
+
+        this.bucketOptions = {
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        };
+      },
+      (error) => {
+        this.activeAlarmInstancesTableLoading = false;
+        this.activeAlarmInstancesTableError = true;
       }
     );
   }
@@ -476,5 +582,121 @@ export class AnalyticsModuleComponent
   onClickGoToEditAlert(alert: any)
   {
     this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
+  }
+
+  onClickPreset(preset: string) {    const now = new Date();
+
+    let unit = this.unitTypes[0]; // seconds por defecto
+    let unitValue = 1;
+
+    switch (preset) {
+      case 'today': {
+        // Horas transcurridas desde las 00:00 de hoy (mínimo 1)
+        const hoursElapsed = now.getHours() + (now.getMinutes() > 0 || now.getSeconds() > 0 ? 1 : 0) || 1;
+        unit = this.unitTypes[2]; // hours
+        unitValue = hoursElapsed;
+        break;
+      }
+      case 'last24Hours':
+        unit = this.unitTypes[2]; // hours
+        unitValue = 24;
+        break;
+
+      case 'thisWeek': {
+        // Días transcurridos desde el lunes (lunes = 1, domingo = 7)
+        const dow = now.getDay(); // 0=dom, 1=lun, ..., 6=sáb
+        const daysSinceMonday = dow === 0 ? 6 : dow - 1;
+        unit = this.unitTypes[3]; // days
+        unitValue = daysSinceMonday || 1;
+        break;
+      }
+      case 'last7Days':
+        unit = this.unitTypes[3]; // days
+        unitValue = 7;
+        break;
+
+      case 'last15Minutes':
+        unit = this.unitTypes[1]; // minutes
+        unitValue = 15;
+        break;
+
+      case 'last30Minutes':
+        unit = this.unitTypes[1]; // minutes
+        unitValue = 30;
+        break;
+
+      case 'last1Hour':
+        unit = this.unitTypes[2]; // hours
+        unitValue = 1;
+        break;
+
+      case 'last30Days':
+        unit = this.unitTypes[3]; // days
+        unitValue = 30;
+        break;
+
+      case 'last90Days':
+        unit = this.unitTypes[3]; // days
+        unitValue = 90;
+        break;
+
+      case 'last1Year':
+        unit = this.unitTypes[6]; // years
+        unitValue = 1;
+        break;
+    }
+
+    this.filterForm.patchValue({ unit, unitValue });
+
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
+
+  /** Converts the given unit+value form controls to a total number of seconds. */
+  private _formToSeconds(unitControlName: string, valueControlName: string): number | null {
+    const unit = this.filterForm.get(unitControlName)?.value;
+    const value = this.filterForm.get(valueControlName)?.value;
+
+    if (!unit || value == null) return null;
+
+    const multipliers: Record<string, number> = {
+      seconds: 1,
+      minutes: 60,
+      hours: 3600,
+      days: 86400,
+      weeks: 604800,
+      months: 2592000,   // 30 days
+      years: 31536000    // 365 days
+    };
+
+    const unitKey = typeof unit === 'object' ? unit.value : unit;
+    const multiplier = multipliers[unitKey] ?? 1;
+    return value * multiplier;
+  }
+
+  private _startRefreshInterval(): void {
+    const refreshSeconds = this._formToSeconds('refreshUnit', 'refreshUnitValue') ?? 60;
+    this.refreshInterval = setInterval(() => {
+      this.getNoiseAlertsTable();
+    }, refreshSeconds * 1000);
+  }
+
+  private _clearRefreshInterval(): void {
+    if (this.refreshInterval !== null) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this._clearRefreshInterval();
+    this.refreshToggleSub?.unsubscribe();
+  }
+
+  onPageChange(event: any)
+  {
+    this.first = event.first;
+    this.page = event.page;
+    this.pageSize = event.rows;
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 }

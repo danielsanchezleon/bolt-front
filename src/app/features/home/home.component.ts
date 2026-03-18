@@ -106,7 +106,7 @@ export class HomeComponent {
     this.alertDrilldownTableLoading = true;
     this.alertDrilldownTableError = false;
 
-    this.alarmAnalyticsService.getAlertsTable(null, null, 24).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(null, null, 86400).subscribe(
       (response) => {
         this.alertDrilldownTable = response;
         this.alertDrilldownTableLoading = false;

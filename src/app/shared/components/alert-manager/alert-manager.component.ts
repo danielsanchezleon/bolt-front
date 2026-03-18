@@ -1733,6 +1733,13 @@ export class AlertManagerComponent implements OnInit{
         this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.set(conditionFilter.filterField!, dimensionValuesInclusionOptions.find((opt) => opt.value == conditionFilter.inclusionType!));
     });
 
+    // Add any groupBy dimension not present in conditionFilters with default INCLUDE
+    alertViewDto.groupBy?.forEach((dimension) => {
+      const key = dimension.toLowerCase();
+      if (!this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.has(key))
+        this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.set(key, dimensionValuesInclusionOptions[0]);
+    });
+
   });
 
   // ===========================
