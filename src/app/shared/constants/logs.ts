@@ -28,5 +28,6 @@ export const periodicityOptions = [
     {value: '10min', label: '10 minutos'},
     {value: '15min', label: '15 minutos'},
     {value: '30min', label: '30 minutos'},
-    {value: '1h', label: '1 hora'}
+    {value: '1h', label: '1 hora'},
+    {value: '24h', label: '24 horas'}
 ];

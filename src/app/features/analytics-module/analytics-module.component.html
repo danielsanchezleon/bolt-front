@@ -107,23 +107,88 @@
             </div>
         </app-accordion>
 
-        <app-accordion [title]="'Análisis de Alertas Ruidosas y Oportunidades (TOP 10)'" [icon]="'pi pi-exclamation-triangle'" [isOpen]="true">
+        <app-accordion [title]="'Análisis de Alertas Ruidosas e Instancias'" [icon]="'pi pi-exclamation-triangle'" [isOpen]="true">
 
             <p-tabs value="0">
                 <p-tablist>
                     <p-tab value="0">Top 10 alertas más ruidosas</p-tab>
-                    <p-tab value="1">Todas las alertas</p-tab>
+                    <p-tab value="1">Todas las instancias</p-tab>
                 </p-tablist>
                 <p-tabpanels>
                     <p-tabpanel value="0">
+                        <div class="filter-container">
+                            <div style="width: 100%; display: flex; flex-direction: row; justify-content: flex-end; align-items: center;">
+                                <div class="date-filter" (click)="noiseOp.toggle($event)">
+                                    <div class="date-filter-left">
+                                        <i class="pi pi-calendar"></i>
+                                        <i class="pi pi-chevron-down" style="font-size: 0.9rem;"></i>
+                                    </div>
+                                    <div class="date-filter-right">
+                                        <div>{{ noiseAlertsActiveTimeWindow }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p-popover #noiseOp>
+                                <div class="noise-alerts-popover-container">
+                                    <div class="popover-section">
+                                        <div class="font-w-600 font-12">Selección rápida</div>
+                                        <div class="popover-section-content">
+                                            <form [formGroup]="noiseAlertsFilterForm" class="quick-select-form">
+                                                <p-select size="small" [options]="timeWindowOptions" formControlName="timeWindow" optionLabel="label" appendTo="body" />
+                                                <ng-container *ngIf="noiseAlertsTimeWindowMode === 'last'">
+                                                    <p-inputnumber size="small" formControlName="unitValue" mode="decimal" [min]="1" [showButtons]="true"
+                                                        [ngClass]="{'ng-invalid ng-dirty': noiseAlertsFilterForm.get('unitValue')?.invalid && noiseAlertsFilterForm.get('unitValue')?.touched}"/>
+                                                    <p-select size="small" [options]="unitTypes" formControlName="unit" optionLabel="label" appendTo="body"
+                                                        [ngClass]="{'ng-invalid ng-dirty': noiseAlertsFilterForm.get('unit')?.invalid && noiseAlertsFilterForm.get('unit')?.touched}"/>
+                                                </ng-container>
+                                                <ng-container *ngIf="noiseAlertsTimeWindowMode === 'between'">
+                                                    <p-datepicker title="dd/mm/yyyy hh:mm" size="small" formControlName="from" [showTime]="true" hourFormat="24" appendTo="body" placeholder="Desde" dateFormat="dd/mm/yy"
+                                                        [ngClass]="{'ng-invalid ng-dirty': noiseAlertsFilterForm.get('from')?.invalid && noiseAlertsFilterForm.get('from')?.touched}"/>
+                                                    <p-datepicker title="dd/mm/yyyy hh:mm" size="small" formControlName="to" [showTime]="true" hourFormat="24" appendTo="body" placeholder="Hasta" dateFormat="dd/mm/yy"
+                                                        [ngClass]="{'ng-invalid ng-dirty': noiseAlertsFilterForm.get('to')?.invalid && noiseAlertsFilterForm.get('to')?.touched}"/>
+                                                </ng-container>
+                                                <p-button size="small" label="Aplicar" [disabled]="noiseAlertsFilterForm.invalid" (onClick)="noiseOp.hide(); getNoiseAlertsTable(); noiseAlertsActiveTimeWindow = 'Personalizado';" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <div class="separator"></div>
+                                    <div class="popover-section">
+                                        <div class="font-w-600 font-12">Usados frecuentemente</div>
+                                        <div class="popover-section-presets">
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('today');">Hoy</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last24Hours');">Últimas 24 horas</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('thisWeek');">Esta semana</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last7Days');">Últimos 7 días</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last15Minutes');">Últimos 15 minutos</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last30Days');">Últimos 30 días</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last30Minutes');">Últimos 30 minutos</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last90Days');">Últimos 90 días</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last1Hour');">Última 1 hora</div>
+                                            <div class="preset-chip" (click)="noiseOp.hide(); onClickNoisePreset('last1Year');">Último 1 año</div>
+                                        </div>
+                                    </div>
+                                    <div class="separator"></div>
+                                    <div class="popover-section">
+                                        <div class="popover-section-content">
+                                            <form [formGroup]="noiseAlertsFilterForm" class="quick-select-form">
+                                                <p-toggleswitch size="small" formControlName="refreshEveryToggle"/>
+                                                <div class="font-w-600 font-12">Refrescar cada</div>
+                                                <p-inputnumber size="small" formControlName="refreshUnitValue" mode="decimal" [min]="1" [showButtons]="true" />
+                                                <p-select size="small" [options]="refreshUnitTypes" formControlName="refreshUnit" optionLabel="label" appendTo="body" />
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </p-popover>
+                        </div>
                         <p-table *ngIf="!noiseAlertsTableLoading" [value]="noiseAlertsTable" dataKey="label" class="step4-table">
                             <ng-template #header>
                                 <tr>
                                     <th style="width: 5rem"></th>
-                                    <th>Id.</th>
+                                    <th>Id</th>
                                     <th>Alerta</th>
                                     <th>Eventos totales</th>
-                                    <th>Hora</th>
+                                    <th>Fecha</th>
                                     <th>Acción</th>
                                     <th>Agrupaciones</th>
                                     <th>Etiquetas</th>
@@ -138,7 +203,7 @@
                                     <td><strong>{{ alert.label }}</strong></td>
                                     <td class="name-column">
                                         <div class="name" title="{{alert.alertText}}">
-                                            <div class="ellipsis">{{alert.alertText}}</div>
+                                            <div>{{alert.alertText}}</div>
                                         </div>
                                     </td>
                                     <td>{{ alert.count }}</td>
@@ -197,7 +262,7 @@
                                     <td>
                                         <div title="{{child.label}}">{{child.label}}</div>
                                     </td>
-                                    <td>{{ child.count }}</td>
+                                    <td>{{ child.action == 'CREATE' ? child.count : child.closedCount }}</td>
                                     <td class="font-12 font-w-600">{{ child.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
                                     <td class="font-12 font-w-600">{{ child.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
                                     <td>
@@ -247,38 +312,51 @@
                         </div>
                     </p-tabpanel>
                     <p-tabpanel value="1">
-                        <div style="margin-bottom: 16px; border-radius: 8px; border: 1px solid lightgray; padding: 8px;">
-                            <p-chart type="bar" [data]="bucketData" [options]="bucketOptions" height="256px" />
-                        </div>
                         <div class="filter-container">
-                            <form *ngIf="!(activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall)" style="width: 100%;" [formGroup]="filterForm">
+                            <form *ngIf="!(activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall)" style="width: 100%;" [formGroup]="instancesFilterForm">
                                 <p-iconfield style="width: 100%;">
                                     <p-inputicon iconPosition="left" class="pi pi-search" />
-                                    <input style="width: 100%;" formControlName="filterText" type="search" pInputText />
-                                    <p-inputicon iconPosition="right" *ngIf="filterForm.get('filterText')?.value && filterForm.get('filterText')?.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="filterForm.get('filterText')?.reset();"/>
+                                    <input #filterInput style="width: 100%;" formControlName="filterText" type="text" pInputText placeholder='Busca por: Id, Mensaje, Fecha o Evento (P.E. Mensaje: "...") o por Etiquetas (P.E. Etiquetas: "{"ob":"TE", ...}")' />
+                                    <p-inputicon iconPosition="right" *ngIf="instancesFilterForm.get('filterText')?.value && instancesFilterForm.get('filterText')?.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="instancesFilterForm.get('filterText')?.reset(); getActiveAlarmInstancesTable(page, pageSize);"/>
                                 </p-iconfield>
                             </form>
                             <p-skeleton *ngIf="activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall" width="1343px" height="39px" borderRadius="8px" />
                             <div class="date-filter" (click)="op1.toggle($event)">
-                                <i class="pi pi-calendar"></i>
-                                <i class="pi pi-chevron-down" style="font-size: 0.9rem;"></i>
+                                <div class="date-filter-left">
+                                    <i class="pi pi-calendar"></i>
+                                    <i class="pi pi-chevron-down" style="font-size: 0.9rem;"></i>
+                                </div>
+                                <div class="date-filter-right">
+                                    <div>{{ instancesActiveTimeWindow }}</div>
+                                </div>
                             </div>
+                            <p-button label="Refrescar" icon="pi pi-refresh" (onClick)="getActiveAlarmInstancesTable(page, pageSize);" [loading]="activeAlarmInstancesTableLoading" [disabled]="activeAlarmInstancesTableLoading" />
                             <p-popover #op1>
                                 <div class="noise-alerts-popover-container">
                                     <div class="popover-section">
                                         <div class="font-w-600 font-12">Selección rápida</div>
                                         <div class="popover-section-content">
-                                            <form [formGroup]="filterForm" class="quick-select-form">
-                                                <div class="font-14">{{filterForm.get('unit')?.value.value == 'hours' || filterForm.get('unit')?.value.value == 'weeks' ? 'Últimas' : 'Últimos'}}</div>
-                                                <p-inputnumber size="small" formControlName="unitValue" mode="decimal" [min]="1" [showButtons]="true"/>
-                                                <p-select size="small" [options]="unitTypes" formControlName="unit" optionLabel="label" appendTo="body" />
-                                                <p-button size="small" label="Aplicar" (onClick)="op1.hide(); getActiveAlarmInstancesTable(page, pageSize);" />
+                                            <form [formGroup]="instancesFilterForm" class="quick-select-form">
+                                                <p-select size="small" [options]="timeWindowOptions" formControlName="timeWindow" optionLabel="label" appendTo="body" />
+                                                <ng-container *ngIf="timeWindowMode === 'last'">
+                                                    <p-inputnumber size="small" formControlName="unitValue" mode="decimal" [min]="1" [showButtons]="true"
+                                                        [ngClass]="{'ng-invalid ng-dirty': instancesFilterForm.get('unitValue')?.invalid && instancesFilterForm.get('unitValue')?.touched}"/>
+                                                    <p-select size="small" [options]="unitTypes" formControlName="unit" optionLabel="label" appendTo="body"
+                                                        [ngClass]="{'ng-invalid ng-dirty': instancesFilterForm.get('unit')?.invalid && instancesFilterForm.get('unit')?.touched}"/>
+                                                </ng-container>
+                                                <ng-container *ngIf="timeWindowMode === 'between'">
+                                                    <p-datepicker title="dd/mm/yyyy hh:mm" size="small" formControlName="from" [showTime]="true" hourFormat="24" appendTo="body" placeholder="Desde" dateFormat="dd/mm/yy"
+                                                        [ngClass]="{'ng-invalid ng-dirty': instancesFilterForm.get('from')?.invalid && instancesFilterForm.get('from')?.touched}"/>
+                                                    <p-datepicker title="dd/mm/yyyy hh:mm" size="small" formControlName="to" [showTime]="true" hourFormat="24" appendTo="body" placeholder="Hasta" dateFormat="dd/mm/yy"
+                                                        [ngClass]="{'ng-invalid ng-dirty': instancesFilterForm.get('to')?.invalid && instancesFilterForm.get('to')?.touched}"/>
+                                                </ng-container>
+                                                <p-button size="small" label="Aplicar" [disabled]="instancesFilterForm.invalid" (onClick)="op1.hide(); getActiveAlarmInstancesTable(page, pageSize); this.instancesActiveTimeWindow = 'Personalizado';" />
                                             </form>
                                         </div>
                                     </div>
                                     <div class="separator"></div>
                                     <div class="popover-section">
-                                            
+                                        <div class="font-w-600 font-12">Usados frecuentemente</div>
                                         <div class="popover-section-presets">
                                             <div class="preset-chip" (click)="op1.hide(); onClickPreset('today');">Hoy</div>
                                             <div class="preset-chip" (click)="op1.hide(); onClickPreset('last24Hours');">Últimas 24 horas</div>
@@ -295,7 +373,7 @@
                                     <div class="separator"></div>
                                     <div class="popover-section">
                                         <div class="popover-section-content">
-                                            <form [formGroup]="filterForm" class="quick-select-form">
+                                            <form [formGroup]="instancesFilterForm" class="quick-select-form">
                                                 <p-toggleswitch size="small" formControlName="refreshEveryToggle"/>
                                                 <div class="font-w-600 font-12">Refrescar cada</div>
                                                 <p-inputnumber size="small" formControlName="refreshUnitValue" mode="decimal" [min]="1" [showButtons]="true" />
@@ -307,14 +385,18 @@
                             </p-popover>
                         </div>
 
-                        <p-table *ngIf="!activeAlarmInstancesTableLoading" [value]="activeAlarmInstancesTable.instances" class="step4-table">
+                        <div *ngIf="bucketData" style="margin-bottom: 16px; border-radius: 8px; border: 1px solid lightgray; padding: 8px;">
+                            <p-chart type="bar" [data]="bucketData" [options]="bucketOptions" height="256px" />
+                        </div>
+
+                        <p-table *ngIf="!activeAlarmInstancesTableLoading && activeAlarmInstancesTable?.instances" [value]="activeAlarmInstancesTable.instances" class="step4-table">
                             <ng-template #header>
                                 <tr>
-                                    <th>Id.</th>
-                                    <th>Mensaje</th>
-                                    <th>Hora</th>
-                                    <th>Acción</th>
-                                    <th>Etiquetas</th>
+                                    <th class="clickable-header" (click)="addFilter('Id')">Id</th>
+                                    <th class="clickable-header" (click)="addFilter('Mensaje')">Mensaje</th>
+                                    <th class="clickable-header" (click)="addFilter('Fecha')">Fecha</th>
+                                    <th class="clickable-header" (click)="addFilter('Evento')">Evento</th>
+                                    <th class="clickable-header" (click)="addFilter('Etiquetas')">Etiquetas</th>
                                     <th></th>
                                 </tr>
                             </ng-template>

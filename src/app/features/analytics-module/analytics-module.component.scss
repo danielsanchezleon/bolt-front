@@ -295,6 +295,7 @@
     flex-direction: row;
     gap: 16px;
 
+    margin-top: 8px;
     margin-bottom: 16px;
 
     .date-filter
@@ -302,14 +303,54 @@
         display: flex;
         flex-direction: row;
         align-items: center;
-        gap: 4px;
 
-        padding: 4px 8px;
-        border-radius: 8px;
-        background-color: #e0e0e0;
-
-        font-size: 12px;
+        height: 39px;
 
         cursor: pointer;
+
+        .date-filter-left
+        {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 4px;
+
+            padding: 4px 8px;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+            background-color: #e0e0e0;
+
+            font-size: 12px;
+
+            height: 39px;
+        }
+
+        .date-filter-right
+        {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+
+            padding: 4px 8px;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+            background-color: white;
+
+            border: 1px solid #e0e0e0;
+
+            white-space: nowrap;
+
+            height: 39px;
+        }
+    }
+}
+
+.clickable-header
+{
+    cursor: pointer;
+
+    &:hover
+    {
+        background-color: #f5f5f5;
     }
 }

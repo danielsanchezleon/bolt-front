@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PageWrapperComponent } from '../../shared/components/page-wrapper/page-wrapper.component';
 import { ButtonModule } from 'primeng/button';
 import { Router } from '@angular/router';
 import { AccordionComponent } from '../../shared/components/accordion/accordion.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SliderModule } from 'primeng/slider';
@@ -24,10 +24,11 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TabsModule } from 'primeng/tabs';
 import { PaginatorModule } from 'primeng/paginator';
+import { DatePickerModule } from 'primeng/datepicker';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
@@ -165,6 +166,11 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   noiseAlertsTableLoading: boolean = false;
   noiseAlertsTableError: boolean = false;
 
+  timeWindowOptions: any[] = [
+    {label: 'Últimos/as', value: 'last'},
+    {label: 'Rango', value: 'between'}
+  ];
+
   unitTypes: any[] = [
     {label: 'Segundos', value: 'seconds'},
     {label: 'Minutos', value: 'minutes'},
@@ -194,11 +200,20 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     '#D8AFCF'  // lila rosado
   ];
 
-  filterForm!: FormGroup;
+  //Noise alerts
+  noiseAlertsActiveTimeWindow: string = 'Esta semana';
+  noiseAlertsFilterForm!: FormGroup;
+  private noiseRefreshInterval: any = null;
+  private noiseRefreshToggleSub: Subscription | null = null;
+
+  //Active alarm instances table
+  instancesActiveTimeWindow: string = 'Esta semana';
+
+  instancesFilterForm!: FormGroup;
+  @ViewChild('filterInput') filterInputRef!: ElementRef<HTMLInputElement>;
   private refreshInterval: any = null;
   private refreshToggleSub: Subscription | null = null;
 
-  //Active alarm instances table
   activeAlarmInstancesTable: any;
   activeAlarmInstancesTableLoading: boolean = false;
   activeAlarmInstancesTableError: boolean = false;
@@ -224,26 +239,59 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.getServiceDist();
     this.getSourceDist();
     this.getGeneralMetrics();
-    this.getNoiseAlertsTable();
 
-    this.filterForm = this._fb.group({
-      filterText: new FormControl({ value: '', disabled: true }),
-      unit: new FormControl(this.unitTypes[0]),
-      unitValue: new FormControl(1),
+    this.noiseAlertsFilterForm = this._fb.group({
+      timeWindow: new FormControl(this.timeWindowOptions[0]),
+      unit: new FormControl(this.unitTypes[2], Validators.required),
+      unitValue: new FormControl(1, [Validators.required, Validators.min(1)]),
+      from: new FormControl<Date | null>(null),
+      to: new FormControl<Date | null>(null),
       refreshEveryToggle: new FormControl(false),
       refreshUnit: new FormControl(this.refreshUnitTypes[0]),
       refreshUnitValue: new FormControl(60)
     });
 
-    this.refreshToggleSub = this.filterForm.get('refreshEveryToggle')!.valueChanges.subscribe((enabled: boolean) => {
-      this._clearRefreshInterval();
+    this.noiseAlertsFilterForm.get('timeWindow')!.valueChanges.subscribe((tw: any) => {
+      this._applyTimeWindowValidators(this.noiseAlertsFilterForm, tw?.value ?? tw);
+    });
+
+    this.noiseRefreshToggleSub = this.noiseAlertsFilterForm.get('refreshEveryToggle')!.valueChanges.subscribe((enabled: boolean) => {
+      this._clearNoiseRefreshInterval();
       if (enabled) {
         this.getNoiseAlertsTable();
+        this._startNoiseRefreshInterval();
+      }
+    });
+
+    this.instancesFilterForm = this._fb.group({
+      filterText: new FormControl(''),
+      timeWindow: new FormControl(this.timeWindowOptions[0]),
+      unit: new FormControl(this.unitTypes[2], Validators.required),
+      unitValue: new FormControl(1, [Validators.required, Validators.min(1)]),
+      from: new FormControl<Date | null>(null),
+      to: new FormControl<Date | null>(null),
+      refreshEveryToggle: new FormControl(false),
+      refreshUnit: new FormControl(this.refreshUnitTypes[0]),
+      refreshUnitValue: new FormControl(60)
+    });
+
+    this.instancesFilterForm.get('timeWindow')!.valueChanges.subscribe((tw: any) => {
+      this._applyTimeWindowValidators(this.instancesFilterForm, tw?.value ?? tw);
+    });
+
+    this.refreshToggleSub = this.instancesFilterForm.get('refreshEveryToggle')!.valueChanges.subscribe((enabled: boolean) => {
+      this._clearRefreshInterval();
+      if (enabled) {
+        this.getActiveAlarmInstancesTable(this.page, this.pageSize);
         this._startRefreshInterval();
       }
     });
 
-    this.onClickPreset('thisWeek');
+    this._applyPreset('last24Hours', this.noiseAlertsFilterForm, (label) => this.noiseAlertsActiveTimeWindow = label);
+    this._applyPreset('thisWeek', this.instancesFilterForm, (label) => this.instancesActiveTimeWindow = label);
+
+    this.getNoiseAlertsTable();
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 
   onClickNavigateToHome() {
@@ -511,9 +559,18 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.noiseAlertsTableLoading = true;
     this.noiseAlertsTableError = false;
 
-    const lastSeconds = this.filterForm ? this._formToSeconds('unit', 'unitValue') : null;
+    const mode = this.noiseAlertsTimeWindowMode;
+    const lastSeconds = (this.noiseAlertsFilterForm && mode === 'last')
+      ? this._formToSeconds(this.noiseAlertsFilterForm, 'unit', 'unitValue')
+      : null;
+    const from = (this.noiseAlertsFilterForm && mode === 'between')
+      ? this.noiseAlertsFilterForm.get('from')?.value ?? null
+      : null;
+    const to = (this.noiseAlertsFilterForm && mode === 'between')
+      ? this.noiseAlertsFilterForm.get('to')?.value ?? null
+      : null;
 
-    this.alarmAnalyticsService.getAlertsTable(10, 10, null).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(10, 500, lastSeconds, from, to).subscribe(
       (response) => {
         this.noiseAlertsTable = response;
         this.noiseAlertsTableLoading = false;
@@ -531,9 +588,19 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.activeAlarmInstancesTableLoading = true;
     this.activeAlarmInstancesTableError = false;
 
-    const lastSeconds = this.filterForm ? this._formToSeconds('unit', 'unitValue') : null;
+    const mode = this.timeWindowMode;
+    const filterText = this.instancesFilterForm ? this.instancesFilterForm.get('filterText')?.value : null;
+    const lastSeconds = (this.instancesFilterForm && mode === 'last')
+      ? this._formToSeconds(this.instancesFilterForm, 'unit', 'unitValue')
+      : null;
+    const from = (this.instancesFilterForm && mode === 'between')
+      ? this.instancesFilterForm.get('from')?.value ?? null
+      : null;
+    const to = (this.instancesFilterForm && mode === 'between')
+      ? this.instancesFilterForm.get('to')?.value ?? null
+      : null;
 
-    this.alarmAnalyticsService.getActiveAlarmInstancesResponse(page, pageSize, lastSeconds).subscribe(
+    this.alarmAnalyticsService.getActiveAlarmInstancesResponse(page, pageSize, filterText, lastSeconds, from, to).subscribe(
       (response) => {
         this.activeAlarmInstancesTable = response;
         this.activeAlarmInstancesTableLoading = false;
@@ -584,77 +651,129 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
   }
 
-  onClickPreset(preset: string) {    const now = new Date();
+  onClickPreset(preset: string) {
+    this._applyPreset(preset, this.instancesFilterForm, (label) => this.instancesActiveTimeWindow = label);
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
 
-    let unit = this.unitTypes[0]; // seconds por defecto
+  onClickNoisePreset(preset: string) {
+    this._applyPreset(preset, this.noiseAlertsFilterForm, (label) => this.noiseAlertsActiveTimeWindow = label);
+    this.getNoiseAlertsTable();
+  }
+
+  private _applyPreset(preset: string, form: FormGroup, setLabel: (label: string) => void): void {
+    const now = new Date();
+    let unit = this.unitTypes[0];
     let unitValue = 1;
 
     switch (preset) {
       case 'today': {
-        // Horas transcurridas desde las 00:00 de hoy (mínimo 1)
         const hoursElapsed = now.getHours() + (now.getMinutes() > 0 || now.getSeconds() > 0 ? 1 : 0) || 1;
         unit = this.unitTypes[2]; // hours
         unitValue = hoursElapsed;
+        setLabel('Hoy');
         break;
       }
       case 'last24Hours':
         unit = this.unitTypes[2]; // hours
         unitValue = 24;
+        setLabel('Últimas 24 horas');
         break;
 
       case 'thisWeek': {
-        // Días transcurridos desde el lunes (lunes = 1, domingo = 7)
-        const dow = now.getDay(); // 0=dom, 1=lun, ..., 6=sáb
+        const dow = now.getDay();
         const daysSinceMonday = dow === 0 ? 6 : dow - 1;
         unit = this.unitTypes[3]; // days
         unitValue = daysSinceMonday || 1;
+        setLabel('Esta semana');
         break;
       }
       case 'last7Days':
         unit = this.unitTypes[3]; // days
         unitValue = 7;
+        setLabel('Últimos 7 días');
         break;
 
       case 'last15Minutes':
         unit = this.unitTypes[1]; // minutes
         unitValue = 15;
+        setLabel('Últimos 15 minutos');
         break;
 
       case 'last30Minutes':
         unit = this.unitTypes[1]; // minutes
         unitValue = 30;
+        setLabel('Últimos 30 minutos');
         break;
 
       case 'last1Hour':
         unit = this.unitTypes[2]; // hours
         unitValue = 1;
+        setLabel('Última hora');
         break;
 
       case 'last30Days':
         unit = this.unitTypes[3]; // days
         unitValue = 30;
+        setLabel('Últimos 30 días');
         break;
 
       case 'last90Days':
         unit = this.unitTypes[3]; // days
         unitValue = 90;
+        setLabel('Últimos 90 días');
         break;
 
       case 'last1Year':
         unit = this.unitTypes[6]; // years
         unitValue = 1;
+        setLabel('Último año');
         break;
     }
 
-    this.filterForm.patchValue({ unit, unitValue });
+    form.patchValue({ unit, unitValue, timeWindow: this.timeWindowOptions[0] });
+    this._applyTimeWindowValidators(form, 'last');
+  }
 
-    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  get noiseAlertsTimeWindowMode(): string {
+    const tw = this.noiseAlertsFilterForm?.get('timeWindow')?.value;
+    return tw?.value ?? tw ?? 'last';
+  }
+
+  get timeWindowMode(): string {
+    const tw = this.instancesFilterForm?.get('timeWindow')?.value;
+    return tw?.value ?? tw ?? 'last';
+  }
+
+  /** Applies the correct validators depending on the selected timeWindow mode. */
+  private _applyTimeWindowValidators(form: FormGroup, mode: string): void {
+    const unit      = form.get('unit')!;
+    const unitValue = form.get('unitValue')!;
+    const from      = form.get('from')!;
+    const to        = form.get('to')!;
+
+    if (mode === 'last') {
+      unit.setValidators(Validators.required);
+      unitValue.setValidators([Validators.required, Validators.min(1)]);
+      from.clearValidators();
+      to.clearValidators();
+    } else {
+      unit.clearValidators();
+      unitValue.clearValidators();
+      from.setValidators(Validators.required);
+      to.setValidators(Validators.required);
+    }
+
+    unit.updateValueAndValidity();
+    unitValue.updateValueAndValidity();
+    from.updateValueAndValidity();
+    to.updateValueAndValidity();
   }
 
   /** Converts the given unit+value form controls to a total number of seconds. */
-  private _formToSeconds(unitControlName: string, valueControlName: string): number | null {
-    const unit = this.filterForm.get(unitControlName)?.value;
-    const value = this.filterForm.get(valueControlName)?.value;
+  private _formToSeconds(form: FormGroup, unitControlName: string, valueControlName: string): number | null {
+    const unit  = form.get(unitControlName)?.value;
+    const value = form.get(valueControlName)?.value;
 
     if (!unit || value == null) return null;
 
@@ -664,8 +783,8 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
       hours: 3600,
       days: 86400,
       weeks: 604800,
-      months: 2592000,   // 30 days
-      years: 31536000    // 365 days
+      months: 2592000,
+      years: 31536000
     };
 
     const unitKey = typeof unit === 'object' ? unit.value : unit;
@@ -674,9 +793,9 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   }
 
   private _startRefreshInterval(): void {
-    const refreshSeconds = this._formToSeconds('refreshUnit', 'refreshUnitValue') ?? 60;
+    const refreshSeconds = this._formToSeconds(this.instancesFilterForm, 'refreshUnit', 'refreshUnitValue') ?? 60;
     this.refreshInterval = setInterval(() => {
-      this.getNoiseAlertsTable();
+      this.getActiveAlarmInstancesTable(this.page, this.pageSize);
     }, refreshSeconds * 1000);
   }
 
@@ -687,9 +806,25 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     }
   }
 
+  private _startNoiseRefreshInterval(): void {
+    const refreshSeconds = this._formToSeconds(this.noiseAlertsFilterForm, 'refreshUnit', 'refreshUnitValue') ?? 60;
+    this.noiseRefreshInterval = setInterval(() => {
+      this.getNoiseAlertsTable();
+    }, refreshSeconds * 1000);
+  }
+
+  private _clearNoiseRefreshInterval(): void {
+    if (this.noiseRefreshInterval !== null) {
+      clearInterval(this.noiseRefreshInterval);
+      this.noiseRefreshInterval = null;
+    }
+  }
+
   ngOnDestroy(): void {
     this._clearRefreshInterval();
+    this._clearNoiseRefreshInterval();
     this.refreshToggleSub?.unsubscribe();
+    this.noiseRefreshToggleSub?.unsubscribe();
   }
 
   onPageChange(event: any)
@@ -698,5 +833,19 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.page = event.page;
     this.pageSize = event.rows;
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
+
+  addFilter(field: string): void {
+    const newValue = field + ": \"\"";
+    this.instancesFilterForm.get('filterText')?.setValue(newValue);
+    // Position cursor between the two quotes: one char before the end
+    const cursorPos = newValue.length - 1;
+    setTimeout(() => {
+      const el = this.filterInputRef?.nativeElement;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(cursorPos, cursorPos);
+      }
+    });
   }
 }

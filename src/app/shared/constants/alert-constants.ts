@@ -41,7 +41,8 @@ export const periodicityOptions = [
     {value: "10m", label: '10 minutos'},
     {value: "15m", label: '15 minutos'},
     {value: "30m", label: '30 minutos'},
-    {value: "1h", label: '1 hora'}
+    {value: "1h", label: '1 hora'},
+    {value: "24h", label: '24 horas'},
 ];
 
 //LOGS

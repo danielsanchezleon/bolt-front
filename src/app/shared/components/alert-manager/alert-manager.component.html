@@ -436,7 +436,7 @@
                             <ng-container
                                 *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;">
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <div class="font-14 font-w-600" style="color: gray;">{{dimension}}</div>
+                                    <div class="font-14 font-w-600" style="color: gray;">{{dimension}} ({{this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get(dimension)?.value == 'INCLUDE' ? 'Inc.' : 'Exc.'}})</div>
                                     <p-multiselect #ms
                                         *ngIf="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!"
                                         class="multiselect"

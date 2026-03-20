@@ -69,7 +69,7 @@ export class AlarmAnalyticsService {
     return this.http.get<any>(this.apiUrl + '/general');
   }
 
-  getAlertsTable(alertsLimit: number | null, dimensionsLimit: number | null, lastSeconds: number | null): Observable<any>
+  getAlertsTable(alertsLimit: number | null, dimensionsLimit: number | null, lastSeconds: number | null, from: Date | null = null, to: Date | null = null): Observable<any>
   {
     let params = new HttpParams();
 
@@ -85,17 +85,37 @@ export class AlarmAnalyticsService {
       params = params.set('lastSeconds', lastSeconds);
     }
 
+    if (from !== null) {
+      params = params.set('from', from.toISOString());
+    }
+
+    if (to !== null) {
+      params = params.set('to', to.toISOString());
+    }
+
     return this.http.get<any>(this.apiUrl + '/ranking/noise-alerts', { params });
   }
 
-  getActiveAlarmInstancesResponse(page: number, pageSize: number, lastSeconds: number | null): Observable<any>
+  getActiveAlarmInstancesResponse(page: number, pageSize: number, filterText: string | null, lastSeconds: number | null, from: Date | null, to: Date | null): Observable<any>
   {
     let params = new HttpParams()
       .set('page', page)
       .set('pageSize', pageSize);
 
+    if (filterText !== null) {
+      params = params.set('filterText', filterText);
+    }
+
     if (lastSeconds !== null) {
       params = params.set('lastSeconds', lastSeconds);
+    }
+
+    if (from !== null) {
+      params = params.set('from', from.toISOString());
+    }
+
+    if (to !== null) {
+      params = params.set('to', to.toISOString());
     }
 
     return this.http.get<any>(this.apiUrl + '/getActiveAlarmInstancesResponse', { params });

@@ -2371,23 +2371,7 @@ export class AlertManagerComponent implements OnInit{
 
           const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
 
-          if (condMap.has(dimension)) 
-          {
-            const dimMap = condMap.get(dimension)!;
-            const prevSelected: string[] = dimMap.get('selected') ?? [];
-            const created: string[]      = dimMap.get('created')  ?? [];
-
-            const intersection = (dimMap.get('values') ?? []).filter((v: string) => newValues.includes(v));
-            const validSelected = prevSelected.filter(v => newValues.includes(v) || created.includes(v));
-            const lost = validSelected.filter(v => !newValues.includes(v));
-            const merge = [...new Set([...created, ...lost, ...newValues])];
-
-            dimMap.set('values', intersection.length ? intersection : newValues)
-                  .set('selected', validSelected)
-                  .set('lost', lost)
-                  .set('merge', merge);
-          } 
-          else 
+          if (!condMap.has(dimension))
           {
             condMap.set(dimension, new Map()
               .set('values', newValues)
@@ -2550,7 +2534,7 @@ export class AlertManagerComponent implements OnInit{
   { 
     this.generateInternalNameAndName();
 
-    this.conditionFiltersMap = new Map();
+    // this.conditionFiltersMap = new Map();
     this.conditionArray.controls.forEach((condition: ConditionFormGroup) => {
       this.resetConditionFilters(condition);
     });

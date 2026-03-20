@@ -85,5 +85,6 @@ export const periodicityOptions = [
     {value: "10m", label: '10 m'},
     {value: "15m", label: '15 m'},
     {value: "30m", label: '30 m'},
-    {value: "1h", label: '1 h'}
+    {value: "1h", label: '1 h'},
+    {value: "24h", label: '24 h'}
 ];
