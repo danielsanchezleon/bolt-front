@@ -435,7 +435,7 @@
                             class="condition-dimensions">
                             <ng-container
                                 *ngFor="let dimension of this.groupByForm.get('groupBy')?.value; let i = index;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <div class="dimension">
                                     <div class="font-14 font-w-600" style="color: gray;">{{dimension}} ({{this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get(dimension)?.value == 'INCLUDE' ? 'Inc.' : 'Exc.'}})</div>
                                     <p-multiselect #ms
                                         *ngIf="conditionFiltersMap.get(condition.get('id')?.value!)!.get(dimension)!"
@@ -482,6 +482,37 @@
                                             </div>
                                         </ng-template>
                                     </p-multiselect>
+
+                                    <!-- Toggle button for contains filter -->
+                                    <button
+                                        type="button"
+                                        class="dimension-filter-toggle"
+                                        (click)="toggleDimensionFilter(condition, dimension)"
+                                        [title]="isDimensionFilterExpanded(condition, dimension) ? 'Ocultar filtro de texto' : 'Filtrar por texto'"
+                                        [class.active]="isDimensionFilterExpanded(condition, dimension)">
+                                        <i class="pi pi-filter"></i>
+                                    </button>
+
+                                    <!-- Collapsible contains/not-contains filter row -->
+                                    <div *ngIf="isDimensionFilterExpanded(condition, dimension)" class="dimension-contains-filter">
+                                        <p-select
+                                            [options]="[{label: 'Contiene', value: 'CONTAINS'}, {label: 'No contiene', value: 'NOT_CONTAINS'}]"
+                                            [ngModel]="getDimensionContainsFilter(condition, dimension).type"
+                                            (ngModelChange)="setDimensionContainsFilterType(condition, dimension, $event)"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            appendTo="body"
+                                            size="small"
+                                            class="contains-type-select" />
+                                        <input
+                                            pInputText
+                                            type="text"
+                                            size="small"
+                                            class="contains-text-input"
+                                            placeholder="Texto a filtrar..."
+                                            [value]="getDimensionContainsFilter(condition, dimension).value"
+                                            (input)="setDimensionContainsFilterValue(condition, dimension, $any($event.target).value)" />
+                                    </div>
                                 </div>
                             </ng-container>
                         </div>

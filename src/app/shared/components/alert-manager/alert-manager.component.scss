@@ -591,6 +591,64 @@
                     display: flex;
                     flex-wrap: wrap;
                     gap: 8px 16px;
+
+                    .dimension
+                    {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 4px;
+
+                        background-color: white;
+                        border-radius: 8px;
+                        border: 1px solid lightgray;
+
+                        padding: 8px 16px;
+
+                        .dimension-filter-toggle {
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 4px;
+                            width: 100%;
+                            padding: 3px 0;
+                            background: none;
+                            border: none;
+                            border-top: 1px solid lightgray;
+                            cursor: pointer;
+                            color: #6b7280;
+                            font-size: 0.75rem;
+                            border-radius: 0;
+                            transition: color 0.15s, background 0.15s;
+
+                            &:hover {
+                                color: #2563eb;
+                                background-color: #eff6ff;
+                            }
+
+                            &.active {
+                                color: #2563eb;
+                            }
+                        }
+
+                        .dimension-contains-filter {
+                            display: flex;
+                            flex-direction: row;
+                            align-items: center;
+                            gap: 6px;
+                            padding-top: 4px;
+
+                            .contains-type-select {
+                                flex-shrink: 0;
+                                min-width: 120px;
+                            }
+
+                            .contains-text-input {
+                                flex: 1;
+                                min-width: 0;
+                                font-size: 0.85rem;
+                            }
+                        }
+                    }
                 }
             }
 

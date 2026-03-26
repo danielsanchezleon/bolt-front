@@ -378,6 +378,11 @@ export class AlertManagerComponent implements OnInit{
   conditionFiltersInclusionTypeMap: Map<string, Map<string, any>> = new Map();
   lastFilter: string = '';
 
+  // Map<conditionId, Map<dimension, expanded>>
+  dimensionFilterExpandedMap: Map<string, Map<string, boolean>> = new Map();
+  // Map<conditionId, Map<dimension, { type: 'CONTAINS'|'NOT_CONTAINS', value: string }>>
+  dimensionContainsFilterMap: Map<string, Map<string, { type: string; value: string }>> = new Map();
+
   timeWindowOptions: any[] = [];
   discardTimeOptions: any[] = [];
   periodicityOptions: any[] = [];
@@ -1325,7 +1330,7 @@ export class AlertManagerComponent implements OnInit{
               let merge: string[] = [];
               let lost: string[] = [];
 
-              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
+              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension && (conditionFilter.inclusionType === 'INCLUDE' || conditionFilter.inclusionType === 'EXCLUDE')).forEach((cf) => {
 
                 if (cf.isCreated)
                   created.push(cf.filterValue!);
@@ -1344,7 +1349,7 @@ export class AlertManagerComponent implements OnInit{
               this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('lost', lost).set('merge', merge));
             }
           },
-          (error) => {
+          () => {
 
           }
         );
@@ -1518,10 +1523,10 @@ export class AlertManagerComponent implements OnInit{
                   let selected: string[] = [];
                   let created: string[] = [];
                   let merge: string[] = [];
-                  let lost: string[] = []; // 👈 nueva lista
+                  let lost: string[] = [];
 
                   condition.conditionFilters
-                    ?.filter((cf) => cf.externalOperation == null && cf.filterField == req.dimension)
+                    ?.filter((cf) => cf.externalOperation == null && cf.filterField == req.dimension && (cf.inclusionType === 'INCLUDE' || cf.inclusionType === 'EXCLUDE'))
                     .forEach((cf) => {
                       if (cf.isCreated) created.push(cf.filterValue!);
                       else selected.push(cf.filterValue!);
@@ -1533,10 +1538,10 @@ export class AlertManagerComponent implements OnInit{
                         : selected.length === 0 ? created
                           : selected;
 
-                  // 👉 Detectamos los selected que ya no existen en values (response)
+                  // Detectamos los selected que ya no existen en values (response)
                   lost = selected.filter(v => !response.includes(v));
 
-                  // 👉 El merge ahora incluye: values + created + lost
+                  // El merge ahora incluye: values + created + lost
                   merge = [...new Set([...created, ...lost, ...response])];
 
                   const condMap = this.conditionFiltersMap.get(condKey)!;
@@ -1627,7 +1632,7 @@ export class AlertManagerComponent implements OnInit{
               let merge: string[] = [];
               let lost: string[] = []; // 👈 nueva lista
 
-              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension).forEach((cf) => {
+              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension && (conditionFilter.inclusionType === 'INCLUDE' || conditionFilter.inclusionType === 'EXCLUDE')).forEach((cf) => {
                 if (cf.isCreated) created.push(cf.filterValue!);
                 else selected.push(cf.filterValue!);
               });
@@ -1695,6 +1700,7 @@ export class AlertManagerComponent implements OnInit{
           : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar1 ? this.baselinesVariablesConditionTypes[1]
             : this.isBaselinePastAverageAlert && condition.baselinesVariables?.auxVar2 ? this.baselinesVariablesConditionTypes[0]
               : this.baselinesVariablesConditionTypes[0]],
+       
         auxVar1: [condition.baselinesVariables?.auxVar1],
         auxVar2: [condition.baselinesVariables?.auxVar2],
         auxVar3: [condition.baselinesVariables?.auxVar3]
@@ -1728,7 +1734,9 @@ export class AlertManagerComponent implements OnInit{
 
     this.conditionFiltersInclusionTypeMap.set((i+1).toString(), new Map());
 
-    condition.conditionFilters!.forEach((conditionFilter) => {
+    condition.conditionFilters!
+      .filter((conditionFilter) => conditionFilter.inclusionType === 'INCLUDE' || conditionFilter.inclusionType === 'EXCLUDE')
+      .forEach((conditionFilter) => {
       if (!this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.has(conditionFilter.filterField!))
         this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.set(conditionFilter.filterField!, dimensionValuesInclusionOptions.find((opt) => opt.value == conditionFilter.inclusionType!));
     });
@@ -1739,6 +1747,27 @@ export class AlertManagerComponent implements OnInit{
       if (!this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.has(key))
         this.conditionFiltersInclusionTypeMap.get((i+1).toString())?.set(key, dimensionValuesInclusionOptions[0]);
     });
+
+    // Cargar filtros CONTAINS / NOT_CONTAINS en dimensionContainsFilterMap
+    const condId = (i + 1).toString();
+    if (!this.dimensionContainsFilterMap.has(condId)) {
+      this.dimensionContainsFilterMap.set(condId, new Map());
+    }
+    condition.conditionFilters!
+      .filter(cf => cf.inclusionType === 'CONTAINS' || cf.inclusionType === 'NOT_CONTAINS')
+      .forEach(cf => {
+        const dim = cf.filterField!;
+        // Si ya hay una entrada la sobreescribimos (en principio solo debería haber una por dimensión)
+        this.dimensionContainsFilterMap.get(condId)!.set(dim, {
+          type: cf.inclusionType!,
+          value: cf.filterValue ?? ''
+        });
+        // Expandir el panel para que se vea el valor cargado
+        if (!this.dimensionFilterExpandedMap.has(condId)) {
+          this.dimensionFilterExpandedMap.set(condId, new Map());
+        }
+        this.dimensionFilterExpandedMap.get(condId)!.set(dim, true);
+      });
 
   });
 
@@ -1948,13 +1977,19 @@ export class AlertManagerComponent implements OnInit{
           }
         }
 
-        // 2) Enviar los “de la lista” seleccionados SOLO si NO se seleccionaron todos
+        // 2) Enviar los "de la lista" seleccionados SOLO si NO se seleccionaron todos
         if (!allNonCreatedSelected) {
           for (let filter of nonCreated) {
             if (selectedSet.has(filter)) {
               conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, filter, false, this.conditionFiltersInclusionTypeMap.get(condition.get('id')?.value!)!.get(dimension)!.value));
             }
           }
+        }
+
+        // 3) Enviar filtro CONTAINS/NOT_CONTAINS si el input de texto está relleno
+        const containsEntry = this.dimensionContainsFilterMap.get(condition.get('id')?.value!)?.get(dimension);
+        if (containsEntry?.value?.trim()) {
+          conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, containsEntry.value.trim(), false, containsEntry.type));
         }
       });
 
@@ -2319,7 +2354,7 @@ export class AlertManagerComponent implements OnInit{
   //             }
   //           )
   //         }
-  //       });
+  //      });
   //     });
   //   });
   // }
@@ -2584,14 +2619,16 @@ export class AlertManagerComponent implements OnInit{
     const rawValues = dimMap.get('values');
     const rawSelected = dimMap.get('selected');
     const rawCreated = dimMap.get('created');
+    const rawLost = dimMap.get('lost');
 
     const values   = Array.isArray(rawValues)   ? rawValues   : [];
     const selected = Array.isArray(rawSelected) ? rawSelected : [];
     const created  = Array.isArray(rawCreated)  ? rawCreated  : [];
+    const lost     = Array.isArray(rawLost)     ? rawLost     : [];
 
     const newCreated = created.includes(createdFilter) ? created : [createdFilter, ...created];
     const newSelected = selected.includes(createdFilter) ? selected : [createdFilter, ...selected];
-    const newMerge = Array.from(new Set([...newCreated, ...values]));
+    const newMerge = Array.from(new Set([...newCreated, ...lost, ...values]));
 
     dimMap.set('created', newCreated);
     dimMap.set('selected', newSelected);
@@ -2960,5 +2997,42 @@ export class AlertManagerComponent implements OnInit{
     const condId = condition.get('id')?.value!;
     const newType = event;
     this.conditionFiltersInclusionTypeMap.set(condId, this.conditionFiltersInclusionTypeMap.get(condId)!.set(dimension, newType));
+  }
+
+  // ── Collapsible contains/not-contains filter per dimension ──────────────
+
+  isDimensionFilterExpanded(condition: any, dimension: string): boolean {
+    const condId = condition.get('id')?.value!;
+    return this.dimensionFilterExpandedMap.get(condId)?.get(dimension) ?? false;
+  }
+
+  toggleDimensionFilter(condition: any, dimension: string): void {
+    const condId = condition.get('id')?.value!;
+    if (!this.dimensionFilterExpandedMap.has(condId)) {
+      this.dimensionFilterExpandedMap.set(condId, new Map());
+    }
+    const current = this.dimensionFilterExpandedMap.get(condId)!.get(dimension) ?? false;
+    this.dimensionFilterExpandedMap.get(condId)!.set(dimension, !current);
+  }
+
+  getDimensionContainsFilter(condition: any, dimension: string): { type: string; value: string } {
+    const condId = condition.get('id')?.value!;
+    if (!this.dimensionContainsFilterMap.has(condId)) {
+      this.dimensionContainsFilterMap.set(condId, new Map());
+    }
+    if (!this.dimensionContainsFilterMap.get(condId)!.has(dimension)) {
+      this.dimensionContainsFilterMap.get(condId)!.set(dimension, { type: 'CONTAINS', value: '' });
+    }
+    return this.dimensionContainsFilterMap.get(condId)!.get(dimension)!;
+  }
+
+  setDimensionContainsFilterType(condition: any, dimension: string, type: string): void {
+    const entry = this.getDimensionContainsFilter(condition, dimension);
+    entry.type = type;
+  }
+
+  setDimensionContainsFilterValue(condition: any, dimension: string, value: string): void {
+    const entry = this.getDimensionContainsFilter(condition, dimension);
+    entry.value = value;
   }
 }

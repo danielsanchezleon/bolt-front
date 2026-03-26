@@ -112,7 +112,7 @@
             <p-tabs value="0">
                 <p-tablist>
                     <p-tab value="0">Top 10 alertas más ruidosas</p-tab>
-                    <p-tab value="1">Todas las instancias</p-tab>
+                    <p-tab value="1">Todas las instancias <i class="pi pi-info-circle font-w-600" style="color: #3b82f6; font-size: 1rem; cursor: pointer;" (mouseenter)="onHoverInstancesInformationIcon($event)" (mouseleave)="instancesInformationModalVisible = false"></i></p-tab>
                 </p-tablist>
                 <p-tabpanels>
                     <p-tabpanel value="0">
@@ -460,3 +460,21 @@
         </app-accordion>
     </div>
 </app-page-wrapper>
+
+<p-dialog [(visible)]="instancesInformationModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false"
+    [style]="instancesInformationModalStyle" (click)="$event.stopPropagation();" styleClass="condition-info-dialog">
+
+    <div class="notice c-blue">
+        <i class="pi pi-info-circle"></i>
+        <div>
+            <p>Ejemplos de filtros:</p>
+            <ul>
+                <li>Id: "711"</li>
+                <li>Mensaje: "Anomaly detected in status_code for group:"</li>
+                <li>Fecha: "06/03/2026"</li>
+                <li>Evento: "OK"</li>
+                <li>Etiquetas: "{{ '{' }}"ob":"VIVO", "cdn_protocol":"dash"{{ '}' }}"</li>
+            </ul>
+        </div>
+    </div>
+</p-dialog>

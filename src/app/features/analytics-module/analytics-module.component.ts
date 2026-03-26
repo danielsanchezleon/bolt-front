@@ -25,10 +25,11 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { TabsModule } from 'primeng/tabs';
 import { PaginatorModule } from 'primeng/paginator';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule, DialogModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
@@ -213,6 +214,9 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   @ViewChild('filterInput') filterInputRef!: ElementRef<HTMLInputElement>;
   private refreshInterval: any = null;
   private refreshToggleSub: Subscription | null = null;
+
+  instancesInformationModalStyle: any = {};
+  instancesInformationModalVisible: boolean = false;
 
   activeAlarmInstancesTable: any;
   activeAlarmInstancesTableLoading: boolean = false;
@@ -836,8 +840,26 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   }
 
   addFilter(field: string): void {
-    const newValue = field + ": \"\"";
-    this.instancesFilterForm.get('filterText')?.setValue(newValue);
+
+    let newValue: string = '';
+
+    if (field === 'Etiquetas')
+    {
+      newValue = field + ": \"{\"clave\":\"valor\"}\""
+    }
+    else
+    {
+      newValue = field + ": \"\"";
+    }
+
+    if (this.instancesFilterForm.get('filterText')?.value && this.instancesFilterForm.get('filterText')?.value.trim() !== '') 
+    {
+      this.instancesFilterForm.get('filterText')?.setValue(this.instancesFilterForm.get('filterText')?.value + ', ' + newValue);
+    } 
+    else 
+    {
+      this.instancesFilterForm.get('filterText')?.setValue(newValue);
+    }
     // Position cursor between the two quotes: one char before the end
     const cursorPos = newValue.length - 1;
     setTimeout(() => {
@@ -847,5 +869,19 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
         el.setSelectionRange(cursorPos, cursorPos);
       }
     });
+  }
+
+  onHoverInstancesInformationIcon(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+
+    this.instancesInformationModalStyle = {
+      position: 'fixed',
+      top: `${rect.bottom + 16}px`,
+      left: `${rect.left}px`,
+      width: '1200px'
+    };
+
+    this.instancesInformationModalVisible = true;
   }
 }
