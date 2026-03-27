@@ -380,8 +380,8 @@ export class AlertManagerComponent implements OnInit{
 
   // Map<conditionId, Map<dimension, expanded>>
   dimensionFilterExpandedMap: Map<string, Map<string, boolean>> = new Map();
-  // Map<conditionId, Map<dimension, { type: 'CONTAINS'|'NOT_CONTAINS', value: string }>>
-  dimensionContainsFilterMap: Map<string, Map<string, { type: string; value: string }>> = new Map();
+  // Map<conditionId, Map<dimension, { type: 'CONTAINS'|'NOT_CONTAINS', value: string, externalOperation: 'AND'|'OR' }>>
+  dimensionContainsFilterMap: Map<string, Map<string, { type: string; value: string; externalOperation: string }>> = new Map();
 
   timeWindowOptions: any[] = [];
   discardTimeOptions: any[] = [];
@@ -1760,7 +1760,8 @@ export class AlertManagerComponent implements OnInit{
         // Si ya hay una entrada la sobreescribimos (en principio solo debería haber una por dimensión)
         this.dimensionContainsFilterMap.get(condId)!.set(dim, {
           type: cf.inclusionType!,
-          value: cf.filterValue ?? ''
+          value: cf.filterValue ?? '',
+          externalOperation: cf.externalOperation ?? 'AND'
         });
         // Expandir el panel para que se vea el valor cargado
         if (!this.dimensionFilterExpandedMap.has(condId)) {
@@ -1989,7 +1990,7 @@ export class AlertManagerComponent implements OnInit{
         // 3) Enviar filtro CONTAINS/NOT_CONTAINS si el input de texto está relleno
         const containsEntry = this.dimensionContainsFilterMap.get(condition.get('id')?.value!)?.get(dimension);
         if (containsEntry?.value?.trim()) {
-          conditionFiltersList.push(new ConditionFilterDto(null, null, "EQUALS", dimension, containsEntry.value.trim(), false, containsEntry.type));
+          conditionFiltersList.push(new ConditionFilterDto(null, containsEntry.externalOperation, "EQUALS", dimension, containsEntry.value.trim(), false, containsEntry.type));
         }
       });
 
@@ -3015,13 +3016,13 @@ export class AlertManagerComponent implements OnInit{
     this.dimensionFilterExpandedMap.get(condId)!.set(dimension, !current);
   }
 
-  getDimensionContainsFilter(condition: any, dimension: string): { type: string; value: string } {
+  getDimensionContainsFilter(condition: any, dimension: string): { type: string; value: string; externalOperation: string } {
     const condId = condition.get('id')?.value!;
     if (!this.dimensionContainsFilterMap.has(condId)) {
       this.dimensionContainsFilterMap.set(condId, new Map());
     }
     if (!this.dimensionContainsFilterMap.get(condId)!.has(dimension)) {
-      this.dimensionContainsFilterMap.get(condId)!.set(dimension, { type: 'CONTAINS', value: '' });
+      this.dimensionContainsFilterMap.get(condId)!.set(dimension, { type: 'CONTAINS', value: '', externalOperation: 'AND' });
     }
     return this.dimensionContainsFilterMap.get(condId)!.get(dimension)!;
   }
@@ -3034,5 +3035,10 @@ export class AlertManagerComponent implements OnInit{
   setDimensionContainsFilterValue(condition: any, dimension: string, value: string): void {
     const entry = this.getDimensionContainsFilter(condition, dimension);
     entry.value = value;
+  }
+
+  setDimensionContainsFilterExternalOperation(condition: any, dimension: string, externalOperation: string): void {
+    const entry = this.getDimensionContainsFilter(condition, dimension);
+    entry.externalOperation = externalOperation;
   }
 }

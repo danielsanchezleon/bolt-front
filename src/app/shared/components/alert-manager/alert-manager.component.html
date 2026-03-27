@@ -496,6 +496,15 @@
                                     <!-- Collapsible contains/not-contains filter row -->
                                     <div *ngIf="isDimensionFilterExpanded(condition, dimension)" class="dimension-contains-filter">
                                         <p-select
+                                            [options]="[{label: 'AND', value: 'AND'}, {label: 'OR', value: 'OR'}]"
+                                            [ngModel]="getDimensionContainsFilter(condition, dimension).externalOperation"
+                                            (ngModelChange)="setDimensionContainsFilterExternalOperation(condition, dimension, $event)"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            appendTo="body"
+                                            size="small"
+                                            class="contains-type-select" />
+                                        <p-select
                                             [options]="[{label: 'Contiene', value: 'CONTAINS'}, {label: 'No contiene', value: 'NOT_CONTAINS'}]"
                                             [ngModel]="getDimensionContainsFilter(condition, dimension).type"
                                             (ngModelChange)="setDimensionContainsFilterType(condition, dimension, $event)"
@@ -509,7 +518,7 @@
                                             type="text"
                                             size="small"
                                             class="contains-text-input"
-                                            placeholder="Texto a filtrar..."
+                                            placeholder="valor1,valor2,valor3..."
                                             [value]="getDimensionContainsFilter(condition, dimension).value"
                                             (input)="setDimensionContainsFilterValue(condition, dimension, $any($event.target).value)" />
                                     </div>

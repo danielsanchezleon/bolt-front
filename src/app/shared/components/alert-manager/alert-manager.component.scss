@@ -639,7 +639,20 @@
 
                             .contains-type-select {
                                 flex-shrink: 0;
-                                min-width: 120px;
+                                width: fit-content;
+                                min-width: 0;
+
+                                // Fuerza al componente host p-select a no expandirse
+                                &::ng-deep,
+                                ::ng-deep .p-select {
+                                    width: fit-content !important;
+                                    min-width: 0 !important;
+                                }
+
+                                ::ng-deep .p-select-label {
+                                    padding-right: 0.25rem;
+                                    white-space: nowrap;
+                                }
                             }
 
                             .contains-text-input {
