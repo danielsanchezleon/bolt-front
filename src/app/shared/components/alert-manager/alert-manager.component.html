@@ -543,11 +543,11 @@
                             <div class="activation-recover-card">
                                 <div>¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
                                 <div class="activation-recover-card-data">
-                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="activation1" />
+                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
+                                        optionLabel="label" appendTo="body" formControlName="activation1" [editable]="true" />
                                     <div class="font-16">de las últimas</div>
-                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="activation2" />
+                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
+                                        optionLabel="label" appendTo="body" formControlName="activation2" [editable]="true" />
                                     <div class="font-16">evaluaciones</div>
                                 </div>
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en
@@ -571,11 +571,11 @@
                             <div class="activation-recover-card">
                                 <div>¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
                                 <div class="activation-recover-card-data">
-                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="recover1" />
+                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
+                                        optionLabel="label" appendTo="body" formControlName="recover1" [editable]="true" />
                                     <div class="font-16">de las últimas</div>
-                                    <p-select [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="recover2" />
+                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
+                                        optionLabel="label" appendTo="body" formControlName="recover2" [editable]="true" />
                                     <div class="font-16">evaluaciones</div>
                                 </div>
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en
@@ -855,10 +855,10 @@
 
         <div *ngIf="!isInitialMetricListLoading" class="end-button-container">
             <p-button *ngIf="mode == 'create'" label="Crear alerta" (onClick)="onClickCreateAlert();" severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0 || !activationRecoverForm.valid" />
             <p-button *ngIf="mode == 'edit'" label="Actualizar alerta" (onClick)="onClickCreateAlert();"
                 severity="primary"
-                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0" />
+                [disabled]="((isSimpleConditionAlert || isCompositeConditionAlert) && !allIndicatorsCorrect()) || (isLogsAlert && !logsStep1Form.valid) || (isBaselineAlert && !selectedBaseline) || !allFinalExpressionsCorrect() || configuredAlertExists || !allConditionsCorrect() || (silencePeriodArray.length > 1 && !allSilencePeriodFieldsCompleted()) || !notificationMessageForm.valid || !allPermissionsCompleted() || endpointList.length == 0 || !activationRecoverForm.valid" />
         </div>
     </div>
 </app-page-wrapper>

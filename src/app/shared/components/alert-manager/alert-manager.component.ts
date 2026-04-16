@@ -310,6 +310,16 @@ type SilencePeriodFormGroup = FormGroup<{
 
 type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 
+function evaluationOptionValidator(): ValidatorFn {
+  return (control: AbstractControl) => {
+    const val = control.value;
+    if (val === null || val === undefined || val === '' || typeof val !== 'object') {
+      return { invalidEvaluationOption: true };
+    }
+    return null;
+  };
+}
+
 @Component({
   selector: 'app-alert-manager',
   imports: [FloatingGraphComponent, ProgressSpinnerModule, ToggleSwitchModule, SkeletonModule, DialogModule, PageWrapperComponent, ReactiveFormsModule, ModalComponent, TabsModule, TextareaModule, ButtonModule, CommonModule, AccordionComponent, MultiSelectModule, FormsModule, FluidModule, SelectModule, TooltipModule, InputTextModule, SanitizeExpressionPipe, FloatLabelModule, InputNumberModule, InnerAccordionComponent, CheckboxModule, DatePickerModule, RadioButtonModule, AutoCompleteModule],
@@ -591,10 +601,10 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray = this._fb.array<ConditionFormGroup>([]);
 
     this.activationRecoverForm = this._fb.group({
-      activation1: [activationRecoverEvaluationOptions[1], [Validators.required]],
-      activation2: [activationRecoverEvaluationOptions[1], [Validators.required]],
-      recover1: [activationRecoverEvaluationOptions[1], [Validators.required]],
-      recover2: [activationRecoverEvaluationOptions[1], [Validators.required]]
+      activation1: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
+      activation2: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
+      recover1: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
+      recover2: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]]
     });
 
     this.silencePeriodArray = this._fb.array<SilencePeriodFormGroup>([]);

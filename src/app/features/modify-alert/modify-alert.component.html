@@ -253,9 +253,9 @@
                     </td>
                     <td style="text-align: center;">
                         <i *ngIf="alert.status == 'ENABLED'" class="pi pi-verified c-green" [title]="'Alerta creada activa'"></i>
-                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-gray" [title]="'Alerta creada deshabilitada'"></i>
-                        <i *ngIf="alert.status == 'DOLPHIN_ERROR'" class="pi pi-times-circle c-red" [title]="'Error en la creación de la alerta en Dolphin'"></i>
-                        <i *ngIf="alert.status == 'PARTIALLY_ACTIVE'" class="pi pi-verified c-orange" [title]="'Alerta creada parcialmente activa'"></i>
+                        <i *ngIf="alert.status == 'DISABLED'" class="pi pi-verified c-red" [title]="'Alerta creada deshabilitada'"></i>
+                        <i *ngIf="alert.status == 'DOLPHIN_ERROR'" class="pi pi-times-circle c-gray" [title]="'Error en la creación de la alerta en Dolphin'"></i>
+                        <i *ngIf="alert.status == 'PARTIALLY_ACTIVE'" class="pi pi-verified c-yellow" [title]="'Alerta creada parcialmente activa'"></i>
                     </td>
                 </tr>
             </ng-template>
