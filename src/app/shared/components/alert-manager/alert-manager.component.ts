@@ -1115,11 +1115,48 @@ export class AlertManagerComponent implements OnInit{
   }
 
   removeCondition(index: number) {
-    this.conditionArray.controls.splice(index, 1);
+    // Eliminamos la condición usando el API del FormArray
+    const removedNum = index + 1;
+    this.conditionArray.removeAt(index);
+
+    // Reasignar ids (1..n)
     this.conditionArray.controls.forEach((c, i) => c.get('id')?.setValue((i + 1).toString()));
+
     this.buildConditionGraphsList();
     this.resetSeverityOptions();
-    this.conditionFiltersMap.delete((index + 1).toString());
+
+    // Helper para reindexar mapas que usan claves numéricas en formato string ('1','2',...)
+    const reindexMap = <T>(oldMap: Map<string, T>): Map<string, T> => {
+      const newMap = new Map<string, T>();
+      oldMap.forEach((v, k) => {
+        const n = Number(k);
+        if (Number.isNaN(n)) {
+          // Mantener entradas no numéricas tal cual
+          newMap.set(k, v);
+          return;
+        }
+        if (n < removedNum) {
+          newMap.set(k, v); // claves anteriores se mantienen
+        } else if (n > removedNum) {
+          newMap.set(String(n - 1), v); // decrementar el índice para las claves posteriores a la eliminada
+        }
+        // si n === removedNum => omitimos (entrada eliminada)
+      });
+      return newMap;
+    };
+
+    // Reindexar todos los mapas que indexan por id de condición
+    this.conditionFiltersMap = reindexMap(this.conditionFiltersMap);
+    this.conditionFiltersInclusionTypeMap = reindexMap(this.conditionFiltersInclusionTypeMap);
+    this.dimensionContainsFilterMap = reindexMap(this.dimensionContainsFilterMap);
+    this.dimensionFilterExpandedMap = reindexMap(this.dimensionFilterExpandedMap);
+
+    // Resetear filtros para cada condición restante (usa los nuevos ids)
+    this.conditionArray.controls.forEach((cur: ConditionFormGroup) => {
+      if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) this.resetConditionFilters(cur);
+      else if (this.isLogsAlert) this.resetLogsConditionFilters(cur);
+      else this.resetBaselineConditionFilters(cur);
+    });
   }
 
   resetSeverityOptions() {
@@ -1289,7 +1326,7 @@ export class AlertManagerComponent implements OnInit{
         newIndicator.controls.metrics.push(this._fb.group({
           metricId: this._fb.control(metric.metricId),
           id: this._fb.control((j + 1).toString()),
-          name: this._fb.control(`${this.letters[0]}.${j + 1}`),
+          name: this._fb.control(`${this.letters[0] + "." + (j + 1)}`),
           metric: this._fb.control({ value: ml[0], disabled: true }),
           operation: this._fb.control({ value: matOperationOptions.find(o => o.value === metric.operation), disabled: true }),
           options: this._fb.control(ml),
@@ -1533,7 +1570,7 @@ export class AlertManagerComponent implements OnInit{
                   let selected: string[] = [];
                   let created: string[] = [];
                   let merge: string[] = [];
-                  let lost: string[] = [];
+                  let lost: string[] = []; // 👈 nueva lista
 
                   condition.conditionFilters
                     ?.filter((cf) => cf.externalOperation == null && cf.filterField == req.dimension && (cf.inclusionType === 'INCLUDE' || cf.inclusionType === 'EXCLUDE'))
@@ -1659,8 +1696,10 @@ export class AlertManagerComponent implements OnInit{
               this.conditionFiltersMap.set((i + 1).toString(), filterDimensionMap);
             },
             () => { }
+         
           );
         });
+     
       });
 
       this.generateInternalNameAndName();
@@ -3035,6 +3074,14 @@ export class AlertManagerComponent implements OnInit{
       this.dimensionContainsFilterMap.get(condId)!.set(dimension, { type: 'CONTAINS', value: '', externalOperation: 'AND' });
     }
     return this.dimensionContainsFilterMap.get(condId)!.get(dimension)!;
+  }
+
+  getContainsFilterTooltip(condition: any, dimension: string): string {
+    const type = this.getDimensionContainsFilter(condition, dimension).type;
+    if (type === 'CONTAINS') {
+      return 'Los valores se separan con OR: la dimensión coincide si contiene alguno de ellos.\nEj: valor1, valor2 → contiene "valor1" OR "valor2"';
+    }
+    return 'Los valores se separan con AND: la dimensión coincide si no contiene ninguno de ellos.\nEj: valor1, valor2 → NO contiene "valor1" AND NO contiene "valor2"';
   }
 
   setDimensionContainsFilterType(condition: any, dimension: string, type: string): void {
