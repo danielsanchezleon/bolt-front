@@ -9,7 +9,7 @@ RUN npm ci --silent
 COPY . .
 
 # Construir la aplicación sin restricciones de presupuesto
-RUN npx ng build || (ls -la dist/ && exit 0)
+RUN npx ng build --configuration=production || (ls -la dist/ && exit 0)
 
 FROM nginx:1.25-alpine AS production
 
