@@ -637,6 +637,10 @@
                             gap: 6px;
                             padding-top: 4px;
 
+                            .contains-type-select-wrapper {
+                                flex-shrink: 0;
+                            }
+
                             .contains-type-select {
                                 flex-shrink: 0;
                                 width: fit-content;

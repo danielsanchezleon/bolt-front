@@ -328,7 +328,7 @@
                             <div *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
                                 style="width: 2px; height: 32px; background-color: lightgray;"></div>
                             <p-button
-                                *ngIf="(conditionArray.controls.length > 1 && mode == 'create') || (mode == 'edit' && condition.get('conditionId')?.value == null)"
+                                *ngIf="conditionArray.controls.length > 1"
                                 [pTooltip]="'Eliminar condición'" tooltipPosition="top" showDelay="1000"
                                 icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
                                 (onClick)="removeCondition(i);" />
@@ -504,15 +504,27 @@
                                             appendTo="body"
                                             size="small"
                                             class="contains-type-select" />
-                                        <p-select
-                                            [options]="[{label: 'Contiene', value: 'CONTAINS'}, {label: 'No contiene', value: 'NOT_CONTAINS'}]"
-                                            [ngModel]="getDimensionContainsFilter(condition, dimension).type"
-                                            (ngModelChange)="setDimensionContainsFilterType(condition, dimension, $event)"
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            appendTo="body"
-                                            size="small"
-                                            class="contains-type-select" />
+                                        <div class="contains-type-select-wrapper">
+                                            <p-select
+                                                [options]="[{label: 'Contiene', value: 'CONTAINS'}, {label: 'No contiene', value: 'NOT_CONTAINS'}]"
+                                                [ngModel]="getDimensionContainsFilter(condition, dimension).type"
+                                                (ngModelChange)="setDimensionContainsFilterType(condition, dimension, $event)"
+                                                [pTooltip]="getContainsFilterTooltip(condition, dimension)"
+                                                tooltipPosition="top"
+                                                showDelay="300"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                appendTo="body"
+                                                size="small"
+                                                class="contains-type-select">
+                                                <ng-template #selectedItem let-option>
+                                                    <span style="display: flex; align-items: center; gap: 5px;">
+                                                        {{ option.label }}
+                                                        <i class="pi pi-info-circle" style="font-size: 0.75rem;"></i>
+                                                    </span>
+                                                </ng-template>
+                                            </p-select>
+                                        </div>
                                         <input
                                             pInputText
                                             type="text"
