@@ -313,9 +313,9 @@ type SilencePeriodFormArray = FormArray<SilencePeriodFormGroup>;
 function evaluationOptionValidator(): ValidatorFn {
   return (control: AbstractControl) => {
     const val = control.value;
-    if (val === null || val === undefined || val === '' || typeof val !== 'object') {
-      return { invalidEvaluationOption: true };
-    }
+    if (val === null || val === undefined || val === '') return { invalidEvaluationOption: true };
+    const n = Number(val);
+    if (!Number.isInteger(n) || n < 1) return { invalidEvaluationOption: true };
     return null;
   };
 }
@@ -439,6 +439,7 @@ export class AlertManagerComponent implements OnInit{
   externalOperationOptions: string[] = ['AND', 'OR'];
 
   activationRecoverEvaluationOptions: any[] = [];
+  filteredActivationRecoverOptions: string[] = [];
   activationRecoverForm: FormGroup;
 
   silencePeriodDayOptions: any[] = [];
@@ -601,10 +602,10 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray = this._fb.array<ConditionFormGroup>([]);
 
     this.activationRecoverForm = this._fb.group({
-      activation1: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
-      activation2: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
-      recover1: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]],
-      recover2: [activationRecoverEvaluationOptions[1], [Validators.required, evaluationOptionValidator()]]
+      activation1: ['2', [Validators.required, evaluationOptionValidator()]],
+      activation2: ['2', [Validators.required, evaluationOptionValidator()]],
+      recover1: ['2', [Validators.required, evaluationOptionValidator()]],
+      recover2: ['2', [Validators.required, evaluationOptionValidator()]]
     });
 
     this.silencePeriodArray = this._fb.array<SilencePeriodFormGroup>([]);
@@ -968,7 +969,12 @@ export class AlertManagerComponent implements OnInit{
     }) as ClauseFormGroup);
 
     const newClause = clauses.at(clauses.length - 1);
-    newClause.valueChanges.subscribe(() => this.conditionTextMap.set(conditionIndex, this.generateConditionText(conditionIndex)));
+    newClause.valueChanges.subscribe(() => {
+      const currentIndex = this.conditionArray.controls.findIndex(cond =>
+        (cond as ConditionFormGroup).controls.clauses.controls.includes(newClause)
+      );
+      if (currentIndex >= 0) this.conditionTextMap.set(currentIndex, this.generateConditionText(currentIndex));
+    });
 
     const comparationCtrl = newClause.get('comparation');
     const sub = comparationCtrl?.valueChanges.subscribe((comp: any) => {
@@ -1151,6 +1157,14 @@ export class AlertManagerComponent implements OnInit{
     this.dimensionContainsFilterMap = reindexMap(this.dimensionContainsFilterMap);
     this.dimensionFilterExpandedMap = reindexMap(this.dimensionFilterExpandedMap);
 
+    // Reindexar conditionTextMap (usa claves 0-based)
+    const newConditionTextMap = new Map<number, string>();
+    this.conditionTextMap.forEach((v, k) => {
+      if (k < index) newConditionTextMap.set(k, v);
+      else if (k > index) newConditionTextMap.set(k - 1, v);
+    });
+    this.conditionTextMap = newConditionTextMap;
+
     // Resetear filtros para cada condición restante (usa los nuevos ids)
     this.conditionArray.controls.forEach((cur: ConditionFormGroup) => {
       if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) this.resetConditionFilters(cur);
@@ -1227,7 +1241,10 @@ export class AlertManagerComponent implements OnInit{
   }
 
   private _getTime(key: string): string {
-    return this.formatTime(this.toSeconds(this.advancedOptionsForm.get('timeWindow')?.value.value) * this.activationRecoverForm.get(key)?.value.value);
+    const val = this.activationRecoverForm.get(key)?.value;
+    const n = Number(val);
+    if (!n || isNaN(n)) return '?';
+    return this.formatTime(this.toSeconds(this.advancedOptionsForm.get('timeWindow')?.value.value) * n);
   }
 
   getActivationTime1() { return this._getTime('activation1'); }
@@ -1824,10 +1841,10 @@ export class AlertManagerComponent implements OnInit{
   // ===========================
   // ACTIVATION AND RECOVERY
   // ===========================
-  this.activationRecoverForm.get('activation1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmNumPeriods));
-  this.activationRecoverForm.get('activation2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.alarmTotalPeriods));
-  this.activationRecoverForm.get('recover1')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryNumPeriods));
-  this.activationRecoverForm.get('recover2')?.setValue(this.activationRecoverEvaluationOptions.find((opt) => opt.value == alertViewDto.recoveryTotalPeriods));
+  this.activationRecoverForm.get('activation1')?.setValue(String(alertViewDto.alarmNumPeriods));
+  this.activationRecoverForm.get('activation2')?.setValue(String(alertViewDto.alarmTotalPeriods));
+  this.activationRecoverForm.get('recover1')?.setValue(String(alertViewDto.recoveryNumPeriods));
+  this.activationRecoverForm.get('recover2')?.setValue(String(alertViewDto.recoveryTotalPeriods));
 
   // ===========================
   // SILENCE PERIODS
@@ -2101,10 +2118,10 @@ export class AlertManagerComponent implements OnInit{
       this.advancedOptionsForm.get('discardTime')?.value.value,
       this.groupByForm.get('groupBy')?.value,
       this.notificationMessageForm.get('opiUrl')?.value,
-      this.activationRecoverForm.get('activation1')?.value.value,
-      this.activationRecoverForm.get('activation2')?.value.value,
-      this.activationRecoverForm.get('recover1')?.value.value,
-      this.activationRecoverForm.get('recover2')?.value.value,
+      Number(this.activationRecoverForm.get('activation1')?.value),
+      Number(this.activationRecoverForm.get('activation2')?.value),
+      Number(this.activationRecoverForm.get('recover1')?.value),
+      Number(this.activationRecoverForm.get('recover2')?.value),
       this.logsStep1Form.get('service')?.value ? this.logsStep1Form.get('service')?.value : null,
       this.logsStep1Form.get('catalog')?.value ? this.logsStep1Form.get('catalog')?.value : null,
       this.isBaselinePastAverageAlert ? 'PAST_AVERAGE' : this.isBaselinePastAveragePonderedAlert ? 'PAST_AVERAGE_PONDERED' : this.isBaselineKSigmaAlert ? 'K-SIGMA' : null
@@ -2994,6 +3011,14 @@ export class AlertManagerComponent implements OnInit{
     this.tagFilteredNames = this.tagNames.filter(n =>
       n.toLowerCase().includes(query)
     );
+  }
+
+  searchActivationRecoverOptions(event: any) {
+    const query = (event.query ?? '').toString();
+    const all = this.activationRecoverEvaluationOptions.map((o: any) => o.label as string);
+    this.filteredActivationRecoverOptions = query
+      ? all.filter(l => l.startsWith(query))
+      : all;
   }
 
   onHoverConditionInformationIcon(event: MouseEvent) {

@@ -555,16 +555,30 @@
                             <div class="activation-recover-card">
                                 <div>¿Cuántas evaluaciones deben fallar para activar la alerta?</div>
                                 <div class="activation-recover-card-data">
-                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="activation1" [editable]="true" />
+                                    <p-autocomplete
+                                        [ngStyle]="{'width': '90px'}"
+                                        size="small"
+                                        formControlName="activation1"
+                                        [suggestions]="filteredActivationRecoverOptions"
+                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [dropdown]="true"
+                                        [completeOnFocus]="true"
+                                        appendTo="body" />
                                     <div class="font-16">de las últimas</div>
-                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="activation2" [editable]="true" />
+                                    <p-autocomplete
+                                        [ngStyle]="{'width': '90px'}"
+                                        size="small"
+                                        formControlName="activation2"
+                                        [suggestions]="filteredActivationRecoverOptions"
+                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [dropdown]="true"
+                                        [completeOnFocus]="true"
+                                        appendTo="body" />
                                     <div class="font-16">evaluaciones</div>
                                 </div>
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en
-                                    {{activationRecoverForm.get('activation1')?.value.label}} de los últimas
-                                    {{activationRecoverForm.get('activation2')?.value.label}} evaluaciones falla</div>
+                                    {{activationRecoverForm.get('activation1')?.value}} de los últimas
+                                    {{activationRecoverForm.get('activation2')?.value}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
                                     <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getActivationTime1()}}
@@ -583,16 +597,30 @@
                             <div class="activation-recover-card">
                                 <div>¿Cuántas evaluaciones deben fallar para desactivar la alerta?</div>
                                 <div class="activation-recover-card-data">
-                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="recover1" [editable]="true" />
+                                    <p-autocomplete
+                                        [ngStyle]="{'width': '90px'}"
+                                        size="small"
+                                        formControlName="recover1"
+                                        [suggestions]="filteredActivationRecoverOptions"
+                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [dropdown]="true"
+                                        [completeOnFocus]="true"
+                                        appendTo="body" />
                                     <div class="font-16">de las últimas</div>
-                                    <p-select [ngStyle]="{'width': '90px'}" [options]="activationRecoverEvaluationOptions" size="small" class="select"
-                                        optionLabel="label" appendTo="body" formControlName="recover2" [editable]="true" />
+                                    <p-autocomplete
+                                        [ngStyle]="{'width': '90px'}"
+                                        size="small"
+                                        formControlName="recover2"
+                                        [suggestions]="filteredActivationRecoverOptions"
+                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [dropdown]="true"
+                                        [completeOnFocus]="true"
+                                        appendTo="body" />
                                     <div class="font-16">evaluaciones</div>
                                 </div>
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se desactiva si en
-                                    {{activationRecoverForm.get('recover1')?.value.label}} de las últimas
-                                    {{activationRecoverForm.get('recover2')?.value.label}} evaluaciones falla</div>
+                                    {{activationRecoverForm.get('recover1')?.value}} de las últimas
+                                    {{activationRecoverForm.get('recover2')?.value}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
                                     <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getRecoverTime1()}} y
