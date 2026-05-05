@@ -440,6 +440,10 @@ export class AlertManagerComponent implements OnInit{
 
   activationRecoverEvaluationOptions: any[] = [];
   filteredActivationRecoverOptions: string[] = [];
+  filteredActivation1Options: string[] = [];
+  filteredActivation2Options: string[] = [];
+  filteredRecover1Options: string[] = [];
+  filteredRecover2Options: string[] = [];
   activationRecoverForm: FormGroup;
 
   silencePeriodDayOptions: any[] = [];
@@ -753,7 +757,7 @@ export class AlertManagerComponent implements OnInit{
     const groupBy: string[] = this.groupByForm.get('groupBy')?.value ?? [];
     if (groupBy.length > 0) this.internalName += '_' + groupBy.join('_');
 
-    if (this.mode === 'create' && !this.authService.isAdmin()) this.existsByInternalName();
+    if (this.mode === 'create') this.existsByInternalName();
   }
 
   existsByInternalName() {
@@ -1117,7 +1121,11 @@ export class AlertManagerComponent implements OnInit{
 
   onFilterMetricsChange(event: MultiSelectFilterEvent, metric: MetricFormGroup) {
     const term = event.filter?.trim() ?? '';
-    if (term.length > 2) this.filterSubject.next({ term, metric });
+    if (term.length > 2) {
+      this.filterSubject.next({ term, metric });
+    } else {
+      metric.get('options')?.setValue([]);
+    }
   }
 
   removeCondition(index: number) {
@@ -1169,7 +1177,7 @@ export class AlertManagerComponent implements OnInit{
     this.conditionArray.controls.forEach((cur: ConditionFormGroup) => {
       if (this.isSimpleConditionAlert || this.isCompositeConditionAlert) this.resetConditionFilters(cur);
       else if (this.isLogsAlert) this.resetLogsConditionFilters(cur);
-      else this.resetBaselineConditionFilters(cur);
+      // Para alertas baseline no se llama a reset: el reindexado ya preserva los datos seleccionados
     });
   }
 
@@ -1244,7 +1252,7 @@ export class AlertManagerComponent implements OnInit{
     const val = this.activationRecoverForm.get(key)?.value;
     const n = Number(val);
     if (!n || isNaN(n)) return '?';
-    return this.formatTime(this.toSeconds(this.advancedOptionsForm.get('timeWindow')?.value.value) * n);
+    return this.formatTime(this.toSeconds(this.advancedOptionsForm.get('periodicity')?.value.value) * n);
   }
 
   getActivationTime1() { return this._getTime('activation1'); }
@@ -1382,41 +1390,51 @@ export class AlertManagerComponent implements OnInit{
       alertViewDto.conditions!.forEach((condition, i) => 
       {
         this.conditionFiltersMap.set((i+1).toString(), new Map());
-    
-        let baselineType: string = this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'CDN' : 'QOE';
-        this.inventoryBaselinesService.getDimensionValues(new DimensionValuesRequest(baselineType, this.selectedBaseline.id, this.groupByForm.get('groupBy')?.value!)).subscribe(
-          (response) => 
-          {
-            for (const dimension in response) 
-            {
-              let selected: string[] = [];
-              let created: string[] = [];
-              let merge: string[] = [];
-              let lost: string[] = [];
 
-              condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension && (conditionFilter.inclusionType === 'INCLUDE' || conditionFilter.inclusionType === 'EXCLUDE')).forEach((cf) => {
+        const condIdLoad = (i+1).toString();
+        const condMapLoad = this.conditionFiltersMap.get(condIdLoad)!;
 
-                if (cf.isCreated)
-                  created.push(cf.filterValue!);
-                else
-                  selected.push(cf.filterValue!);
-              });
-
-              selected = selected.length == 0 && created.length == 0 ? response[dimension] : selected.length == 0 ? created : selected;
-
-              // Perdidos: selected que ya no existen en values (response)
-              lost = selected.filter(v => !response[dimension].includes(v));
-
-              // 🔥 Merge con orden: created → lost → values
-              merge = [...new Set([...created, ...lost, ...response[dimension]])];
-
-              this.conditionFiltersMap.get((i+1).toString())!.set(dimension, new Map().set('values', response[dimension]).set('selected', selected).set('created', created).set('lost', lost).set('merge', merge));
-            }
-          },
-          () => {
-
-          }
+        const metricsLoad: DimensionValuesMetricRequest[] = [];
+        this.indicatorArray.controls.forEach(indicator =>
+          indicator.controls.metrics.controls.forEach(metric => {
+            const f = metric.get('metric')?.value;
+            if (f) metricsLoad.push(new DimensionValuesMetricRequest(f.bbdd!, (f.table_name! as string).replace(/^view_/, ''), f.metric!));
+          })
         );
+
+        const dimensionsLoad: DimensionValuesAgroupationRequest[] = (this.groupByForm.get('groupBy')?.value as string[])
+          .map((dim: string) => new DimensionValuesAgroupationRequest(dim, []));
+
+        if (metricsLoad.length > 0 && dimensionsLoad.length > 0) {
+          const requestLoad = new AlertDimensionValuesRequest(metricsLoad, dimensionsLoad);
+
+          this.alertService.getAllDimensionValues(requestLoad).subscribe(
+            (response: DimensionValuesResponse[]) =>
+            {
+              dimensionsLoad.forEach(({ dimension }) => {
+                const values: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
+
+                let selected: string[] = [];
+                let created: string[] = [];
+                let lost: string[] = [];
+
+                condition.conditionFilters?.filter((conditionFilter) => conditionFilter.externalOperation == null && conditionFilter.filterField == dimension && (conditionFilter.inclusionType === 'INCLUDE' || conditionFilter.inclusionType === 'EXCLUDE')).forEach((cf) => {
+                  if (cf.isCreated)
+                    created.push(cf.filterValue!);
+                  else
+                    selected.push(cf.filterValue!);
+                });
+
+                selected = selected.length == 0 && created.length == 0 ? values : selected.length == 0 ? created : selected;
+                lost = selected.filter(v => !values.includes(v));
+                const merge = [...new Set([...created, ...lost, ...values])];
+
+                condMapLoad.set(dimension, new Map().set('values', values).set('selected', selected).set('created', created).set('lost', lost).set('merge', merge));
+              });
+            },
+            () => {}
+          );
+        }
       });
     } 
     catch 
@@ -2536,35 +2554,49 @@ export class AlertManagerComponent implements OnInit{
 
     const condMap = this.conditionFiltersMap.get(condId)!;
 
-    let baselineType: string = this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'CDN' : 'QOE';
-    this.inventoryBaselinesService.getDimensionValues(new DimensionValuesRequest(baselineType, this.selectedBaseline.id, this.groupByForm.get('groupBy')?.value!)).subscribe(
-      (response) => 
-      {
-        for (const dimension in response) 
-        {
-          if (response.hasOwnProperty(dimension)) 
-          {
-            this.conditionFiltersInclusionTypeMap.get(condId)?.set(dimension, this.conditionFiltersInclusionTypeMap.get(condId)?.has(dimension) ? this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) : this.dimensionValuesInclusionOptions[0]);
+    const metrics: DimensionValuesMetricRequest[] = [];
+    this.indicatorArray.controls.forEach(indicator =>
+      indicator.controls.metrics.controls.forEach(metric => {
+        const f = metric.get('metric')?.value;
+        if (f) metrics.push(new DimensionValuesMetricRequest(f.bbdd!, (f.table_name! as string).replace(/^view_/, ''), f.metric!));
+      })
+    );
 
-            if (condMap.has(dimension))
-            {
-              const filterValues: string[] = response[dimension];
-              this.conditionFiltersMap.get(condId)!.set(dimension, new Map().set('values', filterValues).set('selected', filterValues).set('created', []).set('merge', filterValues));
-            }
-            else
-            {
-              condMap.set(dimension, new Map()
-                .set('values', [])
-                .set('selected', [])
-                .set('created', [])
-                .set('lost', [])
-                .set('merge', []));
-            }
-          }
-        }
+    if (!metrics.length) return;
+
+    const dimensions: DimensionValuesAgroupationRequest[] = (this.groupByForm.get('groupBy')?.value as string[])
+      .map(dim => new DimensionValuesAgroupationRequest(dim, condMap.get(dim)?.get('selected') ?? []));
+
+    if (!dimensions.length) return;
+
+    const request = new AlertDimensionValuesRequest(metrics, dimensions);
+
+    this.allDimensionValuesLoading = true;
+    this.allDimensionValuesError = false;
+
+    this.alertService.getAllDimensionValues(request).subscribe(
+      (response: DimensionValuesResponse[]) => {
+        this.allDimensionValuesLoading = false;
+        this.allDimensionValuesError = false;
+
+        dimensions.forEach(({ dimension }) => {
+          this.conditionFiltersInclusionTypeMap.get(condId)?.set(dimension, this.conditionFiltersInclusionTypeMap.get(condId)?.has(dimension) ? this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) : this.dimensionValuesInclusionOptions[0]);
+
+          const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
+          condMap.set(dimension, new Map()
+            .set('values', newValues)
+            .set('selected', newValues)
+            .set('created', [])
+            .set('lost', [])
+            .set('merge', newValues));
+        });
       },
-      (error) => {
-
+      () => {
+        this.allDimensionValuesLoading = false;
+        this.allDimensionValuesError = true;
+        dimensions.forEach(({ dimension }) => {
+          condMap.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('lost', []).set('merge', []));
+        });
       }
     );
   }
@@ -3019,6 +3051,52 @@ export class AlertManagerComponent implements OnInit{
     this.filteredActivationRecoverOptions = query
       ? all.filter(l => l.startsWith(query))
       : all;
+  }
+
+  searchActivation1Options(event: any) {
+    const query = (event.query ?? '').toString();
+    const maxVal = Number(this.activationRecoverForm.get('activation2')?.value);
+    const all = this.activationRecoverEvaluationOptions.map((o: any) => o.label as string);
+    const pool = !isNaN(maxVal) && maxVal > 0 ? all.filter(l => Number(l) <= maxVal) : all;
+    this.filteredActivation1Options = query ? pool.filter(l => l.startsWith(query)) : pool;
+  }
+
+  searchActivation2Options(event: any) {
+    const query = (event.query ?? '').toString();
+    const minVal = Number(this.activationRecoverForm.get('activation1')?.value);
+    const all = this.activationRecoverEvaluationOptions.map((o: any) => o.label as string);
+    const pool = !isNaN(minVal) && minVal > 0 ? all.filter(l => Number(l) >= minVal) : all;
+    this.filteredActivation2Options = query ? pool.filter(l => l.startsWith(query)) : pool;
+  }
+
+  searchRecover1Options(event: any) {
+    const query = (event.query ?? '').toString();
+    const maxVal = Number(this.activationRecoverForm.get('recover2')?.value);
+    const all = this.activationRecoverEvaluationOptions.map((o: any) => o.label as string);
+    const pool = !isNaN(maxVal) && maxVal > 0 ? all.filter(l => Number(l) <= maxVal) : all;
+    this.filteredRecover1Options = query ? pool.filter(l => l.startsWith(query)) : pool;
+  }
+
+  searchRecover2Options(event: any) {
+    const query = (event.query ?? '').toString();
+    const minVal = Number(this.activationRecoverForm.get('recover1')?.value);
+    const all = this.activationRecoverEvaluationOptions.map((o: any) => o.label as string);
+    const pool = !isNaN(minVal) && minVal > 0 ? all.filter(l => Number(l) >= minVal) : all;
+    this.filteredRecover2Options = query ? pool.filter(l => l.startsWith(query)) : pool;
+  }
+
+  getActivationTimeLabel(): string {
+    const v1 = Number(this.activationRecoverForm.get('activation1')?.value);
+    const v2 = Number(this.activationRecoverForm.get('activation2')?.value);
+    if (!isNaN(v1) && !isNaN(v2) && v1 === v2) return this._getTime('activation1');
+    return `Entre ${this.getActivationTime1()} y ${this.getActivationTime2()}`;
+  }
+
+  getRecoverTimeLabel(): string {
+    const v1 = Number(this.activationRecoverForm.get('recover1')?.value);
+    const v2 = Number(this.activationRecoverForm.get('recover2')?.value);
+    if (!isNaN(v1) && !isNaN(v2) && v1 === v2) return this._getTime('recover1');
+    return `Entre ${this.getRecoverTime1()} y ${this.getRecoverTime2()}`;
   }
 
   onHoverConditionInformationIcon(event: MouseEvent) {

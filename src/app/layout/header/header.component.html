@@ -4,11 +4,17 @@
   <div *ngIf="router.url !== '/' && router.url !== '/login'" class="font-16 text-white font-w-700 title"
     (click)="onClickNavigateToHome()">
     <i class="pi pi-home"></i>
-    <div>Motor de alertado</div>
+    <div class="title-text">
+      <div>Motor de alertado</div>
+      <div class="font-w-400 title-version">v.1.1.34</div>
+    </div>
   </div>
 
-  <div *ngIf="router.url === '/'" class="font-16 text-white font-w-700">
-    <div>Motor de alertado</div>
+  <div *ngIf="router.url === '/'" class="font-16 text-white font-w-700 title">
+    <div class="title-text">
+      <div>Motor de alertado</div>
+      <div class="font-w-400 title-version">v.1.1.34</div>
+    </div>
   </div>
 
   <img class="logo" src="../../../assets/logos/telefonica_logo_2.png" alt="Telefónica" height="60" />

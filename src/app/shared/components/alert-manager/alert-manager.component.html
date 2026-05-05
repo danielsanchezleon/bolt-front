@@ -61,6 +61,7 @@
                                     class="full-width-selector" [loading]="loadingMetricList"
                                     [options]="metric.get('options')?.value" formControlName="metric" [filter]="true"
                                     (onFilter)="onFilterMetricsChange($event, metric);" optionLabel="metric"
+                                    filterBy="metric,table_name"
                                     [placeholder]="loadingMetricList ? 'Cargando...' : 'Selecciona una métrica'"
                                     emptyMessage=" " emptyFilterMessage=" " (onChange)="onChangeMetricSelect();"
                                     appendTo="body" >
@@ -559,8 +560,8 @@
                                         [ngStyle]="{'width': '90px'}"
                                         size="small"
                                         formControlName="activation1"
-                                        [suggestions]="filteredActivationRecoverOptions"
-                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [suggestions]="filteredActivation1Options"
+                                        (completeMethod)="searchActivation1Options($event)"
                                         [dropdown]="true"
                                         [completeOnFocus]="true"
                                         appendTo="body" />
@@ -569,20 +570,19 @@
                                         [ngStyle]="{'width': '90px'}"
                                         size="small"
                                         formControlName="activation2"
-                                        [suggestions]="filteredActivationRecoverOptions"
-                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [suggestions]="filteredActivation2Options"
+                                        (completeMethod)="searchActivation2Options($event)"
                                         [dropdown]="true"
                                         [completeOnFocus]="true"
                                         appendTo="body" />
                                     <div class="font-16">evaluaciones</div>
                                 </div>
                                 <div class="font-12 text-gray font-w-600">Ejemplo: La alerta se activa si en
-                                    {{activationRecoverForm.get('activation1')?.value}} de los últimas
+                                    {{activationRecoverForm.get('activation1')?.value}} de las últimas
                                     {{activationRecoverForm.get('activation2')?.value}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getActivationTime1()}}
-                                            y {{getActivationTime2()}}</span></div>
+                                    <div class="font-16">Tiempo estimado: <span class="font-w-600">{{getActivationTimeLabel()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -601,8 +601,8 @@
                                         [ngStyle]="{'width': '90px'}"
                                         size="small"
                                         formControlName="recover1"
-                                        [suggestions]="filteredActivationRecoverOptions"
-                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [suggestions]="filteredRecover1Options"
+                                        (completeMethod)="searchRecover1Options($event)"
                                         [dropdown]="true"
                                         [completeOnFocus]="true"
                                         appendTo="body" />
@@ -611,8 +611,8 @@
                                         [ngStyle]="{'width': '90px'}"
                                         size="small"
                                         formControlName="recover2"
-                                        [suggestions]="filteredActivationRecoverOptions"
-                                        (completeMethod)="searchActivationRecoverOptions($event)"
+                                        [suggestions]="filteredRecover2Options"
+                                        (completeMethod)="searchRecover2Options($event)"
                                         [dropdown]="true"
                                         [completeOnFocus]="true"
                                         appendTo="body" />
@@ -623,8 +623,7 @@
                                     {{activationRecoverForm.get('recover2')?.value}} evaluaciones falla</div>
                                 <div class="activation-recover-card-time">
                                     <i class="pi pi-clock"></i>
-                                    <div class="font-16">Tiempo: <span class="font-w-600">Entre {{getRecoverTime1()}} y
-                                            {{getRecoverTime2()}}</span></div>
+                                    <div class="font-16">Tiempo estimado: <span class="font-w-600">{{getRecoverTimeLabel()}}</span></div>
                                 </div>
                             </div>
                         </div>
@@ -1252,7 +1251,7 @@
         <div class="font-16 font-w-600">Alerta duplicada</div>
     </div>
     <div class="c-yellow description">
-        La alerta que estás configurando ya existe. Si quieres acceder a ella, pulsa <span class="font-w-700"
+        Ya existe una alerta con esta métrica. Si quieres acceder a ella, pulsa <span class="font-w-700"
             style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
     </div>
 
