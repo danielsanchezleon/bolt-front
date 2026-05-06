@@ -961,7 +961,7 @@ export class AlertManagerComponent implements OnInit{
       indicatorName: this._fb.control((this.isSimpleConditionAlert || isComp || isBase) ? 'A' : ''),
       id: this._fb.control((clauses.length + 1).toString()),
       comparation: this._fb.control(clauseComparationOptions[0]),
-      order: this._fb.control(this.conditionArray.length + 1),
+      order: this._fb.control(clauses.length + 1),
       value: this._fb.control(null, [Validators.required]),
       minIncluded: this._fb.control(true),
       min: this._fb.control(null),
@@ -1800,7 +1800,7 @@ export class AlertManagerComponent implements OnInit{
           indicatorName: this._fb.control(clause.indicatorName),
           id: this._fb.control((this.conditionArray.at(i).controls.clauses.length! + 1).toString()),
           comparation: this._fb.control(this.clauseComparationOptions.find((opt) => opt.value == clause.compOperation)),
-          order: this._fb.control(this.conditionArray.length + 1),
+          order: this._fb.control(clause.order ?? this.conditionArray.at(i).controls.clauses.length + 1),
           value: this._fb.control(clause.threshold),
           minIncluded: this._fb.control(clause.thresholdInclude),
           min: this._fb.control(clause.threshold),
@@ -2102,6 +2102,8 @@ export class AlertManagerComponent implements OnInit{
 
       alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariablesDto, alertClauses, conditionFiltersList));
     }
+
+    console.log(alertConditions)
 
     // BASELINE
     if (this.isBaselineAlert && this.mode == 'create')
@@ -3150,6 +3152,23 @@ export class AlertManagerComponent implements OnInit{
     const condId = condition.get('id')?.value!;
     const newType = event;
     this.conditionFiltersInclusionTypeMap.set(condId, this.conditionFiltersInclusionTypeMap.get(condId)!.set(dimension, newType));
+  }
+
+  // ── Dimension selected label helpers ────────────────────────────────────
+
+  getDimensionSelectedLabel(condition: any, dimension: string): string {
+    const condId = condition.get('id')?.value!;
+    const selected: string[] = this.conditionFiltersMap.get(condId)?.get(dimension)?.get('selected') ?? [];
+    const merge: string[] = this.conditionFiltersMap.get(condId)?.get(dimension)?.get('merge') ?? [];
+    if (merge.length === 0 || selected.length === 0 || selected.length === merge.length) return 'Todos';
+    return '{0} seleccionados';
+  }
+
+  isAllDimensionValuesSelected(condition: any, dimension: string): boolean {
+    const condId = condition.get('id')?.value!;
+    const selected: string[] = this.conditionFiltersMap.get(condId)?.get(dimension)?.get('selected') ?? [];
+    const merge: string[] = this.conditionFiltersMap.get(condId)?.get(dimension)?.get('merge') ?? [];
+    return merge.length === 0 || selected.length === 0 || selected.length === merge.length;
   }
 
   // ── Collapsible contains/not-contains filter per dimension ──────────────
