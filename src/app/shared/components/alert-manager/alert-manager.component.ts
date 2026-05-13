@@ -74,6 +74,8 @@ import { GraphSerieResponse } from '../../responses/plotting/GraphSerieResponse'
 import { PlottingService } from '../../services/plotting.service';
 import { GraphRequest } from '../../requests/GraphRequest';
 import { DimensionValuesRequest } from '../../requests/baseline/DimensionValuesRequest';
+import { BaselineDimensionValuesRequest } from '../../requests/baseline/BaselineDimensionValuesRequest';
+import { BaselineDimensionValuesResponse } from '../../responses/baselines/BaselineDimensionValuesResponse';
 import { AlertIndicatorViewDto } from '../../dto/alert/AlertIndicatorViewDto';
 import { DimensionValuesRequest as AlertDimensionValuesRequest } from '../../../shared/dto/alert/dimension/DimensionValuesRequest';
 import { DimensionValuesMetricRequest } from '../../../shared/dto/alert/dimension/DimensionValuesMetricRequest';
@@ -1394,25 +1396,16 @@ export class AlertManagerComponent implements OnInit{
         const condIdLoad = (i+1).toString();
         const condMapLoad = this.conditionFiltersMap.get(condIdLoad)!;
 
-        const metricsLoad: DimensionValuesMetricRequest[] = [];
-        this.indicatorArray.controls.forEach(indicator =>
-          indicator.controls.metrics.controls.forEach(metric => {
-            const f = metric.get('metric')?.value;
-            if (f) metricsLoad.push(new DimensionValuesMetricRequest(f.bbdd!, (f.table_name! as string).replace(/^view_/, ''), f.metric!));
-          })
-        );
+        const dimensionsLoad: string[] = (this.groupByForm.get('groupBy')?.value as string[]);
 
-        const dimensionsLoad: DimensionValuesAgroupationRequest[] = (this.groupByForm.get('groupBy')?.value as string[])
-          .map((dim: string) => new DimensionValuesAgroupationRequest(dim, []));
+        if (dimensionsLoad.length > 0) {
+          const requestLoad = new BaselineDimensionValuesRequest(this.selectedBaseline.baselineTable, dimensionsLoad);
 
-        if (metricsLoad.length > 0 && dimensionsLoad.length > 0) {
-          const requestLoad = new AlertDimensionValuesRequest(metricsLoad, dimensionsLoad);
-
-          this.alertService.getAllDimensionValues(requestLoad).subscribe(
-            (response: DimensionValuesResponse[]) =>
+          this.inventoryBaselinesService.getBaselineDimensionValues(requestLoad).subscribe(
+            (response: BaselineDimensionValuesResponse[]) =>
             {
-              dimensionsLoad.forEach(({ dimension }) => {
-                const values: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
+              dimensionsLoad.forEach((dimension) => {
+                const values: string[] = response.find(r => r.dimension === dimension)?.valueList ?? [];
 
                 let selected: string[] = [];
                 let created: string[] = [];
@@ -2556,35 +2549,24 @@ export class AlertManagerComponent implements OnInit{
 
     const condMap = this.conditionFiltersMap.get(condId)!;
 
-    const metrics: DimensionValuesMetricRequest[] = [];
-    this.indicatorArray.controls.forEach(indicator =>
-      indicator.controls.metrics.controls.forEach(metric => {
-        const f = metric.get('metric')?.value;
-        if (f) metrics.push(new DimensionValuesMetricRequest(f.bbdd!, (f.table_name! as string).replace(/^view_/, ''), f.metric!));
-      })
-    );
+    const selectedDimensions: string[] = (this.groupByForm.get('groupBy')?.value as string[]);
 
-    if (!metrics.length) return;
+    if (!selectedDimensions.length) return;
 
-    const dimensions: DimensionValuesAgroupationRequest[] = (this.groupByForm.get('groupBy')?.value as string[])
-      .map(dim => new DimensionValuesAgroupationRequest(dim, condMap.get(dim)?.get('selected') ?? []));
-
-    if (!dimensions.length) return;
-
-    const request = new AlertDimensionValuesRequest(metrics, dimensions);
+    const request = new BaselineDimensionValuesRequest(this.selectedBaseline.baselineTable, selectedDimensions);
 
     this.allDimensionValuesLoading = true;
     this.allDimensionValuesError = false;
 
-    this.alertService.getAllDimensionValues(request).subscribe(
-      (response: DimensionValuesResponse[]) => {
+    this.inventoryBaselinesService.getBaselineDimensionValues(request).subscribe(
+      (response: BaselineDimensionValuesResponse[]) => {
         this.allDimensionValuesLoading = false;
         this.allDimensionValuesError = false;
 
-        dimensions.forEach(({ dimension }) => {
+        selectedDimensions.forEach((dimension) => {
           this.conditionFiltersInclusionTypeMap.get(condId)?.set(dimension, this.conditionFiltersInclusionTypeMap.get(condId)?.has(dimension) ? this.conditionFiltersInclusionTypeMap.get(condId)?.get(dimension) : this.dimensionValuesInclusionOptions[0]);
 
-          const newValues: string[] = response.find(r => r.dimension === dimension)?.values ?? [];
+          const newValues: string[] = response.find(r => r.dimension === dimension)?.valueList ?? [];
           condMap.set(dimension, new Map()
             .set('values', newValues)
             .set('selected', newValues)
@@ -2596,7 +2578,7 @@ export class AlertManagerComponent implements OnInit{
       () => {
         this.allDimensionValuesLoading = false;
         this.allDimensionValuesError = true;
-        dimensions.forEach(({ dimension }) => {
+        selectedDimensions.forEach((dimension) => {
           condMap.set(dimension, new Map().set('values', []).set('selected', []).set('created', []).set('lost', []).set('merge', []));
         });
       }

@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BaselineResponse } from '../responses/baselines/BaselineResponse';
 import { DimensionValuesRequest } from '../requests/baseline/DimensionValuesRequest';
+import { BaselineDimensionValuesRequest } from '../requests/baseline/BaselineDimensionValuesRequest';
+import { BaselineDimensionValuesResponse } from '../responses/baselines/BaselineDimensionValuesResponse';
 
 @Injectable({
   providedIn: 'root'
@@ -31,5 +33,10 @@ export class InventoryBaselinesService {
   getDimensionValues(dimensionValuesRequest: DimensionValuesRequest): Observable<any>
   {
     return this.http.post<any>(this.apiUrl + '/getDimensionValues', dimensionValuesRequest);
+  }
+
+  getBaselineDimensionValues(request: BaselineDimensionValuesRequest): Observable<BaselineDimensionValuesResponse[]>
+  {
+    return this.http.post<BaselineDimensionValuesResponse[]>(this.apiUrl + '/getBaselineDimensionValues', request);
   }
 }
