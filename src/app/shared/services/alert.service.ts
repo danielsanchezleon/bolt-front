@@ -33,7 +33,7 @@ export class AlertService {
     return this.http.get<AlertViewDto>(this.apiUrl + '/getAlert', {params: params});
   }
 
-  getAllAlerts(page: number, size: number, filters: any): Observable<any>
+  getAllAlerts(page: number, size: number, filters: any, alertIds?: number[]): Observable<any>
   {
     let params: HttpParams = new HttpParams();
 
@@ -46,6 +46,12 @@ export class AlertService {
         if (value !== null && value !== undefined && value !== '') {
           params = params.set(key, value);
         }
+      });
+    }
+
+    if (alertIds && alertIds.length > 0) {
+      alertIds.forEach(id => {
+        params = params.append('alertIds', id.toString());
       });
     }
 
@@ -84,12 +90,12 @@ export class AlertService {
     return this.http.get<TeamViewDto[]>(this.apiUrl + '/getAllTeams');
   }
 
-  existsByInternalName(internalName: string): Observable<boolean>
+  existsByInternalName(internalName: string): Observable<string | null>
   {
     let params = new HttpParams();
     params = params.append('internalName', internalName);
 
-    return this.http.get<boolean>(this.apiUrl + '/existsByInternalName', {params: params});
+    return this.http.get(this.apiUrl + '/existsByInternalName', {params: params, responseType: 'text'}) as Observable<string | null>;
   }
 
   updateAlert(alertViewDto: AlertViewDto): Observable<AlertViewDto>

@@ -388,6 +388,25 @@ th {
     width: 100%;
 }
 
+.duplicate-filter-banner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+    border-radius: 8px;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 10px 16px;
+
+    color: #1d4ed8;
+    font-size: 0.875rem;
+
+    span {
+        flex: 1;
+    }
+}
+
 .bottom-panel {
     bottom: 0;
     position: fixed;

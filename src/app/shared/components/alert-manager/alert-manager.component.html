@@ -1253,11 +1253,15 @@
 <div *ngIf="configuredAlertExists" class="toast bg-yellow">
     <div class="c-yellow title">
         <i class="pi pi-info-circle" style="font-size: 1.2rem;"></i>
-        <div class="font-16 font-w-600">Alerta duplicada</div>
+        <div class="font-16 font-w-600">{{ configuredAlertIsMultiple ? 'Alertas duplicadas' : 'Alerta duplicada' }}</div>
     </div>
     <div class="c-yellow description">
-        Ya existe una alerta con esta métrica. Si quieres acceder a ella, pulsa <span class="font-w-700"
-            style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
+        <ng-container *ngIf="configuredAlertIsMultiple">
+            Se han encontrado {{ duplicateAlertCount }} alertas con ese nombre interno. Si quieres acceder a ellas, pulsa <span class="font-w-700" style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
+        </ng-container>
+        <ng-container *ngIf="!configuredAlertIsMultiple">
+            Ya existe una alerta con esta métrica. Si quieres acceder a ella, pulsa <span class="font-w-700" style="cursor: pointer;" (click)="onClickGoToAlert();">aquí</span>.
+        </ng-container>
     </div>
 
 </div>

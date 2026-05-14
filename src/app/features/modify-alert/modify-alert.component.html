@@ -59,6 +59,12 @@
         </div>
     </div>
 
+    <div *ngIf="duplicateFilterMessage" class="duplicate-filter-banner">
+        <i class="pi pi-info-circle"></i>
+        <span>{{ duplicateFilterMessage }}</span>
+        <p-button label="Limpiar filtro" icon="pi pi-times" [text]="true" severity="secondary" size="small" (onClick)="clearDuplicateFilter()" />
+    </div>
+
     <div *ngIf="(!isLoading && !isError && firstCall) || !firstCall" class="table-container">
         <p-table *ngIf="alertList && alertList.length > 0" class="table" id="dt" #dt [value]="currentAlertList" [size]="'small'" [showGridlines]="true" [stripedRows]="true" [(selection)]="selectedAlerts">
             <ng-template #header>

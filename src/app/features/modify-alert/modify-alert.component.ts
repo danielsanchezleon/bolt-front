@@ -198,6 +198,10 @@ export class ModifyAlertComponent implements OnInit
   page: number = 0;
   size: number = 20;
 
+  //DUPLICATE FILTER
+  duplicateFilterIds: number[] | null = null;
+  duplicateFilterMessage: string | null = null;
+
   //TAGS
   selectedTagIndex: number | null = null;
   tagNames: string[] = ['bolt_source', 'bolt_service', 'bolt_funcion', 'bolt_data_type', 'bolt_category', 'bolt_host', 'bolt_ob'];
@@ -205,9 +209,6 @@ export class ModifyAlertComponent implements OnInit
 
   constructor(private router: Router, private _fb: FormBuilder, private alertService: AlertService, private route: ActivatedRoute, private metadataService: MetadataService, private messageService: MessageService, private authService: AuthService) 
   {
-    const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras.state as { alertId: any };
-
     this.tagForm = this._fb.group({
       name: ['', [Validators.required]],
       value: ['', [Validators.required]]
@@ -217,6 +218,14 @@ export class ModifyAlertComponent implements OnInit
   ngOnInit() 
   {
     this.isAdmin = this.authService.isAdmin() && this.authService.isAdmin() == true ? true : false;
+
+    const navState = history.state as { alertId?: any; alertIds?: number[] };
+    if (navState?.alertIds && navState.alertIds.length > 0) {
+      this.duplicateFilterIds = navState.alertIds;
+      this.duplicateFilterMessage = navState.alertIds.length === 1
+        ? `Se ha encontrado 1 alerta con ese nombre interno`
+        : `Se han encontrado ${navState.alertIds.length} alertas con ese nombre interno`;
+    }
 
     this.filterForm = this._fb.group({
       filterText: new FormControl(''),
@@ -300,6 +309,12 @@ export class ModifyAlertComponent implements OnInit
   clearIndividualFilters() {
     this.filterForm.reset();
     this.filterForm.updateValueAndValidity();
+  }
+
+  clearDuplicateFilter() {
+    this.duplicateFilterIds = null;
+    this.duplicateFilterMessage = null;
+    this.getAllAlerts(this.page, this.size, this.filterForm.value);
   }
 
   onClickAddSeverity(alert: AlertViewDto)
@@ -536,7 +551,7 @@ export class ModifyAlertComponent implements OnInit
     this.isLoading = true;
     this.isError = false;
 
-    this.alertService.getAllAlerts(page, size, filters).subscribe(
+    this.alertService.getAllAlerts(page, size, filters, this.duplicateFilterIds ?? undefined).subscribe(
       (response) => {
         this.isLoading = false;
         this.isError = false;

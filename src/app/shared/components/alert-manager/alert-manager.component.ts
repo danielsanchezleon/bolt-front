@@ -369,7 +369,7 @@ export class AlertManagerComponent implements OnInit{
 
   internalName: string = '';
   name: string = '';
-  configuredAlertExists: number | null = null;
+  configuredAlertExists: string | null = null;
 
   indicatorArray: IndicatorFormArray;
   indicatorNames: string[] = [];
@@ -764,7 +764,7 @@ export class AlertManagerComponent implements OnInit{
 
   existsByInternalName() {
     this.alertService.existsByInternalName(this.internalName).subscribe(
-      (response: any) => { this.configuredAlertExists = response; }
+      (response: string | null) => { this.configuredAlertExists = response || null; }
     );
   }
 
@@ -2101,7 +2101,7 @@ export class AlertManagerComponent implements OnInit{
     // BASELINE
     if (this.isBaselineAlert && this.mode == 'create')
     {
-      let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
+      let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.selectedBaseline.baselineTable, this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
       alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
     }
     else if (this.isBaselineAlert && this.mode == 'edit')
@@ -2111,7 +2111,7 @@ export class AlertManagerComponent implements OnInit{
         let alertMetrics: AlertMetricDto[] = [];
 
         this.baselineIndicator.alertMetrics?.forEach((metric) => {
-          alertMetrics.push(new AlertMetricDto(metric.metricId!, 'BASELINES', this.isBaselinePastAverageAlert || this.isBaselinePastAveragePonderedAlert ? 'baseline_cdn' : 'baseline_qoe', this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory));
+          alertMetrics.push(new AlertMetricDto(metric.metricId!, 'BASELINES', this.selectedBaseline.baselineTable, this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory));
         });
 
         alertIndicators.push(new AlertIndicatorDto(this.baselineIndicator.id!, 'B', alertMetrics, "B.1", this.isBaselineAlert));
@@ -2174,9 +2174,23 @@ export class AlertManagerComponent implements OnInit{
     )
   }
 
+  get configuredAlertIsMultiple(): boolean {
+    return !!this.configuredAlertExists && this.configuredAlertExists.startsWith('(');
+  }
+
+  get duplicateAlertCount(): number {
+    if (!this.configuredAlertIsMultiple) return 0;
+    return this.configuredAlertExists!.replace(/[()]/g, '').split(',').length;
+  }
+
   onClickGoToAlert()
   {
-    this.router.navigate(['alerts'], { state: { alertId: this.configuredAlertExists } });
+    if (this.configuredAlertIsMultiple) {
+      const ids = this.configuredAlertExists!.replace(/[()]/g, '').split(',').map(s => parseInt(s.trim(), 10));
+      this.router.navigate(['alerts'], { state: { alertIds: ids } });
+    } else {
+      this.router.navigate(['alerts'], { state: { alertIds: [parseInt(this.configuredAlertExists!, 10)] } });
+    }
   }
 
   addStartBracket(clauseIndex: number, conditionIndex: number) 
