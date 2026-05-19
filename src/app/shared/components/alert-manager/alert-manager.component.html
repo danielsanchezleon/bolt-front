@@ -359,6 +359,7 @@
                         </div>
                         <div class="condition-clause"
                             *ngFor="let clause of condition.controls.clauses.controls; let j = index; let first = first;"
+                            [style.display]="(isBaselineAlert && clause.get('value')?.value == null && clause.get('min')?.value == null && clause.get('max')?.value == null) ? 'none' : 'flex'"
                             [formGroup]="clause">
                             <div class="fields">
                                 <div *ngIf="clause.get('startBrackets')?.value">
@@ -430,7 +431,7 @@
                                     severity="secondary" (onClick)="removeClause(i, j);" />
                             </div>
                         </div>
-                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0 && conditionFiltersMap.get(condition.get('id')?.value!)"
+                        <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0 && conditionFiltersMap.get(condition.get('id')?.value!)"}
                             class="separator"></div>
                         <div *ngIf="this.groupByForm.get('groupBy')?.value.length > 0 && conditionFiltersMap.get(condition.get('id')?.value!)"
                             class="condition-dimensions">

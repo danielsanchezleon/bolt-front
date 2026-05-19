@@ -1786,7 +1786,7 @@ export class AlertManagerComponent implements OnInit{
 
     this.conditionArray.push(newCondition);
 
-    if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! > 1)) {
+    if (!this.isBaselineAlert || (this.isBaselineAlert && condition.alertClauses?.length! >= 1)) {
       condition.alertClauses?.forEach((clause) => {
         this.conditionArray.at(i).controls.clauses.push(this._fb.group({
           clauseId: this._fb.control(clause.id),

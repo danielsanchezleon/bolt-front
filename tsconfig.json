@@ -12,6 +12,7 @@
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    "types": ["jasmine"],
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
