@@ -2089,8 +2089,10 @@ export class AlertManagerComponent implements OnInit{
           (condition.get('baselineVariables') as FormGroup).get('auxVar3')?.value
         );
 
-        if (this.mode == 'create')
-          alertClauses.push(new AlertClauseDto(null, 'B', null, 'MORE_THAN', null, null, 0, null, null, null, null));
+        if (this.mode == 'create') {
+          const conditionType = (condition.get('baselineVariables') as FormGroup).get('type')?.value?.value ?? 'MORE_THAN';
+          alertClauses.push(new AlertClauseDto(null, 'B', null, conditionType, null, null, 0, null, null, null, null));
+        }
       }
 
       alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariablesDto, alertClauses, conditionFiltersList));
