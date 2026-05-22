@@ -120,4 +120,9 @@ export class AlarmAnalyticsService {
 
     return this.http.get<any>(this.apiUrl + '/getActiveAlarmInstancesResponse', { params });
   }
+
+  closeInstancesManually(notificationIds: string[]): Observable<any>
+  {
+    return this.http.post<any>(this.apiUrl + '/close-manually', { notificationIds });
+  }
 }

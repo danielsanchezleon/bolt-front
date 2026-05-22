@@ -313,13 +313,39 @@
                     </p-tabpanel>
                     <p-tabpanel value="1">
                         <div class="filter-container">
-                            <form *ngIf="!(activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall)" style="width: 100%;" [formGroup]="instancesFilterForm">
-                                <p-iconfield style="width: 100%;">
-                                    <p-inputicon iconPosition="left" class="pi pi-search" />
-                                    <input #filterInput style="width: 100%;" formControlName="filterText" type="text" pInputText placeholder='Busca por: Id, Mensaje, Fecha o Evento (P.E. Mensaje: "...") o por Etiquetas (P.E. Etiquetas: "{"ob":"TE", ...}")' />
-                                    <p-inputicon iconPosition="right" *ngIf="instancesFilterForm.get('filterText')?.value && instancesFilterForm.get('filterText')?.value.length > 0" class="pi pi-times" style="cursor: pointer;" (click)="instancesFilterForm.get('filterText')?.reset(); getActiveAlarmInstancesTable(page, pageSize);"/>
-                                </p-iconfield>
-                            </form>
+                            <div *ngIf="!(activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall)" class="chip-filter-container">
+                                <form [formGroup]="instancesFilterForm" class="chip-filter-wrapper" (click)="filterInput.focus()">
+                                    <i class="pi pi-search chip-search-icon"></i>
+                                    <div class="chip-filter-chips-row">
+                                        <span *ngFor="let chip of activeFilterChips; let i = index" class="filter-chip-item" (click)="$event.stopPropagation()">
+                                            <span class="filter-chip-text">{{ chip }}</span>
+                                            <i class="pi pi-times filter-chip-remove" (click)="$event.stopPropagation(); removeFilterChip(i)"></i>
+                                        </span>
+                                        <input
+                                            #filterInput
+                                            class="chip-text-input"
+                                            formControlName="filterText"
+                                            type="text"
+                                            [placeholder]="activeFilterChips.length === 0 ? 'Haz clic para ver los filtros disponibles...' : 'Añadir otro filtro...'"
+                                            (focus)="showFilterSuggestions = true"
+                                            (blur)="onFilterInputBlur()"
+                                            (keydown.escape)="showFilterSuggestions = false"
+                                            (keydown.enter)="$event.preventDefault(); addChipFromInput()"
+                                        />
+                                    </div>
+                                    <i *ngIf="activeFilterChips.length > 0 || (instancesFilterForm.get('filterText')?.value && instancesFilterForm.get('filterText')?.value.length > 0)"
+                                       class="pi pi-times chip-clear-icon"
+                                       (click)="$event.stopPropagation(); clearAllFilterChips()"></i>
+                                </form>
+                                <div *ngIf="showFilterSuggestions && !instancesFilterForm.get('filterText')?.value" class="filter-suggestions-panel">
+                                    <span class="filter-suggestions-label">Filtrar por:</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Id')"><i class="pi pi-hashtag"></i> Id</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Mensaje')"><i class="pi pi-comment"></i> Mensaje</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Fecha')"><i class="pi pi-calendar"></i> Fecha</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Evento')"><i class="pi pi-bolt"></i> Evento</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Etiquetas')"><i class="pi pi-tag"></i> Etiquetas</span>
+                                </div>
+                            </div>
                             <p-skeleton *ngIf="activeAlarmInstancesTableLoading && !activeAlarmInstancesTableError && firstCall" width="1343px" height="39px" borderRadius="8px" />
                             <div class="date-filter" (click)="op1.toggle($event)">
                                 <div class="date-filter-left">
@@ -392,6 +418,9 @@
                         <p-table *ngIf="!activeAlarmInstancesTableLoading && activeAlarmInstancesTable?.instances" [value]="activeAlarmInstancesTable.instances" class="step4-table">
                             <ng-template #header>
                                 <tr>
+                                    <th style="width: 3rem;" (click)="$event.stopPropagation()">
+                                        <p-checkbox [binary]="true" [ngModel]="allCurrentPageSelected" (ngModelChange)="toggleAllCurrentPage($event)" />
+                                    </th>
                                     <th class="clickable-header" (click)="addFilter('Id')">Id</th>
                                     <th class="clickable-header" (click)="addFilter('Mensaje')">Mensaje</th>
                                     <th class="clickable-header" (click)="addFilter('Fecha')">Fecha</th>
@@ -401,7 +430,10 @@
                                 </tr>
                             </ng-template>
                             <ng-template #body let-instance>
-                                <tr class="alert-row">
+                                <tr class="alert-row" [class.row-selected]="isInstanceSelected(instance)">
+                                    <td (click)="$event.stopPropagation()">
+                                        <p-checkbox [binary]="true" [ngModel]="isInstanceSelected(instance)" (ngModelChange)="toggleInstanceSelection(instance, $event)" [disabled]="instance.action !== 'CREATE'" />
+                                    </td>
                                     <td><strong>{{ instance.alertId }}</strong></td>
                                     <td class="name-column">
                                         <div class="name" title="{{instance.instanceText}}">
@@ -461,20 +493,155 @@
     </div>
 </app-page-wrapper>
 
+<div class="bulk-action-bar" [class.visible]="selectedInstances.length > 0">
+    <div class="bulk-action-bar-left">
+        <i class="pi pi-check-square" style="color: #3b82f6; font-size: 1.1rem;"></i>
+        <span class="bulk-count">{{ selectedInstances.length }} instancia{{ selectedInstances.length !== 1 ? 's' : '' }} seleccionada{{ selectedInstances.length !== 1 ? 's' : '' }}</span>
+        <p-button label="Deseleccionar todo" icon="pi pi-times" severity="secondary" [text]="true" size="small" (onClick)="clearSelection()" />
+    </div>
+    <div class="bulk-action-bar-right">
+        <p-button label="Cerrar manualmente" icon="pi pi-times-circle" severity="danger" size="small" [loading]="closeManuallyLoading" (onClick)="onClickCloseManually()" />
+    </div>
+</div>
+
+<!-- ─── Close manually confirmation dialog ─────────────────────────────── -->
+<p-dialog [(visible)]="showCloseManuallyConfirmModal" [modal]="true" [closable]="false" [resizable]="false" [showHeader]="false"
+    styleClass="close-manually-confirm-dialog" [style]="{ width: '460px' }">
+
+    <div class="close-confirm-content">
+        <div class="close-confirm-icon-wrapper">
+            <div class="close-confirm-icon-bg">
+                <i class="pi pi-exclamation-triangle"></i>
+            </div>
+        </div>
+
+        <div class="close-confirm-title">Cerrar instancias manualmente</div>
+
+        <div class="close-confirm-badge">
+            <i class="pi pi-check-square"></i>
+            <span>{{ selectedInstances.length }} instancia{{ selectedInstances.length === 1 ? '' : 's' }} seleccionada{{ selectedInstances.length === 1 ? '' : 's' }}</span>
+        </div>
+
+        <p class="close-confirm-desc">
+            Esta acción marcará las instancias seleccionadas como <strong>cerradas</strong> en el sistema de monitorización.
+            Se registrará una copia histórica de cada instancia antes del cierre.
+        </p>
+
+        <div class="close-confirm-warning">
+            <i class="pi pi-info-circle"></i>
+            <span>Esta operación <strong>no puede deshacerse</strong>. Solo se cerrarán instancias con evento <code>PROBLEM</code>.</span>
+        </div>
+
+        <div class="close-confirm-actions">
+            <p-button
+                label="Cancelar"
+                icon="pi pi-times"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="showCloseManuallyConfirmModal = false" />
+            <p-button
+                label="Confirmar cierre"
+                icon="pi pi-check"
+                severity="danger"
+                (onClick)="confirmCloseManually()" />
+        </div>
+    </div>
+</p-dialog>
+
 <p-dialog [(visible)]="instancesInformationModalVisible" [modal]="false" [closable]="false" [resizable]="false" [showHeader]="false"
     [style]="instancesInformationModalStyle" (click)="$event.stopPropagation();" styleClass="condition-info-dialog">
 
-    <div class="notice c-blue">
-        <i class="pi pi-info-circle"></i>
-        <div>
-            <p>Ejemplos de filtros:</p>
-            <ul>
-                <li>Id: "711"</li>
-                <li>Mensaje: "Anomaly detected in status_code for group:"</li>
-                <li>Fecha: "06/03/2026"</li>
-                <li>Evento: "OK"</li>
-                <li>Etiquetas: "{{ '{' }}"ob":"VIVO", "cdn_protocol":"dash"{{ '}' }}"</li>
-            </ul>
+    <div class="info-dialog-content">
+        <div class="info-dialog-header">
+            <i class="pi pi-info-circle"></i>
+            <span class="font-w-600" style="font-size: 14px;">Cómo usar el filtro de instancias</span>
+        </div>
+        <div class="info-dialog-body">
+            <div class="info-dialog-intro">
+                Escribe un filtro con el formato <code>Campo: "valor"</code> y pulsa <strong>Enter</strong> para añadirlo como chip.
+                Puedes añadir varios chips; todos se aplican con operador <strong>AND</strong>.
+                También puedes hacer clic en las <strong>cabeceras de la tabla</strong> para insertar una plantilla de filtro.
+            </div>
+
+            <div class="info-dialog-grid">
+                <div class="info-dialog-section">
+                    <div class="info-dialog-section-title">Campos disponibles</div>
+                    <div class="fields-list">
+                        <div class="field-row"><code>Id</code><span>Identificador numérico de la alerta</span></div>
+                        <div class="field-row"><code>Mensaje</code><span>Texto del mensaje (búsqueda parcial)</span></div>
+                        <div class="field-row"><code>Fecha</code><span>Fecha de la instancia — formato <code>dd/MM/yyyy</code></span></div>
+                        <div class="field-row"><code>Evento</code><span>Tipo de evento: <code>PROBLEM</code> o <code>OK</code></span></div>
+                        <div class="field-row"><code>Etiquetas</code><span>JSON con pares clave-valor de etiquetas</span></div>
+                    </div>
+                </div>
+
+                <div class="info-dialog-section">
+                    <div class="info-dialog-section-title">Filtros simples</div>
+                    <div class="examples-list">
+                        <div class="example-row"><code>Id: "711"</code><span>Alerta con id 711</span></div>
+                        <div class="example-row"><code>Evento: "OK"</code><span>Solo instancias de recuperación</span></div>
+                        <div class="example-row"><code>Evento: "PROBLEM"</code><span>Solo instancias de problema</span></div>
+                        <div class="example-row"><code>Fecha: "06/03/2026"</code><span>Instancias del 6 de marzo de 2026</span></div>
+                        <div class="example-row"><code>Mensaje: "Anomaly detected"</code><span>Mensajes que contienen ese texto</span></div>
+                        <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</code><span>Instancias con OB igual a VIVO</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-dialog-section">
+                <div class="info-dialog-section-title">Filtros compuestos (AND)</div>
+                <div class="info-dialog-intro" style="margin-bottom: 8px;">
+                    Añade varios chips para combinar criterios. Todos deben cumplirse (operador AND):
+                </div>
+                <div class="compound-examples">
+                    <div class="compound-row">
+                        <div class="chips-preview">
+                            <span class="preview-chip">Id: "711"</span>
+                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
+                            <span class="preview-chip">Evento: "PROBLEM"</span>
+                        </div>
+                        <span class="compound-arrow">→</span>
+                        <span class="compound-desc">Instancias del alert 711 que sean PROBLEM</span>
+                    </div>
+                    <div class="compound-row">
+                        <div class="chips-preview">
+                            <span class="preview-chip">Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</span>
+                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
+                            <span class="preview-chip">Evento: "OK"</span>
+                        </div>
+                        <span class="compound-arrow">→</span>
+                        <span class="compound-desc">Instancias de OB VIVO con evento OK</span>
+                    </div>
+                    <div class="compound-row">
+                        <div class="chips-preview">
+                            <span class="preview-chip">Fecha: "06/03/2026"</span>
+                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
+                            <span class="preview-chip">Mensaje: "status_code"</span>
+                        </div>
+                        <span class="compound-arrow">→</span>
+                        <span class="compound-desc">Instancias del 6 de marzo sobre status_code</span>
+                    </div>
+                    <div class="compound-row">
+                        <div class="chips-preview">
+                            <span class="preview-chip">Etiquetas: "{{ '{' }}"ob":"VIVO","cdn_protocol":"dash"{{ '}' }}"</span>
+                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
+                            <span class="preview-chip">Evento: "PROBLEM"</span>
+                        </div>
+                        <span class="compound-arrow">→</span>
+                        <span class="compound-desc">OB VIVO + protocolo dash + eventos de problema</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-dialog-section">
+                <div class="info-dialog-section-title">Filtros por Etiquetas — Sintaxis JSON</div>
+                <div class="examples-list">
+                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</code><span>OB igual a VIVO</span></div>
+                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO","cdn_protocol":"dash"{{ '}' }}"</code><span>OB VIVO y protocolo dash (AND interno)</span></div>
+                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"service":"video"{{ '}' }}"</code><span>Servicio igual a video</span></div>
+                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"severity":"critical"{{ '}' }}"</code><span>Severidad igual a critical</span></div>
+                </div>
+            </div>
         </div>
     </div>
 </p-dialog>

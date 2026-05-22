@@ -26,10 +26,11 @@ import { TabsModule } from 'primeng/tabs';
 import { PaginatorModule } from 'primeng/paginator';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule, DialogModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule, DialogModule, CheckboxModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
@@ -167,6 +168,11 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   noiseAlertsTableLoading: boolean = false;
   noiseAlertsTableError: boolean = false;
 
+  activeFilterChips: string[] = [];
+  selectedInstances: any[] = [];
+  closeManuallyLoading: boolean = false;
+  showCloseManuallyConfirmModal: boolean = false;
+
   timeWindowOptions: any[] = [
     {label: 'Últimos/as', value: 'last'},
     {label: 'Rango', value: 'between'}
@@ -217,6 +223,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
 
   instancesInformationModalStyle: any = {};
   instancesInformationModalVisible: boolean = false;
+  showFilterSuggestions: boolean = false;
 
   activeAlarmInstancesTable: any;
   activeAlarmInstancesTableLoading: boolean = false;
@@ -593,7 +600,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.activeAlarmInstancesTableError = false;
 
     const mode = this.timeWindowMode;
-    const filterText = this.instancesFilterForm ? this.instancesFilterForm.get('filterText')?.value : null;
+    const filterText = this.activeFilterChips.length > 0 ? this.activeFilterChips.join(', ') : null;
     const lastSeconds = (this.instancesFilterForm && mode === 'last')
       ? this._formToSeconds(this.instancesFilterForm, 'unit', 'unitValue')
       : null;
@@ -840,28 +847,18 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   }
 
   addFilter(field: string): void {
-
-    let newValue: string = '';
-
+    let template: string;
     if (field === 'Etiquetas')
     {
-      newValue = field + ": \"{\"clave\":\"valor\"}\""
+      template = field + ": \"{\"clave\":\"valor\"}\"";
     }
     else
     {
-      newValue = field + ": \"\"";
+      template = field + ": \"\"";
     }
 
-    if (this.instancesFilterForm.get('filterText')?.value && this.instancesFilterForm.get('filterText')?.value.trim() !== '') 
-    {
-      this.instancesFilterForm.get('filterText')?.setValue(this.instancesFilterForm.get('filterText')?.value + ', ' + newValue);
-    } 
-    else 
-    {
-      this.instancesFilterForm.get('filterText')?.setValue(newValue);
-    }
-    // Position cursor between the two quotes: one char before the end
-    const cursorPos = newValue.length - 1;
+    this.instancesFilterForm.get('filterText')?.setValue(template);
+    const cursorPos = template.length - 1;
     setTimeout(() => {
       const el = this.filterInputRef?.nativeElement;
       if (el) {
@@ -869,6 +866,110 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
         el.setSelectionRange(cursorPos, cursorPos);
       }
     });
+  }
+
+  addChipFromInput(): void {
+    const val = this.instancesFilterForm.get('filterText')?.value?.trim();
+    if (!val) return;
+    this.activeFilterChips.push(val);
+    this.instancesFilterForm.get('filterText')?.setValue('');
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
+
+  removeFilterChip(i: number): void {
+    this.activeFilterChips.splice(i, 1);
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
+
+  clearAllFilterChips(): void {
+    this.activeFilterChips = [];
+    this.instancesFilterForm.get('filterText')?.setValue('');
+    this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+  }
+
+  // ─── Row selection ─────────────────────────────────────────────────────────
+
+  getInstanceKey(instance: any): string {
+    return instance.notificationId ?? `${instance.alertId}|${instance.dateTime}`;
+  }
+
+  isInstanceSelected(instance: any): boolean {
+    const key = this.getInstanceKey(instance);
+    return this.selectedInstances.some(s => this.getInstanceKey(s) === key);
+  }
+
+  toggleInstanceSelection(instance: any, checked: boolean): void {
+    if (instance.action !== 'CREATE') return;
+    if (checked) {
+      if (!this.isInstanceSelected(instance)) {
+        this.selectedInstances = [...this.selectedInstances, instance];
+      }
+    } else {
+      const key = this.getInstanceKey(instance);
+      this.selectedInstances = this.selectedInstances.filter(s => this.getInstanceKey(s) !== key);
+    }
+  }
+
+  get allCurrentPageSelected(): boolean {
+    const instances = this.activeAlarmInstancesTable?.instances;
+    if (!instances?.length) return false;
+    const selectable = instances.filter((i: any) => i.action === 'CREATE');
+    if (!selectable.length) return false;
+    return selectable.every((i: any) => this.isInstanceSelected(i));
+  }
+
+  toggleAllCurrentPage(checked: boolean): void {
+    const instances = this.activeAlarmInstancesTable?.instances;
+    if (!instances) return;
+    const selectable = instances.filter((i: any) => i.action === 'CREATE');
+    if (checked) {
+      for (const instance of selectable) {
+        if (!this.isInstanceSelected(instance)) {
+          this.selectedInstances = [...this.selectedInstances, instance];
+        }
+      }
+    } else {
+      const currentKeys = new Set(selectable.map((i: any) => this.getInstanceKey(i)));
+      this.selectedInstances = this.selectedInstances.filter(s => !currentKeys.has(this.getInstanceKey(s)));
+    }
+  }
+
+  clearSelection(): void {
+    this.selectedInstances = [];
+  }
+
+  onClickCloseManually(): void {
+    const notificationIds = this.selectedInstances
+      .map(i => i.notificationId)
+      .filter((id): id is string => id !== null && id !== undefined);
+
+    if (!notificationIds.length) return;
+    this.showCloseManuallyConfirmModal = true;
+  }
+
+  confirmCloseManually(): void {
+    const notificationIds = this.selectedInstances
+      .map(i => i.notificationId)
+      .filter((id): id is string => id !== null && id !== undefined);
+
+    if (!notificationIds.length) return;
+
+    this.showCloseManuallyConfirmModal = false;
+    this.closeManuallyLoading = true;
+    this.alarmAnalyticsService.closeInstancesManually(notificationIds).subscribe({
+      next: () => {
+        this.closeManuallyLoading = false;
+        this.clearSelection();
+        this.getActiveAlarmInstancesTable(this.page, this.pageSize);
+      },
+      error: () => {
+        this.closeManuallyLoading = false;
+      }
+    });
+  }
+
+  onFilterInputBlur(): void {
+    setTimeout(() => { this.showFilterSuggestions = false; }, 150);
   }
 
   onHoverInstancesInformationIcon(event: MouseEvent) {
@@ -879,7 +980,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
       position: 'fixed',
       top: `${rect.bottom + 16}px`,
       left: `${rect.left}px`,
-      width: '1200px'
+      width: '900px'
     };
 
     this.instancesInformationModalVisible = true;
