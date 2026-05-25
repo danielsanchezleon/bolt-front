@@ -2028,7 +2028,10 @@ export class AlertManagerComponent implements OnInit{
 
       // CLAUSES
       for (let clause of condition.controls.clauses.controls) {
-        alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clause.get('indicatorName')?.value!, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" || clause.get('comparation')?.value.value == "EQUALS" || clause.get('comparation')?.value.value == "NOT_EQUALS" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
+        const clauseIndicatorName = this.isBaselineAlert
+          ? (this.indicatorArray.length > 0 ? this.indicatorArray.at(0).get('name')?.value! : 'A')
+          : clause.get('indicatorName')?.value!;
+        alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clauseIndicatorName, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" || clause.get('comparation')?.value.value == "EQUALS" || clause.get('comparation')?.value.value == "NOT_EQUALS" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
       }
 
       // CONDITION FILTERS
@@ -2091,7 +2094,8 @@ export class AlertManagerComponent implements OnInit{
 
         if (this.mode == 'create') {
           const conditionType = (condition.get('baselineVariables') as FormGroup).get('type')?.value?.value ?? 'MORE_THAN';
-          alertClauses.push(new AlertClauseDto(null, 'B', null, conditionType, null, null, 0, null, null, null, null));
+          const nonBaselineIndicatorName = this.indicatorArray.length > 0 ? this.indicatorArray.at(0).get('name')?.value : 'A';
+          alertClauses.push(new AlertClauseDto(null, nonBaselineIndicatorName, null, conditionType, null, null, 0, null, null, null, null));
         }
       }
 

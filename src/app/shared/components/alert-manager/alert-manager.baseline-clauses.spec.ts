@@ -249,11 +249,16 @@ describe('AlertManagerComponent – baseline clauses en modo edit', () => {
     expect(sentClauses![0].id)
       .withContext('el id de la clause debe ser el original (42)')
       .toBe(42);
+
+    // El indicatorName debe apuntar al indicador no-baseline ('A'), no al baseline ('B')
+    expect(sentClauses![0].indicatorName)
+      .withContext('la clause debe apuntar al indicador no-baseline A')
+      .toBe('A');
   }));
 
-  // ─── test 4: en create mode, la clause 'B' se añade con id null ─────────
+  // ─── test 4: en create mode, la clause apunta al indicador no-baseline ('A') con id null ─────────
 
-  it('en create mode la clause B se añade con id null', fakeAsync(() => {
+  it('en create mode la clause apunta al indicador no-baseline con id null', fakeAsync(() => {
     component.mode = 'create';
 
     // En create mode no se carga ningún DTO; se configura el form manualmente
@@ -290,7 +295,7 @@ describe('AlertManagerComponent – baseline clauses en modo edit', () => {
       .toBeNull();
 
     expect(sentClauses![0].indicatorName)
-      .withContext('la clause en create mode debe ser B')
-      .toBe('B');
+      .withContext('la clause en create mode debe apuntar al indicador no-baseline A')
+      .toBe('A');
   }));
 });
