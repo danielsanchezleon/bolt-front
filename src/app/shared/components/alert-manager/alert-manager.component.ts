@@ -2094,7 +2094,7 @@ export class AlertManagerComponent implements OnInit{
 
         if (this.mode == 'create') {
           const conditionType = (condition.get('baselineVariables') as FormGroup).get('type')?.value?.value ?? 'MORE_THAN';
-          const nonBaselineIndicatorName = this.indicatorArray.length > 0 ? this.indicatorArray.at(0).get('name')?.value : 'A';
+          const nonBaselineIndicatorName: string = this.indicatorArray.length > 0 ? (this.indicatorArray.at(0).get('name')?.value ?? 'A') : 'A';
           alertClauses.push(new AlertClauseDto(null, nonBaselineIndicatorName, null, conditionType, null, null, 0, null, null, null, null));
         }
       }
