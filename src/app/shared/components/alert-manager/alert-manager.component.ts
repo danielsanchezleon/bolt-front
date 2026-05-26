@@ -421,6 +421,7 @@ export class AlertManagerComponent implements OnInit{
   baselineResponseList: BaselineResponse[] = [];
   selectedBaseline: any = null;
   baselineSelectDisabled: boolean = false;
+  readonly baselineOperationOptions = ['AVG', 'SUM', 'MIN', 'MAX', 'COUNT', 'LAST', 'MEDIAN'];
 
   baselineGroupByOptionsLoading: boolean = false;
   baselineGroupByOptionsError: boolean = false;
@@ -2027,11 +2028,18 @@ export class AlertManagerComponent implements OnInit{
       let alertClauses: AlertClauseDto[] = [];
 
       // CLAUSES
-      for (let clause of condition.controls.clauses.controls) {
-        const clauseIndicatorName = this.isBaselineAlert
-          ? (this.indicatorArray.length > 0 ? this.indicatorArray.at(0).get('name')?.value! : 'A')
-          : clause.get('indicatorName')?.value!;
-        alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clauseIndicatorName, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" || clause.get('comparation')?.value.value == "EQUALS" || clause.get('comparation')?.value.value == "NOT_EQUALS" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
+      if (this.isBaselineAlert && this.mode === 'create') {
+        // Baseline create: siempre exactamente UNA clause por condición, apuntando al indicador no-baseline (A)
+        const conditionType = (condition.get('baselineVariables') as FormGroup).get('type')?.value?.value ?? 'MORE_THAN';
+        const nonBaselineIndicatorName: string = this.indicatorArray.length > 0 ? (this.indicatorArray.at(0).get('name')?.value ?? 'A') : 'A';
+        alertClauses.push(new AlertClauseDto(null, nonBaselineIndicatorName, null, conditionType, null, null, 0, null, null, null, null));
+      } else {
+        for (let clause of condition.controls.clauses.controls) {
+          const clauseIndicatorName = this.isBaselineAlert
+            ? (this.indicatorArray.length > 0 ? this.indicatorArray.at(0).get('name')?.value! : 'A')
+            : clause.get('indicatorName')?.value!;
+          alertClauses.push(new AlertClauseDto(clause.get('clauseId')?.value!, clauseIndicatorName, clause.get('startBrackets')?.value!, clause.get('comparation')?.value.value, clause.get('comparation')?.value.value == "MORE_THAN" || clause.get('comparation')?.value.value == "LESS_THAN" || clause.get('comparation')?.value.value == "EQUALS" || clause.get('comparation')?.value.value == "NOT_EQUALS" ? clause.get('value')?.value! : clause.get('min')?.value!, clause.get('endBrackets')?.value!, clause.get('order')?.value!, clause.get('externalOperation')?.value!, clause.get('minIncluded')?.value!, clause.get('max')?.value!, clause.get('maxIncluded')?.value!));
+        }
       }
 
       // CONDITION FILTERS
@@ -2091,24 +2099,16 @@ export class AlertManagerComponent implements OnInit{
           (condition.get('baselineVariables') as FormGroup).get('auxVar2')?.value,
           (condition.get('baselineVariables') as FormGroup).get('auxVar3')?.value
         );
-
-        if (this.mode == 'create') {
-          const conditionType = (condition.get('baselineVariables') as FormGroup).get('type')?.value?.value ?? 'MORE_THAN';
-          const nonBaselineIndicatorName: string = this.indicatorArray.length > 0 ? (this.indicatorArray.at(0).get('name')?.value ?? 'A') : 'A';
-          alertClauses.push(new AlertClauseDto(null, nonBaselineIndicatorName, null, conditionType, null, null, 0, null, null, null, null));
-        }
       }
 
       alertConditions.push(new AlertConditionDto(condition.get('conditionId')?.value!, condition.get('severity')?.value.value, condition.get('status')?.value!, baselinesVariablesDto, alertClauses, conditionFiltersList));
     }
 
-    console.log(alertConditions)
-
     // BASELINE
     if (this.isBaselineAlert && this.mode == 'create')
     {
       let alertMetricDto: AlertMetricDto = new AlertMetricDto(null, 'BASELINES', this.selectedBaseline.baselineTable, this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory);
-      alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert));
+      alertIndicators.push(new AlertIndicatorDto(null, 'B', [alertMetricDto], "B.1", this.isBaselineAlert, this.selectedBaseline.baselineOperation));
     }
     else if (this.isBaselineAlert && this.mode == 'edit')
     {
@@ -2120,7 +2120,7 @@ export class AlertManagerComponent implements OnInit{
           alertMetrics.push(new AlertMetricDto(metric.metricId!, 'BASELINES', this.selectedBaseline.baselineTable, this.selectedBaseline.name, 'SUM', '', this.selectedBaseline.idInventory));
         });
 
-        alertIndicators.push(new AlertIndicatorDto(this.baselineIndicator.id!, 'B', alertMetrics, "B.1", this.isBaselineAlert));
+        alertIndicators.push(new AlertIndicatorDto(this.baselineIndicator.id!, 'B', alertMetrics, "B.1", this.isBaselineAlert, this.selectedBaseline.baselineOperation));
       }
     }
 

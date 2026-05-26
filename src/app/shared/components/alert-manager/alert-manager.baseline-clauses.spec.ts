@@ -285,9 +285,9 @@ describe('AlertManagerComponent – baseline clauses en modo edit', () => {
     const sentAlertDto = alertServiceMock.crupdateAlert.calls.mostRecent().args[1];
     const sentClauses = sentAlertDto.alertConditions![0].alertClauses;
 
-    // En create mode se añade la clause 'B' con id null
+    // En create mode se genera exactamente 1 clause con id null
     expect(sentClauses?.length)
-      .withContext('en create mode debe añadirse 1 clause B')
+      .withContext('en create mode debe generarse exactamente 1 clause')
       .toBe(1);
 
     expect(sentClauses![0].id)
