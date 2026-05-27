@@ -72,11 +72,11 @@ export const modifyAlertTimeWindowOptions = [
 ];
 
 export const discardTimeOptions = [
-    {value: null, label: 'Sin descartar'},
-    {value: 1, label: '1 minuto'},
-    {value: 5, label: '5 minutos'},
-    {value: 10, label: '10 minutos'},
-    {value: 15, label: '15 minutos'}
+    {value: 0, label: 'Sin descartar'},
+    {value: 60, label: '1 minuto'},
+    {value: 300, label: '5 minutos'},
+    {value: 600, label: '10 minutos'},
+    {value: 900, label: '15 minutos'}
 ];
 
 export const periodicityOptions = [
