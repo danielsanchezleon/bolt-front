@@ -871,7 +871,17 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   addChipFromInput(): void {
     const val = this.instancesFilterForm.get('filterText')?.value?.trim();
     if (!val) return;
-    this.activeFilterChips.push(val);
+
+    let chip: string;
+    if (/^\d+$/.test(val)) {
+      chip = `Id: "${val}"`;
+    } else if (!val.includes(':')) {
+      chip = `Mensaje: "${val}"`;
+    } else {
+      chip = val;
+    }
+
+    this.activeFilterChips.push(chip);
     this.instancesFilterForm.get('filterText')?.setValue('');
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
