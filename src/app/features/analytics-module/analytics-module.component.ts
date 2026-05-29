@@ -213,7 +213,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   noiseAlertsFilterForm!: FormGroup;
   noiseAlertsFirst: number = 0;
   noiseAlertsPage: number = 0;
-  noiseAlertsPageSize: number = 20;
+  noiseAlertsPageSize: number = 10;
   private noiseRefreshInterval: any = null;
   private noiseRefreshToggleSub: Subscription | null = null;
 
