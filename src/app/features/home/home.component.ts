@@ -106,7 +106,7 @@ export class HomeComponent {
     this.alertDrilldownTableLoading = true;
     this.alertDrilldownTableError = false;
 
-    this.alarmAnalyticsService.getAlertsTable(null, null, 86400).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(0, 20, null, 86400).subscribe(
       (response) => {
         this.alertDrilldownTable = response;
         this.alertDrilldownTableLoading = false;
@@ -135,6 +135,6 @@ export class HomeComponent {
 
   onClickGoToEditAlert2(alert: any)
   {
-    this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
   }
 }

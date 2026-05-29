@@ -27,10 +27,11 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DatePickerModule } from 'primeng/datepicker';
 import { DialogModule } from 'primeng/dialog';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
   selector: 'app-analytics-module',
-  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule, DialogModule, CheckboxModule],
+  imports: [PageWrapperComponent, ButtonModule, AccordionComponent, SelectButtonModule, CommonModule, FormsModule, SelectModule, MultiSelectModule, SliderModule, TableModule, CarouselModule, ChartModule, ProgressSpinnerModule, PopoverModule, IconFieldModule, InputIconModule, SkeletonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, ToggleSwitchModule, TabsModule, PaginatorModule, DatePickerModule, DialogModule, CheckboxModule, TooltipModule],
   templateUrl: './analytics-module.component.html',
   styleUrl: './analytics-module.component.scss'
 })
@@ -210,6 +211,9 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   //Noise alerts
   noiseAlertsActiveTimeWindow: string = 'Esta semana';
   noiseAlertsFilterForm!: FormGroup;
+  noiseAlertsFirst: number = 0;
+  noiseAlertsPage: number = 0;
+  noiseAlertsPageSize: number = 20;
   private noiseRefreshInterval: any = null;
   private noiseRefreshToggleSub: Subscription | null = null;
 
@@ -574,14 +578,8 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     const lastSeconds = (this.noiseAlertsFilterForm && mode === 'last')
       ? this._formToSeconds(this.noiseAlertsFilterForm, 'unit', 'unitValue')
       : null;
-    const from = (this.noiseAlertsFilterForm && mode === 'between')
-      ? this.noiseAlertsFilterForm.get('from')?.value ?? null
-      : null;
-    const to = (this.noiseAlertsFilterForm && mode === 'between')
-      ? this.noiseAlertsFilterForm.get('to')?.value ?? null
-      : null;
 
-    this.alarmAnalyticsService.getAlertsTable(10, 500, lastSeconds, from, to).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(this.noiseAlertsPage, this.noiseAlertsPageSize, null, lastSeconds).subscribe(
       (response) => {
         this.noiseAlertsTable = response;
         this.noiseAlertsTableLoading = false;
@@ -659,7 +657,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
 
   onClickGoToEditAlert(alert: any)
   {
-    this.router.navigate(['alert', 'edit', alert.alertType, alert.label]);
+    this.router.navigate(['alert', 'edit', alert.alertType, alert.alertId]);
   }
 
   onClickPreset(preset: string) {
@@ -846,6 +844,14 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 
+  onNoiseAlertsPageChange(event: any)
+  {
+    this.noiseAlertsFirst = event.first;
+    this.noiseAlertsPage = event.page;
+    this.noiseAlertsPageSize = event.rows;
+    this.getNoiseAlertsTable();
+  }
+
   addFilter(field: string): void {
     let template: string;
     if (field === 'Etiquetas')
@@ -909,7 +915,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   }
 
   toggleInstanceSelection(instance: any, checked: boolean): void {
-    if (instance.action !== 'CREATE') return;
+    if (instance.action !== 'PROBLEM') return;
     if (checked) {
       if (!this.isInstanceSelected(instance)) {
         this.selectedInstances = [...this.selectedInstances, instance];
@@ -923,7 +929,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   get allCurrentPageSelected(): boolean {
     const instances = this.activeAlarmInstancesTable?.instances;
     if (!instances?.length) return false;
-    const selectable = instances.filter((i: any) => i.action === 'CREATE');
+    const selectable = instances.filter((i: any) => i.action === 'PROBLEM');
     if (!selectable.length) return false;
     return selectable.every((i: any) => this.isInstanceSelected(i));
   }
@@ -931,7 +937,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
   toggleAllCurrentPage(checked: boolean): void {
     const instances = this.activeAlarmInstancesTable?.instances;
     if (!instances) return;
-    const selectable = instances.filter((i: any) => i.action === 'CREATE');
+    const selectable = instances.filter((i: any) => i.action === 'PROBLEM');
     if (checked) {
       for (const instance of selectable) {
         if (!this.isInstanceSelected(instance)) {
@@ -990,7 +996,7 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
       position: 'fixed',
       top: `${rect.bottom + 16}px`,
       left: `${rect.left}px`,
-      width: '900px'
+      width: '650px'
     };
 
     this.instancesInformationModalVisible = true;

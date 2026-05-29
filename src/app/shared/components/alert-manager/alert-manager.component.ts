@@ -1384,9 +1384,9 @@ export class AlertManagerComponent implements OnInit{
 
       this.resultMetricMap.set(0, this.selectedBaseline.alertIndicatorViewDto.finalExpression);
 
-      this.generateInternalNameAndName();
-
       this.groupByForm.get('groupBy')?.setValue(alertViewDto.groupBy?.map(dimension => dimension.toLowerCase()));
+
+      this.generateInternalNameAndName();
 
       this.conditionFiltersMap = new Map();
 

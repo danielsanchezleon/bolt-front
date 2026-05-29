@@ -181,7 +181,7 @@
                                 </div>
                             </p-popover>
                         </div>
-                        <p-table *ngIf="!noiseAlertsTableLoading" [value]="noiseAlertsTable" dataKey="label" class="step4-table">
+                        <p-table *ngIf="!noiseAlertsTableLoading" [value]="noiseAlertsTable?.data" dataKey="alertId" class="step4-table">
                             <ng-template #header>
                                 <tr>
                                     <th style="width: 5rem"></th>
@@ -200,13 +200,13 @@
                                     <td>
                                         <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
                                     </td>
-                                    <td><strong>{{ alert.label }}</strong></td>
+                                    <td><strong>{{ alert.alertId }}</strong></td>
                                     <td class="name-column">
                                         <div class="name" title="{{alert.alertText}}">
                                             <div>{{alert.alertText}}</div>
                                         </div>
                                     </td>
-                                    <td>{{ alert.count }}</td>
+                                    <td>{{ alert.instances?.length }}</td>
                                     <td>-</td>
                                     <td>-</td>
                                     <td style="max-width: 250px;">
@@ -216,97 +216,39 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
-                                        <p-button *ngIf="!alert.tags || alert.tags.length == 0"
-                                                label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
-                                                size="small"
-                                                severity="secondary"
-                                                class="font-12 font-w-600"
-                                                [rounded]="true"
-                                                [text]="true"
-                                                [disabled]="!alert.tags || alert.tags.length == 0"
-                                            />
-
-                                        <span *ngIf="alert.tags && alert.tags.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
-                                            <p-button
-                                                label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}"
-                                                size="small"
-                                                severity="secondary"
-                                                class="font-12 font-w-600"
-                                                [rounded]="true"
-                                                [text]="true"
-                                                [disabled]="!alert.tags || alert.tags.length == 0"
-                                            />
-                                        </span>
-
-                                        <p-popover #op1>
-                                            <div class="popover-container">
-                                                <div class="font-w-600">Tags</div>
-                                                <div class="tags-list">
-                                                    <div *ngFor="let tag of alert.tags" class="tag-item">
-                                                        <strong>{{ tag.name }}</strong>: {{ tag.value }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </p-popover>
-                                    </td>
+                                    <td>-</td>
                                     <td>
                                         <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info" (onClick)="onClickGoToEditAlert(alert);" />
                                     </td>
                                 </tr>
                             </ng-template>
                             <ng-template #expandedrow let-alert>
-                                <tr *ngFor="let child of alert.children">
+                                <tr *ngFor="let instance of alert.instances">
                                     <td></td>
-                                    <td></td>
-                                    <td>
-                                        <div title="{{child.label}}">{{child.label}}</div>
-                                    </td>
-                                    <td>{{ child.action == 'CREATE' ? child.count : child.closedCount }}</td>
-                                    <td class="font-12 font-w-600">{{ child.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
-                                    <td class="font-12 font-w-600">{{ child.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
-                                    <td>
-                                        <div *ngIf="!child.groupBy">-</div>
+                                    <td style="max-width: 160px;">
+                                        <span [pTooltip]="instance.alarmDimensionId" tooltipPosition="top" style="display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; border-bottom: 1px dashed currentColor; opacity: 0.85; cursor: help;">{{ instance.alarmDimensionId }}</span>
                                     </td>
                                     <td>
-
-                                        <p-button *ngIf="!child.tags || (child.tags && getKeysCount(child.tags) == 0)"
-                                                label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                                                size="small"
-                                                severity="secondary"
-                                                class="font-12 font-w-600"
-                                                [rounded]="true"
-                                                [text]="true"
-                                                [disabled]="!child.tags || getKeysCount(child.tags) == 0"
-                                            />
-
-                                        <span *ngIf="child.tags && getKeysCount(child.tags) > 0" (mouseenter)="op2.show($event)" (mouseleave)="op2.hide()" style="display: inline-block;">
-                                            <p-button
-                                                label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                                                size="small"
-                                                severity="secondary"
-                                                class="font-12 font-w-600"
-                                                [rounded]="true"
-                                                [text]="true"
-                                                [disabled]="!child.tags || getKeysCount(child.tags) == 0"
-                                            />
-                                        </span>
-
-                                        <p-popover #op2>
-                                            <div class="popover-container">
-                                                <div class="font-w-600">Filtros</div>
-                                                <div class="tags-list">
-                                                <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">
-                                                    {{ tagString }}
-                                                </div>
-                                                </div>
-                                            </div>
-                                        </p-popover>
+                                        <div title="{{instance.instanceText}}">{{instance.instanceText}}</div>
                                     </td>
+                                    <td>-</td>
+                                    <td class="font-12 font-w-600">{{ instance.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                                    <td class="font-12 font-w-600">{{ instance.action }}</td>
+                                    <td>-</td>
+                                    <td>-</td>
                                     <td></td>
                                 </tr>
                             </ng-template>
                         </p-table>
+                        <p-paginator *ngIf="noiseAlertsTable"
+                            (onPageChange)="onNoiseAlertsPageChange($event)"
+                            [first]="noiseAlertsFirst"
+                            [rows]="noiseAlertsPageSize"
+                            [totalRecords]="noiseAlertsTable.total"
+                            [showCurrentPageReport]="true"
+                            [showPageLinks]="true"
+                            currentPageReportTemplate="{first} a {last} de {totalRecords} alertas"
+                            [rowsPerPageOptions]="[10, 20, 50, 100]" />
                         <div *ngIf="noiseAlertsTableLoading" style="display: flex; flex-direction: row; justify-content: center; align-items: center; width: 100%; height: 425px;">
                             <p-progress-spinner />
                         </div>
@@ -340,6 +282,7 @@
                                 <div *ngIf="showFilterSuggestions && !instancesFilterForm.get('filterText')?.value" class="filter-suggestions-panel">
                                     <span class="filter-suggestions-label">Filtrar por:</span>
                                     <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Id')"><i class="pi pi-hashtag"></i> Id</span>
+                                    <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Identificador')"><i class="pi pi-key"></i> Identificador</span>
                                     <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Mensaje')"><i class="pi pi-comment"></i> Mensaje</span>
                                     <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Fecha')"><i class="pi pi-calendar"></i> Fecha</span>
                                     <span class="filter-suggestion-chip" (mousedown)="$event.preventDefault(); addFilter('Evento')"><i class="pi pi-bolt"></i> Evento</span>
@@ -415,13 +358,15 @@
                             <p-chart type="bar" [data]="bucketData" [options]="bucketOptions" height="256px" />
                         </div>
 
-                        <p-table *ngIf="!activeAlarmInstancesTableLoading && activeAlarmInstancesTable?.instances" [value]="activeAlarmInstancesTable.instances" class="step4-table">
+                        <div style="overflow-x: auto; width: 100%;">
+                        <p-table *ngIf="!activeAlarmInstancesTableLoading && activeAlarmInstancesTable?.instances" [value]="activeAlarmInstancesTable.instances" class="step4-table" [tableStyle]="{'min-width': '950px'}">
                             <ng-template #header>
                                 <tr>
                                     <th style="width: 3rem;" (click)="$event.stopPropagation()">
                                         <p-checkbox [binary]="true" [ngModel]="allCurrentPageSelected" (ngModelChange)="toggleAllCurrentPage($event)" />
                                     </th>
                                     <th class="clickable-header" (click)="addFilter('Id')">Id</th>
+                                    <th class="clickable-header" (click)="addFilter('Identificador')">Identificador</th>
                                     <th class="clickable-header" (click)="addFilter('Mensaje')">Mensaje</th>
                                     <th class="clickable-header" (click)="addFilter('Fecha')">Fecha</th>
                                     <th class="clickable-header" (click)="addFilter('Evento')">Evento</th>
@@ -432,16 +377,19 @@
                             <ng-template #body let-instance>
                                 <tr class="alert-row" [class.row-selected]="isInstanceSelected(instance)">
                                     <td (click)="$event.stopPropagation()">
-                                        <p-checkbox [binary]="true" [ngModel]="isInstanceSelected(instance)" (ngModelChange)="toggleInstanceSelection(instance, $event)" [disabled]="instance.action !== 'CREATE'" />
+                                        <p-checkbox [binary]="true" [ngModel]="isInstanceSelected(instance)" (ngModelChange)="toggleInstanceSelection(instance, $event)" [disabled]="instance.action !== 'PROBLEM'" />
                                     </td>
                                     <td><strong>{{ instance.alertId }}</strong></td>
+                                    <td style="max-width: 160px;">
+                                        <span [pTooltip]="instance.alarmDimensionId" tooltipPosition="top" style="display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; border-bottom: 1px dashed currentColor; opacity: 0.85; cursor: help;">{{ instance.alarmDimensionId }}</span>
+                                    </td>
                                     <td class="name-column">
                                         <div class="name" title="{{instance.instanceText}}">
                                             <div>{{instance.instanceText}}</div>
                                         </div>
                                     </td>
                                     <td class="font-12 font-w-600">{{ instance.dateTime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
-                                    <td class="font-12 font-w-600">{{ instance.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
+                                    <td class="font-12 font-w-600">{{ instance.action }}</td>
                                     <td>
                                         <span *ngIf="instance.activeAlarmInstanceTagList && instance.activeAlarmInstanceTagList.length > 0" (mouseenter)="op1.show($event)" (mouseleave)="op1.hide()" style="display:inline-block">
                                             <p-button
@@ -472,6 +420,7 @@
                                 </tr>
                             </ng-template>
                         </p-table>
+                        </div>
                         <p-paginator *ngIf="activeAlarmInstancesTable" 
                             (onPageChange)="onPageChange($event)" 
                             [first]="first" 
@@ -554,92 +503,34 @@
     <div class="info-dialog-content">
         <div class="info-dialog-header">
             <i class="pi pi-info-circle"></i>
-            <span class="font-w-600" style="font-size: 14px;">Cómo usar el filtro de instancias</span>
+            <span class="font-w-600" style="font-size: 14px;">Filtros de instancias</span>
         </div>
         <div class="info-dialog-body">
             <div class="info-dialog-intro">
-                Escribe un filtro con el formato <code>Campo: "valor"</code> y pulsa <strong>Enter</strong> para añadirlo como chip.
-                Puedes añadir varios chips; todos se aplican con operador <strong>AND</strong>.
-                También puedes hacer clic en las <strong>cabeceras de la tabla</strong> para insertar una plantilla de filtro.
+                Formato: <code>Campo: "valor"</code> → <strong>Enter</strong>. Varios chips aplican <strong>AND</strong>. Haz clic en las cabeceras para insertar una plantilla.
             </div>
-
             <div class="info-dialog-grid">
                 <div class="info-dialog-section">
                     <div class="info-dialog-section-title">Campos disponibles</div>
                     <div class="fields-list">
                         <div class="field-row"><code>Id</code><span>Identificador numérico de la alerta</span></div>
+                        <div class="field-row"><code>Identificador</code><span>Dimensión de alarma (alarmDimensionId)</span></div>
                         <div class="field-row"><code>Mensaje</code><span>Texto del mensaje (búsqueda parcial)</span></div>
-                        <div class="field-row"><code>Fecha</code><span>Fecha de la instancia — formato <code>dd/MM/yyyy</code></span></div>
-                        <div class="field-row"><code>Evento</code><span>Tipo de evento: <code>PROBLEM</code> o <code>OK</code></span></div>
-                        <div class="field-row"><code>Etiquetas</code><span>JSON con pares clave-valor de etiquetas</span></div>
+                        <div class="field-row"><code>Fecha</code><span>Formato <code>dd/MM/yyyy</code></span></div>
+                        <div class="field-row"><code>Evento</code><span><code>PROBLEM</code> o <code>OK</code></span></div>
+                        <div class="field-row"><code>Etiquetas</code><span>JSON clave-valor</span></div>
                     </div>
                 </div>
-
                 <div class="info-dialog-section">
-                    <div class="info-dialog-section-title">Filtros simples</div>
+                    <div class="info-dialog-section-title">Ejemplos</div>
                     <div class="examples-list">
                         <div class="example-row"><code>Id: "711"</code><span>Alerta con id 711</span></div>
-                        <div class="example-row"><code>Evento: "OK"</code><span>Solo instancias de recuperación</span></div>
+                        <div class="example-row"><code>Identificador: "mi_alarma"</code><span>Por dimensión de alarma</span></div>
                         <div class="example-row"><code>Evento: "PROBLEM"</code><span>Solo instancias de problema</span></div>
-                        <div class="example-row"><code>Fecha: "06/03/2026"</code><span>Instancias del 6 de marzo de 2026</span></div>
-                        <div class="example-row"><code>Mensaje: "Anomaly detected"</code><span>Mensajes que contienen ese texto</span></div>
-                        <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</code><span>Instancias con OB igual a VIVO</span></div>
+                        <div class="example-row"><code>Fecha: "06/03/2026"</code><span>Instancias de esa fecha</span></div>
+                        <div class="example-row"><code>Mensaje: "Anomaly"</code><span>Mensajes con ese texto</span></div>
+                        <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</code><span>OB igual a VIVO</span></div>
                     </div>
-                </div>
-            </div>
-
-            <div class="info-dialog-section">
-                <div class="info-dialog-section-title">Filtros compuestos (AND)</div>
-                <div class="info-dialog-intro" style="margin-bottom: 8px;">
-                    Añade varios chips para combinar criterios. Todos deben cumplirse (operador AND):
-                </div>
-                <div class="compound-examples">
-                    <div class="compound-row">
-                        <div class="chips-preview">
-                            <span class="preview-chip">Id: "711"</span>
-                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
-                            <span class="preview-chip">Evento: "PROBLEM"</span>
-                        </div>
-                        <span class="compound-arrow">→</span>
-                        <span class="compound-desc">Instancias del alert 711 que sean PROBLEM</span>
-                    </div>
-                    <div class="compound-row">
-                        <div class="chips-preview">
-                            <span class="preview-chip">Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</span>
-                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
-                            <span class="preview-chip">Evento: "OK"</span>
-                        </div>
-                        <span class="compound-arrow">→</span>
-                        <span class="compound-desc">Instancias de OB VIVO con evento OK</span>
-                    </div>
-                    <div class="compound-row">
-                        <div class="chips-preview">
-                            <span class="preview-chip">Fecha: "06/03/2026"</span>
-                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
-                            <span class="preview-chip">Mensaje: "status_code"</span>
-                        </div>
-                        <span class="compound-arrow">→</span>
-                        <span class="compound-desc">Instancias del 6 de marzo sobre status_code</span>
-                    </div>
-                    <div class="compound-row">
-                        <div class="chips-preview">
-                            <span class="preview-chip">Etiquetas: "{{ '{' }}"ob":"VIVO","cdn_protocol":"dash"{{ '}' }}"</span>
-                            <i class="pi pi-plus" style="font-size: 10px; color: #6b7280;"></i>
-                            <span class="preview-chip">Evento: "PROBLEM"</span>
-                        </div>
-                        <span class="compound-arrow">→</span>
-                        <span class="compound-desc">OB VIVO + protocolo dash + eventos de problema</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-dialog-section">
-                <div class="info-dialog-section-title">Filtros por Etiquetas — Sintaxis JSON</div>
-                <div class="examples-list">
-                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO"{{ '}' }}"</code><span>OB igual a VIVO</span></div>
-                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"ob":"VIVO","cdn_protocol":"dash"{{ '}' }}"</code><span>OB VIVO y protocolo dash (AND interno)</span></div>
-                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"service":"video"{{ '}' }}"</code><span>Servicio igual a video</span></div>
-                    <div class="example-row"><code>Etiquetas: "{{ '{' }}"severity":"critical"{{ '}' }}"</code><span>Severidad igual a critical</span></div>
                 </div>
             </div>
         </div>

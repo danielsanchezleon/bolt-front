@@ -69,28 +69,18 @@ export class AlarmAnalyticsService {
     return this.http.get<any>(this.apiUrl + '/general');
   }
 
-  getAlertsTable(alertsLimit: number | null, dimensionsLimit: number | null, lastSeconds: number | null, from: Date | null = null, to: Date | null = null): Observable<any>
+  getAlertsTable(page: number, pageSize: number, alertsLimit: number | null, lastSeconds: number | null): Observable<any>
   {
-    let params = new HttpParams();
+    let params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', pageSize);
 
     if (alertsLimit !== null) {
       params = params.set('alertsLimit', alertsLimit);
     }
 
-    if (dimensionsLimit !== null) {
-      params = params.set('dimensionsLimit', dimensionsLimit);
-    }
-
     if (lastSeconds !== null) {
       params = params.set('lastSeconds', lastSeconds);
-    }
-
-    if (from !== null) {
-      params = params.set('from', from.toISOString());
-    }
-
-    if (to !== null) {
-      params = params.set('to', to.toISOString());
     }
 
     return this.http.get<any>(this.apiUrl + '/ranking/noise-alerts', { params });

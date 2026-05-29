@@ -131,12 +131,12 @@
 
   <div class="last-24h-container">
     <div *ngIf="!alertDrilldownTableLoading" class="font-20 font-w-600">Alertas lanzadas en las últimas 24h
-      ({{alertDrilldownTable?.length}})</div>
+      ({{alertDrilldownTable?.total}})</div>
 
     <p-skeleton *ngIf="alertDrilldownTableLoading" width="375px" height="27px" borderRadius="8px" />
 
     <div *ngIf="!alertDrilldownTableLoading" class="table-container">
-      <p-table *ngIf="!alertDrilldownTableLoading" [value]="alertDrilldownTable" dataKey="label" class="my-table">
+      <p-table *ngIf="!alertDrilldownTableLoading" [value]="alertDrilldownTable?.data" dataKey="alertId" class="my-table">
         <ng-template #header>
           <tr>
             <th style="width: 5rem"></th>
@@ -156,13 +156,13 @@
               <p-button type="button" pRipple [text]="true" severity="secondary" [rounded]="true"
                 [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
             </td>
-            <td><strong>{{ alert.label }}</strong></td>
+            <td><strong>{{ alert.alertId }}</strong></td>
             <td class="name-column">
               <div class="name" title="{{alert.alertText}}">
                 <div class="ellipsis">{{alert.alertText}}</div>
               </div>
             </td>
-            <td>{{ alert.count }}</td>
+            <td>{{ alert.instances?.length }}</td>
             <td>-</td>
             <td>-</td>
             <td style="max-width: 250px;">
@@ -173,30 +173,7 @@
                 </div>
               </div>
             </td>
-            <td>
-              <p-button *ngIf="!alert.tags || alert.tags.length == 0"
-                label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}" size="small"
-                severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true"
-                [disabled]="!alert.tags || alert.tags.length == 0" />
-
-              <span *ngIf="alert.tags && alert.tags.length > 0" (mouseenter)="op1.show($event)"
-                (mouseleave)="op1.hide()" style="display:inline-block">
-                <p-button label="{{alert.tags.length == 1 ? '1 tag' : alert.tags.length + ' tags'}}" size="small"
-                  severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true"
-                  [disabled]="!alert.tags || alert.tags.length == 0" />
-              </span>
-
-              <p-popover #op1>
-                <div class="popover-container">
-                  <div class="font-w-600">Tags</div>
-                  <div class="tags-list">
-                    <div *ngFor="let tag of alert.tags" class="tag-item">
-                      <strong>{{ tag.name }}</strong>: {{ tag.value }}
-                    </div>
-                  </div>
-                </div>
-              </p-popover>
-            </td>
+            <td>-</td>
             <td>
               <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info"
                 (onClick)="onClickGoToEditAlert(alert);" />
@@ -204,44 +181,19 @@
           </tr>
         </ng-template>
         <ng-template #expandedrow let-alert>
-          <tr *ngFor="let child of alert.children">
+          <tr *ngFor="let instance of alert.instances">
             <td></td>
-            <td></td>
-            <td>
-              <div title="{{child.label}}">{{child.label}}</div>
-            </td>
-            <td>{{ child.count }}</td>
-            <td class="font-12 font-w-600">{{ child.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
-            <td class="font-12 font-w-600">{{ child.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
-            <td>
-              <div *ngIf="!child.groupBy">-</div>
+            <td style="max-width: 160px;">
+              <span [pTooltip]="instance.alarmDimensionId" tooltipPosition="top" style="display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; border-bottom: 1px dashed currentColor; opacity: 0.85; cursor: help;">{{ instance.alarmDimensionId }}</span>
             </td>
             <td>
-
-              <p-button *ngIf="!child.tags || (child.tags && getKeysCount(child.tags) == 0)"
-                label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                size="small" severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true"
-                [disabled]="!child.tags || getKeysCount(child.tags) == 0" />
-
-              <span *ngIf="child.tags && getKeysCount(child.tags) > 0" (mouseenter)="op2.show($event)"
-                (mouseleave)="op2.hide()" style="display: inline-block;">
-                <p-button
-                  label="{{!child.tags || (child.tags && getKeysCount(child.tags) == 0) ? '0 filtros' : getKeysCount(child.tags) == 1 ? '1 filtro' : getKeysCount(child.tags) + ' filtros'}}"
-                  size="small" severity="secondary" class="font-12 font-w-600" [rounded]="true" [text]="true"
-                  [disabled]="!child.tags || getKeysCount(child.tags) == 0" />
-              </span>
-
-              <p-popover #op2>
-                <div class="popover-container">
-                  <div class="font-w-600">Filtros</div>
-                  <div class="tags-list">
-                    <div *ngFor="let tagString of buildKeyValueArray(child.tags)" class="tag-item">
-                      {{ tagString }}
-                    </div>
-                  </div>
-                </div>
-              </p-popover>
+              <div title="{{instance.instanceText}}">{{instance.instanceText}}</div>
             </td>
+            <td>-</td>
+            <td class="font-12 font-w-600">{{ instance.datetime | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td class="font-12 font-w-600">{{ instance.action === 'CREATE' ? 'PROBLEM' : 'OK' }}</td>
+            <td>-</td>
+            <td>-</td>
             <td></td>
           </tr>
         </ng-template>
