@@ -662,6 +662,8 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
 
   onClickPreset(preset: string) {
     this._applyPreset(preset, this.instancesFilterForm, (label) => this.instancesActiveTimeWindow = label);
+    this.page = 0;
+    this.first = 0;
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 
@@ -889,17 +891,23 @@ export class AnalyticsModuleComponent implements OnInit, OnDestroy
 
     this.activeFilterChips.push(chip);
     this.instancesFilterForm.get('filterText')?.setValue('');
+    this.page = 0;
+    this.first = 0;
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 
   removeFilterChip(i: number): void {
     this.activeFilterChips.splice(i, 1);
+    this.page = 0;
+    this.first = 0;
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 
   clearAllFilterChips(): void {
     this.activeFilterChips = [];
     this.instancesFilterForm.get('filterText')?.setValue('');
+    this.page = 0;
+    this.first = 0;
     this.getActiveAlarmInstancesTable(this.page, this.pageSize);
   }
 

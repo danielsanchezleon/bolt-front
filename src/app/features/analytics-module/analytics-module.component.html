@@ -310,7 +310,7 @@
                                                     <p-datepicker title="dd/mm/yyyy hh:mm" size="small" formControlName="to" [showTime]="true" hourFormat="24" appendTo="body" placeholder="Hasta" dateFormat="dd/mm/yy"
                                                         [ngClass]="{'ng-invalid ng-dirty': instancesFilterForm.get('to')?.invalid && instancesFilterForm.get('to')?.touched}"/>
                                                 </ng-container>
-                                                <p-button size="small" label="Aplicar" [disabled]="instancesFilterForm.invalid" (onClick)="op1.hide(); getActiveAlarmInstancesTable(page, pageSize); this.instancesActiveTimeWindow = 'Personalizado';" />
+                                                <p-button size="small" label="Aplicar" [disabled]="instancesFilterForm.invalid" (onClick)="op1.hide(); page = 0; first = 0; getActiveAlarmInstancesTable(page, pageSize); this.instancesActiveTimeWindow = 'Personalizado';" />
                                             </form>
                                         </div>
                                     </div>
@@ -418,7 +418,6 @@
                             [rows]="pageSize" 
                             [totalRecords]="activeAlarmInstancesTable.totalInstances" 
                             [showCurrentPageReport]="true"
-                            [showPageLinks]="false"
                             [showJumpToPageDropdown]="false"
                             currentPageReportTemplate="{first} a {last} de {totalRecords} elementos"
                             [rowsPerPageOptions]="pageSizeOptions"

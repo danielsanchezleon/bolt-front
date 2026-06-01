@@ -36,6 +36,9 @@ export class HomeComponent {
   alertDrilldownTable: any;
   alertDrilldownTableLoading: boolean = false;
   alertDrilldownTableError: boolean = false;
+  alertDrilldownPage: number = 0;
+  alertDrilldownPageSize: number = 10;
+  alertDrilldownFirst: number = 0;
 
   pastelChips: string[] = [
     '#F2B6BC', // rosa
@@ -106,7 +109,7 @@ export class HomeComponent {
     this.alertDrilldownTableLoading = true;
     this.alertDrilldownTableError = false;
 
-    this.alarmAnalyticsService.getAlertsTable(0, 20, null, 86400).subscribe(
+    this.alarmAnalyticsService.getAlertsTable(this.alertDrilldownPage, this.alertDrilldownPageSize, null, 86400).subscribe(
       (response) => {
         this.alertDrilldownTable = response;
         this.alertDrilldownTableLoading = false;
@@ -116,6 +119,14 @@ export class HomeComponent {
         this.alertDrilldownTableError = true;
       }
     );
+  }
+
+  onAlertDrilldownPageChange(event: any)
+  {
+    this.alertDrilldownFirst = event.first;
+    this.alertDrilldownPage = event.page;
+    this.alertDrilldownPageSize = event.rows;
+    this.getAlertDrilldownTable();
   }
 
   getKeysCount(obj: any): number {

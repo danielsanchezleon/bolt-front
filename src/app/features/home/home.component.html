@@ -200,6 +200,17 @@
       </p-table>
     </div>
 
+    <p-paginator
+      *ngIf="!alertDrilldownTableLoading && alertDrilldownTable?.total > 0"
+      (onPageChange)="onAlertDrilldownPageChange($event)"
+      [first]="alertDrilldownFirst"
+      [rows]="alertDrilldownPageSize"
+      [totalRecords]="alertDrilldownTable?.total"
+      [showCurrentPageReport]="true"
+      [showPageLinks]="true"
+      [showJumpToPageDropdown]="false"
+      currentPageReportTemplate="{first} a {last} de {totalRecords} elementos" />
+
     <p-skeleton *ngIf="alertDrilldownTableLoading" width="1460px" height="1000px" borderRadius="8px" />
 
     <div style="width: 100%; height: 100px;"></div>
